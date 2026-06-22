@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { Providers } from './providers';
+import { Analytics } from './analytics';
 
 export const metadata: Metadata = {
   title: 'NexxoHub - Gestão Psicossocial Corporativa',
@@ -16,7 +18,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+        <Analytics />
+      </body>
     </html>
   );
 }
