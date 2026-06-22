@@ -1,55 +1,51 @@
-import { supabase } from './client';
+import { createClient } from '@supabase/supabase-js';
 
-export const authClient = {
-  signUp: async (email: string, password: string, userData?: Record<string, any>) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: userData,
-      },
-    });
-    return { data, error };
-  },
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-  signIn: async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { data, error };
-  },
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  signOut: async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
-  },
+export const signUp = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+  return { data, error };
+};
 
-  resetPassword: async (email: string) => {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-    return { data, error };
-  },
+export const signIn = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  return { data, error };
+};
 
-  updatePassword: async (password: string) => {
-    const { data, error } = await supabase.auth.updateUser({
-      password,
-    });
-    return { data, error };
-  },
+export const signOut = async () => {
+  const { error } = await supabase.auth.signOut();
+  return { error };
+};
 
-  getSession: async () => {
-    const { data, error } = await supabase.auth.getSession();
-    return { session: data?.session, error };
-  },
+export const resetPassword = async (email: string) => {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+  });
+  return { data, error };
+};
 
-  getUser: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    return { user: data?.user, error };
-  },
+export const updatePassword = async (newPassword: string) => {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+  return { data, error };
+};
 
-  onAuthStateChange: (callback: (event: any, session: any) => void) => {
-    return supabase.auth.onAuthStateChange(callback);
-  },
+export const getCurrentUser = async () => {
+  const { data, error } = await supabase.auth.getUser();
+  return { data, error };
+};
+
+export const getSession = async () => {
+  const { data, error } = await supabase.auth.getSession();
+  return { data, error };
 };
