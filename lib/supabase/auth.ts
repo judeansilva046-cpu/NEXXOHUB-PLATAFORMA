@@ -49,3 +49,14 @@ export const getSession = async () => {
   const { data, error } = await supabase.auth.getSession();
   return { data, error };
 };
+
+// Export authClient as a convenience wrapper
+export const authClient = {
+  signIn,
+  signOut,
+  signUp,
+  resetPassword,
+  updatePassword,
+  getCurrentUser,
+  getSession,
+};
