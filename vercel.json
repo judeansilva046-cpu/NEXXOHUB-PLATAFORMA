@@ -1,18 +1,6 @@
-{
+﻿{
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
-  "framework": "nextjs",
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": {
-      "description": "Supabase project URL"
-    },
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
-      "description": "Supabase anonymous key"
-    },
-    "NEXT_PUBLIC_APP_VERSION": {
-      "description": "Application version",
-      "default": "1.0.0"
-    }
-  }
+  "framework": "nextjs"
 }
