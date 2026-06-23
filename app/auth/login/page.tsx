@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ZodError } from 'zod';
 import { loginSchema, type LoginInput } from '../../../lib/validations/auth';
 import { authClient } from '../../../lib/supabase/auth';
+import { getAuthErrorMessage } from '../../../lib/auth-errors';
 import { Alert } from '../../../components/ui/alert';
 import { InputField } from '../../../components/ui/input-field';
 import { Spinner } from '../../../components/ui/spinner';
@@ -71,7 +72,7 @@ export default function LoginPage() {
       );
 
       if (authError) {
-        const errorMessage = authError.message || 'Erro desconhecido ao fazer login';
+        const errorMessage = getAuthErrorMessage(authError);
         console.error('Auth error:', {
           message: errorMessage,
           status: authError.status,
@@ -231,7 +232,7 @@ export default function LoginPage() {
       const { data, error: authError } = await authClient.signInWithGoogle();
 
       if (authError) {
-        const errorMessage = authError.message || 'Erro ao fazer login com Google';
+        const errorMessage = getAuthErrorMessage(authError);
         console.error('Google auth error:', errorMessage);
         setError(errorMessage);
         return;
@@ -261,7 +262,7 @@ export default function LoginPage() {
       const { data, error: authError } = await authClient.signInWithGitHub();
 
       if (authError) {
-        const errorMessage = authError.message || 'Erro ao fazer login com GitHub';
+        const errorMessage = getAuthErrorMessage(authError);
         console.error('GitHub auth error:', errorMessage);
         setError(errorMessage);
         return;
