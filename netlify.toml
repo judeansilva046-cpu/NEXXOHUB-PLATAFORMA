@@ -1,11 +1,11 @@
 [build]
-  command = "npm run build"
+  command = "npm install --legacy-peer-deps && npm run build"
   functions = "functions"
   publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "22.0.0"
-  NPM_VERSION = "10.0.0"
+  NODE_VERSION = "20"
+  NPM_VERSION = "10"
 
 [[redirects]]
   from = "/*"
@@ -21,14 +21,13 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
 
 [context.production]
-  command = "npm run build"
-  environment = { NODE_ENV = "production" }
+  command = "npm install --legacy-peer-deps && npm run build"
 
 [context.deploy-preview]
-  command = "npm run build"
+  command = "npm install --legacy-peer-deps && npm run build"
 
 [context.branch-deploy]
-  command = "npm run build"
+  command = "npm install --legacy-peer-deps && npm run build"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
