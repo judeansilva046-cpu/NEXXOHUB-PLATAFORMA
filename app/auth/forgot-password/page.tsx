@@ -2,35 +2,82 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { ZodError } from 'zod';
 import { authClient } from '../../../lib/supabase/auth';
 import { resetPasswordSchema } from '../../../lib/validations/auth';
+import { Alert } from '../../../components/ui/alert';
+import { InputField } from '../../../components/ui/input-field';
+import { Spinner } from '../../../components/ui/spinner';
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string>('');
   const [success, setSuccess] = useState(false);
   const [email, setEmail] = useState('');
+
+  const validateFormData = (): boolean => {
+    setFieldError('');
+
+    try {
+      resetPasswordSchema.parse({ email });
+      return true;
+    } catch (err) {
+      if (err instanceof ZodError) {
+        const message = err.errors[0]?.message || 'Email inválido';
+        setFieldError(message);
+        console.error('Validation error:', message);
+        return false;
+      }
+      return true;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!validateFormData()) {
+      console.warn('Form validation failed');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      console.log('Attempting password reset for email:', email);
       const validation = resetPasswordSchema.parse({ email });
       const { data, error: resetError } = await authClient.resetPassword(validation.email);
 
       if (resetError) {
-        setError(resetError.message);
+        const errorMessage = resetError.message || 'Erro desconhecido ao enviar email';
+        console.error('Reset password error:', {
+          message: errorMessage,
+          status: resetError.status,
+          details: resetError,
+        });
+        setError(errorMessage);
         return;
       }
 
+      console.log('Password reset email sent successfully');
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao enviar email de recuperação');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao enviar email de recuperação';
+      console.error('Unexpected error during password reset:', {
+        message: errorMessage,
+        error: err,
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    handleSubmit({ preventDefault: () => {} } as React.FormEvent);
   };
 
   if (success) {
@@ -76,32 +123,49 @@ export default function ForgotPasswordPage() {
           </p>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-6">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div>
+              <Alert
+                type="error"
+                message={error}
+                onDismiss={() => setError(null)}
+                dismissible={true}
+              />
+              <button
+                onClick={handleRetry}
+                disabled={isLoading}
+                className="w-full mb-6 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isLoading ? <Spinner size="sm" /> : null}
+                {isLoading ? 'Tentando novamente...' : 'Tentar novamente'}
+              </button>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="seu@email.com"
-              />
-            </div>
+            <InputField
+              id="email"
+              label="Email"
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(value) => {
+                setEmail(value);
+                if (fieldError) {
+                  setFieldError('');
+                }
+              }}
+              error={fieldError}
+              required
+              disabled={isLoading}
+              autoComplete="email"
+            />
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
+              {isLoading ? <Spinner size="sm" /> : null}
               {isLoading ? 'Enviando...' : 'Enviar link de recuperação'}
             </button>
           </form>
@@ -109,7 +173,7 @@ export default function ForgotPasswordPage() {
           <div className="mt-6 text-center">
             <Link
               href="/auth/login"
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium transition"
             >
               Voltar para login
             </Link>

@@ -3,13 +3,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ZodError } from 'zod';
 import { registerSchema } from '../../../lib/validations/auth';
 import { authClient } from '../../../lib/supabase/auth';
+import { Alert } from '../../../components/ui/alert';
+import { InputField } from '../../../components/ui/input-field';
+import { Spinner } from '../../../components/ui/spinner';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -18,12 +23,40 @@ export default function RegisterPage() {
     organizationName: '',
   });
 
+  const validateFormData = (): boolean => {
+    setFieldErrors({});
+
+    try {
+      registerSchema.parse(formData);
+      return true;
+    } catch (err) {
+      if (err instanceof ZodError) {
+        const errors: Record<string, string> = {};
+        err.errors.forEach((error) => {
+          const path = error.path.join('.');
+          errors[path] = error.message;
+        });
+        setFieldErrors(errors);
+        console.error('Validation errors:', errors);
+        return false;
+      }
+      return true;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!validateFormData()) {
+      console.warn('Form validation failed');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      console.log('Attempting registration with email:', formData.email);
       const validation = registerSchema.parse(formData);
 
       const { error: authError } = await authClient.signUp(
@@ -32,17 +65,34 @@ export default function RegisterPage() {
       );
 
       if (authError) {
-        setError(authError.message);
+        const errorMessage = authError.message || 'Erro desconhecido ao registrar';
+        console.error('Auth error:', {
+          message: errorMessage,
+          status: authError.status,
+          details: authError,
+        });
+        setError(errorMessage);
         return;
       }
 
+      console.log('Registration successful, redirecting to email verification');
       router.push('/auth/verify-email?email=' + encodeURIComponent(validation.email));
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro ao registrar';
-      setError(message);
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao registrar';
+      console.error('Unexpected error during registration:', {
+        message: errorMessage,
+        error: err,
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    handleSubmit({ preventDefault: () => {} } as React.FormEvent);
   };
 
   return (
@@ -53,99 +103,129 @@ export default function RegisterPage() {
           <p className="text-center text-gray-600 mb-8">Criar Conta</p>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-6">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div>
+              <Alert
+                type="error"
+                message={error}
+                onDismiss={() => setError(null)}
+                dismissible={true}
+              />
+              <button
+                onClick={handleRetry}
+                disabled={isLoading}
+                className="w-full mb-6 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isLoading ? <Spinner size="sm" /> : null}
+                {isLoading ? 'Tentando novamente...' : 'Tentar novamente'}
+              </button>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                Nome Completo
-              </label>
-              <input
-                id="fullName"
-                type="text"
-                required
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Seu nome"
-              />
-            </div>
+            <InputField
+              id="fullName"
+              label="Nome Completo"
+              type="text"
+              placeholder="Seu nome"
+              value={formData.fullName}
+              onChange={(value) => {
+                setFormData({ ...formData, fullName: value });
+                if (fieldErrors.fullName) {
+                  setFieldErrors({ ...fieldErrors, fullName: '' });
+                }
+              }}
+              error={fieldErrors.fullName}
+              required
+              disabled={isLoading}
+              minLength={2}
+            />
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="seu@email.com"
-              />
-            </div>
+            <InputField
+              id="email"
+              label="Email"
+              type="email"
+              placeholder="seu@email.com"
+              value={formData.email}
+              onChange={(value) => {
+                setFormData({ ...formData, email: value });
+                if (fieldErrors.email) {
+                  setFieldErrors({ ...fieldErrors, email: '' });
+                }
+              }}
+              error={fieldErrors.email}
+              required
+              disabled={isLoading}
+              autoComplete="email"
+            />
 
-            <div>
-              <label htmlFor="organizationName" className="block text-sm font-medium text-gray-700 mb-2">
-                Nome da Organização
-              </label>
-              <input
-                id="organizationName"
-                type="text"
-                required
-                value={formData.organizationName}
-                onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nome da sua empresa"
-              />
-            </div>
+            <InputField
+              id="organizationName"
+              label="Nome da Organização"
+              type="text"
+              placeholder="Nome da sua empresa"
+              value={formData.organizationName}
+              onChange={(value) => {
+                setFormData({ ...formData, organizationName: value });
+                if (fieldErrors.organizationName) {
+                  setFieldErrors({ ...fieldErrors, organizationName: '' });
+                }
+              }}
+              error={fieldErrors.organizationName}
+              required
+              disabled={isLoading}
+              minLength={2}
+            />
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Senha
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Mínimo 8 caracteres"
-              />
-            </div>
+            <InputField
+              id="password"
+              label="Senha"
+              type="password"
+              placeholder="Mínimo 8 caracteres"
+              value={formData.password}
+              onChange={(value) => {
+                setFormData({ ...formData, password: value });
+                if (fieldErrors.password) {
+                  setFieldErrors({ ...fieldErrors, password: '' });
+                }
+              }}
+              error={fieldErrors.password}
+              required
+              disabled={isLoading}
+              autoComplete="new-password"
+              minLength={8}
+            />
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmar Senha
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                required
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Confirme sua senha"
-              />
-            </div>
+            <InputField
+              id="confirmPassword"
+              label="Confirmar Senha"
+              type="password"
+              placeholder="Confirme sua senha"
+              value={formData.confirmPassword}
+              onChange={(value) => {
+                setFormData({ ...formData, confirmPassword: value });
+                if (fieldErrors.confirmPassword) {
+                  setFieldErrors({ ...fieldErrors, confirmPassword: '' });
+                }
+              }}
+              error={fieldErrors.confirmPassword}
+              required
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
+              {isLoading ? <Spinner size="sm" /> : null}
               {isLoading ? 'Registrando...' : 'Criar Conta'}
             </button>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">
             Já tem conta?{' '}
-            <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium">
+            <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium transition">
               Faça login
             </Link>
           </div>

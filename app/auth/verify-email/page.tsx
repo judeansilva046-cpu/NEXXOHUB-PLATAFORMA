@@ -1,12 +1,42 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { supabase } from '../../../lib/supabase/auth';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams?.get('email') || 'seu email';
+  const [isResending, setIsResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleResendEmail = async () => {
+    if (!email || email === 'seu email') {
+      setResendMessage({ type: 'error', text: 'Email não encontrado. Por favor, registre-se novamente.' });
+      return;
+    }
+
+    setIsResending(true);
+    setResendMessage(null);
+
+    try {
+      const { error } = await supabase.auth.resendEmailConfirmationLink(email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      });
+
+      if (error) {
+        setResendMessage({ type: 'error', text: error.message || 'Erro ao reenviar email' });
+      } else {
+        setResendMessage({ type: 'success', text: 'Email de confirmação reenviado! Verifique sua caixa de entrada.' });
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao reenviar email';
+      setResendMessage({ type: 'error', text: errorMessage });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
@@ -30,11 +60,25 @@ function VerifyEmailContent() {
             Clique no link no email para confirmar sua conta e começar a usar a NexxoHub.
           </p>
 
+          {resendMessage && (
+            <div className={`mb-6 p-3 rounded-md ${
+              resendMessage.type === 'success'
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-red-50 text-red-700 border border-red-200'
+            }`}>
+              <p className="text-sm">{resendMessage.text}</p>
+            </div>
+          )}
+
           <div className="space-y-3">
             <p className="text-sm text-gray-600">
               Não recebeu o email?{' '}
-              <button className="text-blue-600 hover:text-blue-700 font-medium">
-                Reenviar
+              <button
+                onClick={handleResendEmail}
+                disabled={isResending}
+                className="text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isResending ? 'Reenviando...' : 'Reenviar'}
               </button>
             </p>
 

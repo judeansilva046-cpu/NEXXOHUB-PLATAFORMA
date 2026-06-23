@@ -1,14 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
+'use client';
+
+import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// ✅ CORRIGIDO: Usar createBrowserClient que gerencia cookies automaticamente
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 export const signUp = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+    },
   });
   return { data, error };
 };
@@ -51,10 +57,81 @@ export const getSession = async () => {
 };
 
 // Export authClient as a convenience wrapper
+// ============================================================================
+// OAUTH PROVIDERS - Google, GitHub, etc.
+// ============================================================================
+
+export const signInWithGoogle = async () => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+  });
+  return { data, error };
+};
+
+export const signInWithGitHub = async () => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+    },
+  });
+  return { data, error };
+};
+
+// ============================================================================
+// PHONE AUTH - SMS/WhatsApp via Twilio
+// ============================================================================
+
+export const signInWithPhone = async (phone: string) => {
+  const { data, error } = await supabase.auth.signInWithOtp({
+    phone,
+    options: {
+      channel: 'sms',
+    },
+  });
+  return { data, error };
+};
+
+export const verifyPhoneOtp = async (phone: string, token: string) => {
+  const { data, error } = await supabase.auth.verifyOtp({
+    phone,
+    token,
+    type: 'sms',
+  });
+  return { data, error };
+};
+
+// ============================================================================
+// MAGIC LINK - Email sem senha
+// ============================================================================
+
+export const signInWithMagicLink = async (email: string) => {
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+    },
+  });
+  return { data, error };
+};
+
+// Export authClient as a convenience wrapper
 export const authClient = {
   signIn,
   signOut,
   signUp,
+  signInWithGoogle,
+  signInWithGitHub,
+  signInWithPhone,
+  verifyPhoneOtp,
+  signInWithMagicLink,
   resetPassword,
   updatePassword,
   getCurrentUser,

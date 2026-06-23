@@ -50,10 +50,6 @@ export function Analytics() {
           />
         </>
       )}
-
-      {process.env.NODE_ENV === 'production' && (
-        <Script src="/_vercel/insights/script.js" strategy="afterInteractive" />
-      )}
     </>
   );
 }
