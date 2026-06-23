@@ -21,8 +21,11 @@ function VerifyEmailContent() {
     setResendMessage(null);
 
     try {
-      const { error } = await supabase.auth.resendEmailConfirmationLink(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+        },
       });
 
       if (error) {
