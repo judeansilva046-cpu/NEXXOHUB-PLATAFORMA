@@ -3,12 +3,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthenticationError, AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
 import { updateEmployeeSchema } from '../../../../lib/validations/employee';
 
+type UserProfile = {
+  organization_id?: string;
+  role?: string;
+};
+
+type EmployeeData = {
+  companies?: {
+    organization_id?: string;
+  };
+};
+
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -19,7 +30,6 @@ export async function GET(
       throw new AuthenticationError();
     }
 
-    // Get employee
     const { data: employee, error: employeeError } = await supabase
       .from('employees')
       .select(`
@@ -33,14 +43,16 @@ export async function GET(
       throw new NotFoundError('Colaborador');
     }
 
-    // Verify user's organization
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile || userProfile.organization_id !== (employee as any).companies.organization_id) {
+    const profile = userProfile as unknown as UserProfile;
+    const employeeData = employee as unknown as EmployeeData;
+
+    if (!profile || profile.organization_id !== employeeData.companies?.organization_id) {
       throw new AuthorizationError();
     }
 
@@ -59,7 +71,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -70,18 +82,18 @@ export async function PUT(
       throw new AuthenticationError();
     }
 
-    // Verify user role
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile || !['admin', 'manager'].includes(userProfile.role)) {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (!profile || !profile.role || !['admin', 'manager'].includes(profile.role)) {
       throw new AuthorizationError();
     }
 
-    // Get employee to verify ownership
     const { data: employee } = await supabase
       .from('employees')
       .select(`
@@ -91,14 +103,15 @@ export async function PUT(
       .eq('id', params.id)
       .single();
 
-    if (!employee || (employee as any).companies.organization_id !== userProfile.organization_id) {
+    const employeeData = employee as unknown as EmployeeData;
+
+    if (!employeeData || employeeData.companies?.organization_id !== profile.organization_id) {
       throw new NotFoundError('Colaborador');
     }
 
     const body = await req.json();
     const validatedData = updateEmployeeSchema.parse(body);
 
-    // Update employee
     const { data: updatedEmployee, error: updateError } = await supabase
       .from('employees')
       .update(validatedData)
@@ -121,11 +134,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -136,18 +149,18 @@ export async function DELETE(
       throw new AuthenticationError();
     }
 
-    // Verify user is admin
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile || userProfile.role !== 'admin') {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (!profile || profile.role !== 'admin') {
       throw new AuthorizationError();
     }
 
-    // Get employee to verify ownership
     const { data: employee } = await supabase
       .from('employees')
       .select(`
@@ -157,11 +170,12 @@ export async function DELETE(
       .eq('id', params.id)
       .single();
 
-    if (!employee || (employee as any).companies.organization_id !== userProfile.organization_id) {
+    const employeeData = employee as unknown as EmployeeData;
+
+    if (!employeeData || employeeData.companies?.organization_id !== profile.organization_id) {
       throw new NotFoundError('Colaborador');
     }
 
-    // Delete employee
     const { error: deleteError } = await supabase
       .from('employees')
       .delete()

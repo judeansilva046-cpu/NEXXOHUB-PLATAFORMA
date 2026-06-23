@@ -1,27 +1,33 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import Script from 'next/script';
 import { usePathname, useSearchParams } from 'next/navigation';
 
-export function Analytics() {
+function AnalyticsTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Google Analytics page view
     if (typeof window !== 'undefined' && window.gtag) {
-      const url = pathname + (searchParams ? `?${searchParams}` : '');
-      window.gtag.pageview({
+      const url = pathname + (searchParams ? `?${searchParams.toString()}` : '');
+      window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-XXXXXXXXXX', {
         page_path: url,
         page_title: document.title,
       });
     }
   }, [pathname, searchParams]);
 
+  return null;
+}
+
+export function Analytics() {
   return (
     <>
-      {/* Google Analytics */}
+      <Suspense fallback={null}>
+        <AnalyticsTracker />
+      </Suspense>
+
       {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
         <>
           <Script
@@ -45,12 +51,8 @@ export function Analytics() {
         </>
       )}
 
-      {/* Vercel Analytics */}
       {process.env.NODE_ENV === 'production' && (
-        <Script
-          src="/_vercel/insights/script.js"
-          strategy="afterInteractive"
-        />
+        <Script src="/_vercel/insights/script.js" strategy="afterInteractive" />
       )}
     </>
   );
@@ -58,7 +60,7 @@ export function Analytics() {
 
 declare global {
   interface Window {
-    gtag: (...args: any[]) => void;
-    dataLayer: any[];
+    gtag?: (...args: unknown[]) => void;
+    dataLayer?: unknown[];
   }
 }

@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { registerSchema, type RegisterInput } from '../../../lib/validations/auth';
+import { registerSchema } from '../../../lib/validations/auth';
 import { authClient } from '../../../lib/supabase/auth';
-import { createClient } from '../../../lib/supabase/server';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -27,13 +26,9 @@ export default function RegisterPage() {
     try {
       const validation = registerSchema.parse(formData);
 
-      // Sign up user
-      const { data, error: authError } = await authClient.signUp(
+      const { error: authError } = await authClient.signUp(
         validation.email,
-        validation.password,
-        {
-          full_name: validation.fullName,
-        }
+        validation.password
       );
 
       if (authError) {
@@ -41,12 +36,10 @@ export default function RegisterPage() {
         return;
       }
 
-      // TODO: Create organization after user is created
-      // This would be done via API route after email verification
-
       router.push('/auth/verify-email?email=' + encodeURIComponent(validation.email));
-    } catch (err: any) {
-      setError(err.message || 'Erro ao registrar');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao registrar';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -56,12 +49,8 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">
-            NexxoHub
-          </h1>
-          <p className="text-center text-gray-600 mb-8">
-            Criar Conta
-          </p>
+          <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">NexxoHub</h1>
+          <p className="text-center text-gray-600 mb-8">Criar Conta</p>
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-6">

@@ -3,11 +3,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
 import { createEmployeeSchema } from '../../../lib/validations/employee';
 
+type UserProfile = {
+  organization_id?: string;
+  role?: string;
+};
+
+type CompanyData = {
+  organization_id?: string;
+};
+
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient();
-    const searchParams = req.nextUrl.searchParams;
-    const companyId = searchParams.get('companyId');
+    const supabase = await createClient();
+    const companyId = req.nextUrl.searchParams.get('companyId');
 
     const {
       data: { user },
@@ -18,14 +26,15 @@ export async function GET(req: NextRequest) {
       throw new AuthenticationError();
     }
 
-    // Get user's organization
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile) {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (!profile?.organization_id) {
       throw new AuthenticationError();
     }
 
@@ -35,7 +44,7 @@ export async function GET(req: NextRequest) {
         *,
         companies(organization_id)
       `)
-      .eq('companies.organization_id', userProfile.organization_id);
+      .eq('companies.organization_id', profile.organization_id);
 
     if (companyId) {
       query = query.eq('company_id', companyId);
@@ -59,7 +68,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -70,38 +79,39 @@ export async function POST(req: NextRequest) {
       throw new AuthenticationError();
     }
 
-    // Get user's organization and check if manager or admin
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile) {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (!profile?.organization_id) {
       throw new AuthenticationError();
     }
 
-    if (!['admin', 'manager'].includes(userProfile.role)) {
+    if (!profile.role || !['admin', 'manager'].includes(profile.role)) {
       throw new AuthorizationError('Apenas administradores ou gerentes podem criar colaboradores');
     }
 
     const body = await req.json();
     const { companyId, ...employeeData } = body;
 
-    // Verify company belongs to user's organization
     const { data: company } = await supabase
       .from('companies')
       .select('organization_id')
       .eq('id', companyId)
       .single();
 
-    if (!company || company.organization_id !== userProfile.organization_id) {
+    const companyData = company as unknown as CompanyData;
+
+    if (!companyData || companyData.organization_id !== profile.organization_id) {
       throw new AuthorizationError('Empresa não encontrada');
     }
 
     const validatedData = createEmployeeSchema.parse(employeeData);
 
-    // Create employee
     const { data: employee, error: employeeError } = await supabase
       .from('employees')
       .insert([

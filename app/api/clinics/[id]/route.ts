@@ -3,12 +3,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthenticationError, AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
 import { createOrganizationSchema } from '../../../../lib/validations/organization';
 
+type UserProfile = {
+  organization_id?: string;
+  role?: string;
+};
+
+type ClinicData = {
+  organization_id?: string;
+};
+
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -19,7 +28,6 @@ export async function GET(
       throw new AuthenticationError();
     }
 
-    // Get clinic
     const { data: clinic, error: clinicError } = await supabase
       .from('clinics')
       .select('*')
@@ -30,14 +38,16 @@ export async function GET(
       throw new NotFoundError('Clínica');
     }
 
-    // Verify user's organization
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile || userProfile.organization_id !== clinic.organization_id) {
+    const profile = userProfile as unknown as UserProfile;
+    const clinicData = clinic as unknown as ClinicData;
+
+    if (!profile || profile.organization_id !== clinicData.organization_id) {
       throw new AuthorizationError();
     }
 
@@ -56,7 +66,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -67,32 +77,33 @@ export async function PUT(
       throw new AuthenticationError();
     }
 
-    // Verify user is admin
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile || userProfile.role !== 'admin') {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (!profile || profile.role !== 'admin') {
       throw new AuthorizationError();
     }
 
-    // Get clinic to verify ownership
     const { data: clinic } = await supabase
       .from('clinics')
       .select('organization_id')
       .eq('id', params.id)
       .single();
 
-    if (!clinic || clinic.organization_id !== userProfile.organization_id) {
+    const clinicData = clinic as unknown as ClinicData;
+
+    if (!clinicData || clinicData.organization_id !== profile.organization_id) {
       throw new NotFoundError('Clínica');
     }
 
     const body = await req.json();
     const validatedData = createOrganizationSchema.partial().parse(body);
 
-    // Update clinic
     const { data: updatedClinic, error: updateError } = await supabase
       .from('clinics')
       .update(validatedData)
@@ -115,11 +126,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -130,29 +141,30 @@ export async function DELETE(
       throw new AuthenticationError();
     }
 
-    // Verify user is admin
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile || userProfile.role !== 'admin') {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (!profile || profile.role !== 'admin') {
       throw new AuthorizationError();
     }
 
-    // Get clinic to verify ownership
     const { data: clinic } = await supabase
       .from('clinics')
       .select('organization_id')
       .eq('id', params.id)
       .single();
 
-    if (!clinic || clinic.organization_id !== userProfile.organization_id) {
+    const clinicData = clinic as unknown as ClinicData;
+
+    if (!clinicData || clinicData.organization_id !== profile.organization_id) {
       throw new NotFoundError('Clínica');
     }
 
-    // Delete clinic
     const { error: deleteError } = await supabase
       .from('clinics')
       .delete()

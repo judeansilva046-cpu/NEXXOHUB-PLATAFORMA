@@ -3,12 +3,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthenticationError, AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
 import { createOrganizationSchema } from '../../../../lib/validations/organization';
 
+type UserProfile = {
+  organization_id?: string;
+  role?: string;
+};
+
+type CompanyData = {
+  organization_id?: string;
+};
+
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -19,7 +28,6 @@ export async function GET(
       throw new AuthenticationError();
     }
 
-    // Get company
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .select('*')
@@ -30,14 +38,16 @@ export async function GET(
       throw new NotFoundError('Empresa');
     }
 
-    // Verify user's organization
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile || userProfile.organization_id !== company.organization_id) {
+    const profile = userProfile as unknown as UserProfile;
+    const companyData = company as unknown as CompanyData;
+
+    if (!profile || profile.organization_id !== companyData.organization_id) {
       throw new AuthorizationError();
     }
 
@@ -56,7 +66,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -67,32 +77,33 @@ export async function PUT(
       throw new AuthenticationError();
     }
 
-    // Verify user is admin
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile || userProfile.role !== 'admin') {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (!profile || profile.role !== 'admin') {
       throw new AuthorizationError();
     }
 
-    // Get company to verify ownership
     const { data: company } = await supabase
       .from('companies')
       .select('organization_id')
       .eq('id', params.id)
       .single();
 
-    if (!company || company.organization_id !== userProfile.organization_id) {
+    const companyData = company as unknown as CompanyData;
+
+    if (!companyData || companyData.organization_id !== profile.organization_id) {
       throw new NotFoundError('Empresa');
     }
 
     const body = await req.json();
     const validatedData = createOrganizationSchema.partial().parse(body);
 
-    // Update company
     const { data: updatedCompany, error: updateError } = await supabase
       .from('companies')
       .update(validatedData)
@@ -115,11 +126,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -130,29 +141,30 @@ export async function DELETE(
       throw new AuthenticationError();
     }
 
-    // Verify user is admin
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile || userProfile.role !== 'admin') {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (!profile || profile.role !== 'admin') {
       throw new AuthorizationError();
     }
 
-    // Get company to verify ownership
     const { data: company } = await supabase
       .from('companies')
       .select('organization_id')
       .eq('id', params.id)
       .single();
 
-    if (!company || company.organization_id !== userProfile.organization_id) {
+    const companyData = company as unknown as CompanyData;
+
+    if (!companyData || companyData.organization_id !== profile.organization_id) {
       throw new NotFoundError('Empresa');
     }
 
-    // Delete company
     const { error: deleteError } = await supabase
       .from('companies')
       .delete()

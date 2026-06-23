@@ -1,11 +1,19 @@
 import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, ValidationError, getErrorResponse } from '../../../lib/errors';
+import { AuthenticationError, getErrorResponse } from '../../../lib/errors';
 import { createOrganizationSchema } from '../../../lib/validations/organization';
 
-export async function GET(req: NextRequest) {
+type UserOrg = {
+  organization_id?: string;
+};
+
+type OrganizationData = {
+  id?: string;
+};
+
+export async function GET(_req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -16,22 +24,22 @@ export async function GET(req: NextRequest) {
       throw new AuthenticationError();
     }
 
-    // Get user's organization
     const { data: userOrg, error: userOrgError } = await supabase
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
       .single();
 
-    if (userOrgError || !userOrg) {
+    const profile = userOrg as unknown as UserOrg;
+
+    if (userOrgError || !profile?.organization_id) {
       throw new Error('User organization not found');
     }
 
-    // Get organization data
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .select('*')
-      .eq('id', userOrg.organization_id)
+      .eq('id', profile.organization_id)
       .single();
 
     if (orgError) {
@@ -50,7 +58,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -64,21 +72,21 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validatedData = createOrganizationSchema.parse(body);
 
-    // Create organization
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .insert([validatedData])
       .select()
       .single();
 
-    if (orgError) {
+    const organization = org as unknown as OrganizationData;
+
+    if (orgError || !organization?.id) {
       throw new Error('Failed to create organization');
     }
 
-    // Update user with organization_id
     const { error: updateError } = await supabase
       .from('users')
-      .update({ organization_id: org.id })
+      .update({ organization_id: organization.id })
       .eq('id', user.id);
 
     if (updateError) {

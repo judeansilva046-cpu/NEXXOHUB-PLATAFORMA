@@ -1,11 +1,16 @@
 import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, ValidationError, getErrorResponse } from '../../../lib/errors';
+import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
 import { createOrganizationSchema } from '../../../lib/validations/organization';
 
-export async function GET(req: NextRequest) {
+type UserProfile = {
+  organization_id?: string;
+  role?: string;
+};
+
+export async function GET(_req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -16,22 +21,22 @@ export async function GET(req: NextRequest) {
       throw new AuthenticationError();
     }
 
-    // Get user's organization
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile) {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (!profile?.organization_id) {
       throw new AuthenticationError();
     }
 
-    // Get all clinics for organization
     const { data: clinics, error: clinicsError } = await supabase
       .from('clinics')
       .select('*')
-      .eq('organization_id', userProfile.organization_id)
+      .eq('organization_id', profile.organization_id)
       .order('created_at', { ascending: false });
 
     if (clinicsError) {
@@ -50,7 +55,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -61,30 +66,30 @@ export async function POST(req: NextRequest) {
       throw new AuthenticationError();
     }
 
-    // Get user's organization and check if admin
     const { data: userProfile } = await supabase
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
-    if (!userProfile) {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (!profile?.organization_id) {
       throw new AuthenticationError();
     }
 
-    if (userProfile.role !== 'admin') {
+    if (profile.role !== 'admin') {
       throw new AuthorizationError('Apenas administradores podem criar clínicas');
     }
 
     const body = await req.json();
     const validatedData = createOrganizationSchema.parse(body);
 
-    // Create clinic
     const { data: clinic, error: clinicError } = await supabase
       .from('clinics')
       .insert([
         {
-          organization_id: userProfile.organization_id,
+          organization_id: profile.organization_id,
           ...validatedData,
         },
       ])

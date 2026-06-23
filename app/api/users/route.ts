@@ -2,9 +2,14 @@ import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
 
-export async function GET(req: NextRequest) {
+type UserProfile = {
+  organization_id?: string;
+  role?: string;
+};
+
+export async function GET(_req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -15,27 +20,26 @@ export async function GET(req: NextRequest) {
       throw new AuthenticationError();
     }
 
-    // Get user's organization
     const { data: userProfile, error: userError } = await supabase
       .from('users')
       .select('organization_id, role')
       .eq('id', user.id)
       .single();
 
-    if (userError || !userProfile) {
+    const profile = userProfile as unknown as UserProfile;
+
+    if (userError || !profile) {
       throw new AuthenticationError();
     }
 
-    // Only admins can list users
-    if (userProfile.role !== 'admin') {
+    if (profile.role !== 'admin') {
       throw new AuthorizationError('Apenas administradores podem listar usuários');
     }
 
-    // Get all users in organization
     const { data: users, error: usersError } = await supabase
       .from('users')
       .select('*')
-      .eq('organization_id', userProfile.organization_id);
+      .eq('organization_id', profile.organization_id);
 
     if (usersError) {
       throw new Error('Failed to fetch users');

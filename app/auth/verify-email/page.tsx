@@ -1,12 +1,12 @@
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const email = searchParams?.get('email') || 'your email';
+  const email = searchParams?.get('email') || 'seu email';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
@@ -38,15 +38,20 @@ export default function VerifyEmailPage() {
               </button>
             </p>
 
-            <Link
-              href="/auth/login"
-              className="block text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
+            <Link href="/auth/login" className="block text-sm text-blue-600 hover:text-blue-700 font-medium">
               Voltar para login
             </Link>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={null}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

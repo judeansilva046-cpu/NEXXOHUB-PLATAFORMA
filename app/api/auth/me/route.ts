@@ -4,7 +4,7 @@ import { AuthenticationError, getErrorResponse } from '../../../../lib/errors';
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        ...userProfile,
+        ...((userProfile as unknown) as Record<string, unknown>),
         email: user.email,
       },
     });
