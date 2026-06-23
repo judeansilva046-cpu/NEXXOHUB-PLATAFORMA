@@ -77,40 +77,8 @@ const nextConfig = {
     return [];
   },
 
-  // Webpack optimization
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            // Vendor chunk
-            vendor: {
-              filename: 'chunks/vendor.js',
-              chunks: 'all',
-              test: /node_modules/,
-              priority: 10,
-            },
-            // Radix UI chunk
-            radix: {
-              filename: 'chunks/radix.js',
-              test: /@radix-ui/,
-              priority: 15,
-            },
-            // Common chunk
-            common: {
-              filename: 'chunks/common.js',
-              minChunks: 2,
-              priority: 5,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-      };
-    }
+  // Webpack optimization - simplified for compatibility
+  webpack: (config) => {
     return config;
   },
 
