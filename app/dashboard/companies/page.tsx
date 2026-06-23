@@ -193,7 +193,7 @@ export default function CompaniesPage() {
                     <TableCell>{company.cnpj}</TableCell>
                     <TableCell>{company.phone || '-'}</TableCell>
                     <TableCell>
-                      {new Date(company.created_at).toLocaleDateString('pt-BR')}
+                      {new Date(company.createdAt).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
                       <Dialog open={isDialogOpen && editingCompany?.id === company.id} onOpenChange={setIsDialogOpen}>

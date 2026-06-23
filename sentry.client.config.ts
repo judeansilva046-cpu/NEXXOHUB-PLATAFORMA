@@ -11,7 +11,7 @@ Sentry.init({
 
   // Performance Monitoring
   integrations: [
-    new Sentry.Replay({
+    Sentry.replayIntegration({
       maskAllText: true,
       blockAllMedia: true,
     }),

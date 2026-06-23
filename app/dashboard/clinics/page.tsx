@@ -195,7 +195,7 @@ export default function ClinicsPage() {
                     <TableCell>{clinic.cnpj}</TableCell>
                     <TableCell>{clinic.phone || '-'}</TableCell>
                     <TableCell>
-                      {new Date(clinic.created_at).toLocaleDateString('pt-BR')}
+                      {new Date(clinic.createdAt).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
                       <Dialog open={isDialogOpen && editingClinic?.id === clinic.id} onOpenChange={setIsDialogOpen}>

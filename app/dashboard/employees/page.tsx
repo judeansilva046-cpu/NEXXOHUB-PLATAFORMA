@@ -45,7 +45,7 @@ export default function EmployeesPage() {
 
   const filteredEmployees = useMemo(() => {
     return employees.filter((employee) =>
-      employee.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [employees, searchTerm]);
@@ -182,12 +182,12 @@ export default function EmployeesPage() {
               <TableBody>
                 {filteredEmployees.map((employee) => (
                   <TableRow key={employee.id}>
-                    <TableCell className="font-medium">{employee.full_name}</TableCell>
+                    <TableCell className="font-medium">{employee.fullName}</TableCell>
                     <TableCell>{employee.email}</TableCell>
                     <TableCell>{employee.position}</TableCell>
                     <TableCell>{employee.department || '-'}</TableCell>
                     <TableCell>
-                      {new Date(employee.created_at).toLocaleDateString('pt-BR')}
+                      {new Date(employee.createdAt).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
                       <Dialog open={isDialogOpen && editingEmployee?.id === employee.id} onOpenChange={setIsDialogOpen}>

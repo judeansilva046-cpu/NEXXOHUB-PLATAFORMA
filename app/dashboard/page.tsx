@@ -82,7 +82,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              {user?.full_name || '-'}
+              {user?.fullName || '-'}
             </div>
             <p className="text-xs text-gray-500 mt-2">
               Função: {user?.role || '-'}
