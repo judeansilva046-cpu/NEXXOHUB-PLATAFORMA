@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { authClient } from '@/lib/supabase/auth';
-import { resetPasswordSchema } from '@/lib/validations/auth';
+import { authClient } from '../../../lib/supabase/auth';
+import { resetPasswordSchema } from '../../../lib/validations/auth';
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);

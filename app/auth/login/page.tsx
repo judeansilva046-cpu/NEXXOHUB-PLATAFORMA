@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { loginSchema, type LoginInput } from '@/lib/validations/auth';
-import { authClient } from '@/lib/supabase/auth';
+import { loginSchema, type LoginInput } from '../../../lib/validations/auth';
+import { authClient } from '../../../lib/supabase/auth';
 
 export default function LoginPage() {
   const router = useRouter();

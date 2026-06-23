@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { registerSchema, type RegisterInput } from '@/lib/validations/auth';
-import { authClient } from '@/lib/supabase/auth';
-import { createClient } from '@/lib/supabase/server';
+import { registerSchema, type RegisterInput } from '../../../lib/validations/auth';
+import { authClient } from '../../../lib/supabase/auth';
+import { createClient } from '../../../lib/supabase/server';
 
 export default function RegisterPage() {
   const router = useRouter();
