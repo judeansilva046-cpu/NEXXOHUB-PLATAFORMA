@@ -1,7 +1,7 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, getErrorResponse } from '@/lib/errors';
-import { createEmployeeSchema } from '@/lib/validations/employee';
+import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
+import { createEmployeeSchema } from '../../../lib/validations/employee';
 
 export async function GET(req: NextRequest) {
   try {

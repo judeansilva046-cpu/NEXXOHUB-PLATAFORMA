@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createEmployeeSchema } from '@/lib/validations/employee';
+import { createEmployeeSchema } from '../../../lib/validations/employee';
 
 describe('Employee Validation Schema', () => {
   const validData = {

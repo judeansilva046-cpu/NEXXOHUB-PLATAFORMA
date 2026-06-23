@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -13,9 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { ClinicForm } from '@/components/forms/clinic-form';
-import { Clinic } from '@/types';
+} from '../../../components/ui/dialog';
+import { ClinicForm } from '../../../components/forms/clinic-form';
+import { Clinic } from '../../../types';
 import { toast } from 'sonner';
 
 export default function ClinicsPage() {

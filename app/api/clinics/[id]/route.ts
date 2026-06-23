@@ -1,7 +1,7 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, NotFoundError, getErrorResponse } from '@/lib/errors';
-import { createOrganizationSchema } from '@/lib/validations/organization';
+import { AuthenticationError, AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
+import { createOrganizationSchema } from '../../../../lib/validations/organization';
 
 export async function GET(
   req: NextRequest,

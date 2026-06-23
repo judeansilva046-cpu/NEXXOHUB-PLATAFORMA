@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Organization, User } from '@/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Organization, User } from '../../types';
 
 export default function DashboardPage() {
   const [organization, setOrganization] = useState<Organization | null>(null);

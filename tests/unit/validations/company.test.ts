@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createCompanySchema } from '@/lib/validations/company';
+import { createCompanySchema } from '../../../lib/validations/company';
 
 describe('Company Validation Schema', () => {
   it('validates correct company data', () => {

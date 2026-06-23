@@ -2,9 +2,9 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createEmployeeSchema, type CreateEmployeeInput } from '@/lib/validations/employee';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { createEmployeeSchema, type CreateEmployeeInput } from '../../lib/validations/employee';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import {
   Form,
   FormControl,
@@ -13,7 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from '../ui/form';
 import { useState } from 'react';
 
 interface EmployeeFormProps {

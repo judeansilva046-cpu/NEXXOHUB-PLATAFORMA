@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createClinicSchema } from '@/lib/validations/clinic';
+import { createClinicSchema } from '../../../lib/validations/clinic';
 
 describe('Clinic Validation Schema', () => {
   it('validates correct clinic data', () => {

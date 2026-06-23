@@ -1,6 +1,6 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, getErrorResponse } from '@/lib/errors';
+import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
 
 export async function GET(req: NextRequest) {
   try {
