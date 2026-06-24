@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ZodError } from 'zod';
@@ -25,6 +25,25 @@ export default function LoginPage() {
     phone: '',
     token: '',
   });
+
+  // ============================================================================
+  // VERIFICAR SESSÃO AO MONTAR
+  // ============================================================================
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data } = await authClient.getSession();
+        if (data?.session) {
+          console.log('✅ User already authenticated, redirecting to /dashboard');
+          // Usuário já está autenticado, redirecionar
+          window.location.href = '/dashboard';
+        }
+      } catch (err) {
+        console.error('Error checking session:', err);
+      }
+    };
+    checkSession();
+  }, []);
 
   // ============================================================================
   // EMAIL + SENHA
