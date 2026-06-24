@@ -83,12 +83,26 @@ export default function LoginPage() {
       }
 
       if (data?.session) {
-        console.log('Login successful, redirecting to dashboard');
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        console.log('✅ Login successful!', {
+          userId: data.session.user?.id,
+          email: data.session.user?.email,
+          createdAt: data.session.created_at,
+        });
+        console.log('📍 Redirecting to /dashboard in 1 second...');
+
+        // Aguarda 1 segundo e depois redireciona
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        console.log('🚀 Calling router.push("/dashboard")');
         router.push('/dashboard');
+
+        // Timeout de 5 segundos se não redirecionar
+        setTimeout(() => {
+          console.error('❌ Redirect timeout! Still on:', window.location.pathname);
+        }, 5000);
       } else {
         const msg = 'Login realizado, mas nenhuma sessão foi criada';
-        console.error(msg);
+        console.error('❌', msg);
         setError(msg);
       }
     } catch (err: unknown) {
