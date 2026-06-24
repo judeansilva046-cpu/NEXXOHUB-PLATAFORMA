@@ -10,13 +10,21 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
+  console.log('🔐 MIDDLEWARE DEBUG:', {
+    pathname: req.nextUrl.pathname,
+    hasSession: !!session,
+    sessionUser: session?.user?.email,
+  });
+
   // Redirect unauthenticated users to login
   if (!session && req.nextUrl.pathname.startsWith('/dashboard')) {
+    console.log('🔴 MIDDLEWARE: Unauthenticated → /auth/login');
     return NextResponse.redirect(new URL('/auth/login', req.url));
   }
 
   // Redirect authenticated users away from auth pages
   if (session && req.nextUrl.pathname.startsWith('/auth')) {
+    console.log('🟢 MIDDLEWARE: Authenticated → /dashboard');
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
