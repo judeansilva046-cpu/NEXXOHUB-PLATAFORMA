@@ -106,11 +106,26 @@ export default function LoginPage() {
           userId: data.session.user?.id,
           email: data.session.user?.email,
         });
-        console.log('📍 Redirecting to /dashboard...');
+        console.log('📍 Waiting for session to be persisted...');
 
-        // Usa window.location.href para forçar navegação completa
-        // Isso contorna o Next.js router e garante que a sessão seja enviada
-        window.location.href = '/dashboard';
+        // Aguarda um pouco para a sessão ser persistida nos cookies
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        console.log('🔍 Verifying session on server...');
+
+        // Verifica se a sessão foi criada no servidor antes de redirecionar
+        const verifyResponse = await fetch('/api/auth/verify');
+        const verifyData = await verifyResponse.json();
+
+        if (verifyData.success && verifyData.hasSession) {
+          console.log('✅ Session verified! Redirecting to /dashboard');
+          // Usar window.location.href para navegação completa
+          window.location.href = '/dashboard';
+        } else {
+          const msg = 'Sessão não foi criada no servidor. Tente novamente.';
+          console.error('❌', msg);
+          setError(msg);
+        }
       } else {
         const msg = 'Login realizado, mas nenhuma sessão foi criada';
         console.error('❌', msg);

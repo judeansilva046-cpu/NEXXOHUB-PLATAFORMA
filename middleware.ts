@@ -1,15 +1,44 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
   try {
-    const res = NextResponse.next();
-    const supabase = createMiddlewareClient({ req, res });
+    let res = NextResponse.next();
+
+    // ============================================================================
+    // CREATE SUPABASE CLIENT WITH PROPER COOKIE HANDLING
+    // ============================================================================
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return req.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            res = NextResponse.next();
+            res.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+          },
+          remove(name: string, options: CookieOptions) {
+            res = NextResponse.next();
+            res.cookies.set({
+              name,
+              value: '',
+              ...options,
+            });
+          },
+        },
+      }
+    );
 
     const {
       data: { session },
-      error,
     } = await supabase.auth.getSession();
 
     const pathname = req.nextUrl.pathname;
@@ -23,40 +52,46 @@ export async function middleware(req: NextRequest) {
     }
 
     // ============================================================================
-    // LÓGICA DE REDIRECIONAMENTO
+    // ROUTE PROTECTION LOGIC - NO LOOPS
     // ============================================================================
 
-    // 1. Usuário NÃO autenticado tentando acessar /dashboard
+    // Case 1: User NOT authenticated trying to access /dashboard
     if (!session && isDashboardPage) {
-      console.log('🔴 MIDDLEWARE: Redirecting unauthenticated user to /auth/login');
+      console.log('[MIDDLEWARE_REDIRECT_LOGIN] Unauthenticated user → /auth/login', {
+        pathname,
+      });
       return NextResponse.redirect(new URL('/auth/login', req.url));
     }
 
-    // 2. Usuário autenticado tentando acessar /auth/*
-    //    Redirecionar para /dashboard para evitar permanecer em página de login
+    // Case 2: User authenticated trying to access /auth/* (only redirect once)
     if (session && isAuthPage) {
-      console.log('🟢 MIDDLEWARE: Redirecting authenticated user to /dashboard');
+      console.log('[MIDDLEWARE_REDIRECT_DASHBOARD] Authenticated user → /dashboard', {
+        pathname,
+        userId: session.user?.id,
+      });
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
 
-    // 3. Adicionar security headers a TODAS as respostas
+    // Case 3: User authenticated accessing /dashboard or user not authenticated accessing /auth/*
+    if (session) {
+      console.log('[MIDDLEWARE_AUTHENTICATED] User has valid session', {
+        userId: session.user?.id,
+        email: session.user?.email,
+        pathname,
+      });
+    }
+
+    // ============================================================================
+    // SECURITY HEADERS
+    // ============================================================================
     res.headers.set('X-Content-Type-Options', 'nosniff');
     res.headers.set('X-Frame-Options', 'SAMEORIGIN');
     res.headers.set('X-XSS-Protection', '1; mode=block');
     res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval';");
-
-    console.log('✅ MIDDLEWARE: Request allowed', {
-      pathname,
-      hasSession: !!session,
-      isAuthPage,
-      isDashboardPage,
-    });
 
     return res;
   } catch (err) {
-    console.error('❌ MIDDLEWARE ERROR:', err);
-    // Em caso de erro, deixar passar (melhor que bloquear)
+    console.error('[MIDDLEWARE_ERROR]', err);
     return NextResponse.next();
   }
 }
