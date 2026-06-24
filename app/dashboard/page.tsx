@@ -15,16 +15,28 @@ export default function DashboardPage() {
       try {
         // Fetch current user
         const userRes = await fetch('/api/auth/me');
-        if (!userRes.ok) throw new Error('Failed to fetch user');
+        if (!userRes.ok) {
+          console.error('[DASHBOARD] Failed to fetch user, status:', userRes.status);
+          throw new Error('Failed to fetch user');
+        }
         const userData = await userRes.json();
+        console.log('[DASHBOARD] User data loaded:', userData.data);
         setUser(userData.data);
 
-        // Fetch organization
-        const orgRes = await fetch('/api/organizations');
-        if (!orgRes.ok) throw new Error('Failed to fetch organization');
-        const orgData = await orgRes.json();
-        setOrganization(orgData.data);
+        // Fetch organization (non-critical)
+        try {
+          const orgRes = await fetch('/api/organizations');
+          if (orgRes.ok) {
+            const orgData = await orgRes.json();
+            console.log('[DASHBOARD] Organization data loaded:', orgData.data);
+            setOrganization(orgData.data);
+          }
+        } catch (orgErr) {
+          console.warn('[DASHBOARD] Failed to fetch organization (non-critical):', orgErr);
+          // Organization is optional, don't throw
+        }
       } catch (err) {
+        console.error('[DASHBOARD] Error loading data:', err);
         setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
       } finally {
         setLoading(false);
