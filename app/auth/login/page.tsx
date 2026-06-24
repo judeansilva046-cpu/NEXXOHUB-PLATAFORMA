@@ -86,7 +86,6 @@ export default function LoginPage() {
         console.log('✅ Login successful!', {
           userId: data.session.user?.id,
           email: data.session.user?.email,
-          createdAt: data.session.created_at,
         });
         console.log('📍 Redirecting to /dashboard in 1 second...');
 
