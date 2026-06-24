@@ -87,18 +87,11 @@ export default function LoginPage() {
           userId: data.session.user?.id,
           email: data.session.user?.email,
         });
-        console.log('📍 Redirecting to /dashboard in 1 second...');
+        console.log('📍 Redirecting to /dashboard...');
 
-        // Aguarda 1 segundo e depois redireciona
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        console.log('🚀 Calling router.push("/dashboard")');
-        router.push('/dashboard');
-
-        // Timeout de 5 segundos se não redirecionar
-        setTimeout(() => {
-          console.error('❌ Redirect timeout! Still on:', window.location.pathname);
-        }, 5000);
+        // Usa window.location.href para forçar navegação completa
+        // Isso contorna o Next.js router e garante que a sessão seja enviada
+        window.location.href = '/dashboard';
       } else {
         const msg = 'Login realizado, mas nenhuma sessão foi criada';
         console.error('❌', msg);
@@ -180,9 +173,9 @@ export default function LoginPage() {
       }
 
       if (data?.session) {
-        console.log('Phone verification successful, redirecting to dashboard');
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        router.push('/dashboard');
+        console.log('✅ Phone verification successful!');
+        // Usa window.location.href para forçar navegação completa
+        window.location.href = '/dashboard';
       } else {
         setError('Erro ao criar sessão');
       }
