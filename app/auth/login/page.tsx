@@ -27,23 +27,10 @@ export default function LoginPage() {
   });
 
   // ============================================================================
-  // VERIFICAR SESSÃO AO MONTAR
+  // CHECK SESSION ON MOUNT (MIDDLEWARE WILL HANDLE REDIRECT)
   // ============================================================================
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const { data } = await authClient.getSession();
-        if (data?.session) {
-          console.log('✅ User already authenticated, redirecting to /dashboard');
-          // Usuário já está autenticado, redirecionar
-          window.location.href = '/dashboard';
-        }
-      } catch (err) {
-        console.error('Error checking session:', err);
-      }
-    };
-    checkSession();
-  }, []);
+  // Nota: Remover useEffect aqui porque o middleware já cuida do redirect
+  // de usuários autenticados que acessarem /auth/login
 
   // ============================================================================
   // EMAIL + SENHA
@@ -102,33 +89,39 @@ export default function LoginPage() {
       }
 
       if (data?.session) {
-        console.log('✅ Login successful!', {
+        console.log('[LOGIN_SUCCESS] User logged in', {
           userId: data.session.user?.id,
           email: data.session.user?.email,
         });
-        console.log('📍 Waiting for session to be persisted...');
 
-        // Aguarda um pouco para a sessão ser persistida nos cookies
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Aguarda a sessão ser persistida nos cookies
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-        console.log('🔍 Verifying session on server...');
+        console.log('[SESSION_EXISTS] Verifying session persisted...');
 
-        // Verifica se a sessão foi criada no servidor antes de redirecionar
-        const verifyResponse = await fetch('/api/auth/verify');
-        const verifyData = await verifyResponse.json();
-
-        if (verifyData.success && verifyData.hasSession) {
-          console.log('✅ Session verified! Redirecting to /dashboard');
-          // Usar window.location.href para navegação completa
-          window.location.href = '/dashboard';
-        } else {
-          const msg = 'Sessão não foi criada no servidor. Tente novamente.';
-          console.error('❌', msg);
+        // Verifica se a sessão foi realmente criada no servidor
+        try {
+          const { data: sessionData } = await authClient.getSession();
+          if (sessionData?.session) {
+            console.log('[SESSION_EXISTS] Session confirmed on client');
+            // Use router.replace para evitar loop
+            // Isso substitui a entry do histórico, não empilha
+            router.replace('/dashboard');
+            // Force refresh para garantir que RLS funciona
+            router.refresh();
+          } else {
+            const msg = 'Sessão não persistiu. Tente novamente.';
+            console.error('[SESSION_EXISTS] ERROR:', msg);
+            setError(msg);
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Erro ao verificar sessão';
+          console.error('[SESSION_EXISTS] ERROR:', msg);
           setError(msg);
         }
       } else {
         const msg = 'Login realizado, mas nenhuma sessão foi criada';
-        console.error('❌', msg);
+        console.error('[LOGIN_SUCCESS] ERROR:', msg);
         setError(msg);
       }
     } catch (err: unknown) {
@@ -207,9 +200,10 @@ export default function LoginPage() {
       }
 
       if (data?.session) {
-        console.log('✅ Phone verification successful!');
-        // Usa window.location.href para forçar navegação completa
-        window.location.href = '/dashboard';
+        console.log('[LOGIN_SUCCESS] Phone verification successful!');
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        router.replace('/dashboard');
+        router.refresh();
       } else {
         setError('Erro ao criar sessão');
       }
