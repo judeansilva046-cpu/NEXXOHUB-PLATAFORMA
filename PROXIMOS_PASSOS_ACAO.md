@@ -32,11 +32,13 @@ ls -la COMECE_AQUI.md RESUMO_FINAL.txt tests/e2e/auth.spec.ts
 ### 📍 Local: Terminal
 
 ### Ação 1: Iniciar Servidor
+
 ```bash
 npm run dev
 ```
 
 **Aguardar até ver:**
+
 ```
 ▲ Next.js 15.5.19
 - Local:        http://localhost:3000
@@ -48,16 +50,19 @@ npm run dev
 ---
 
 ### Ação 2: Abrir Novo Terminal
+
 ```
 Ctrl + Shift + ` (ou Terminal → New)
 ```
 
 ### Ação 3: Executar Testes
+
 ```bash
 npm run test:e2e
 ```
 
 **Aguardar resultado (~45 segundos):**
+
 ```
 ✅ Test 1: Login com email e senha funciona
 ✅ Test 2: Pressionar F5 mantém autenticação
@@ -70,6 +75,7 @@ npm run test:e2e
 ```
 
 ### ✅ Validação
+
 - [ ] Viu "6 passed" ✅
 - [ ] Nenhum erro de teste
 - [ ] Nenhum timeout
@@ -91,28 +97,33 @@ npm run test:e2e
 ```
 
 ### ✅ Validação
+
 - [ ] Sem "piscando" visual
 - [ ] Redirecionou para /dashboard
 - [ ] Dados do usuário aparecem
 
 ### Teste 2: F5 Refresh
+
 ```
 1. Pressionar F5 (ou Ctrl+R)
 2. Aguardar página recarregar
 ```
 
 ### ✅ Validação
+
 - [ ] Permaneceu em /dashboard
 - [ ] Dados ainda visíveis
 - [ ] Sem redirecionamento para /login
 
 ### Teste 3: Logout (Se houver botão)
+
 ```
 1. Procurar botão "Sair" ou "Logout"
 2. Clicar
 ```
 
 ### ✅ Validação
+
 - [ ] Redirecionou para /auth/login
 - [ ] Sessão destruída
 
@@ -131,6 +142,7 @@ npm run test:e2e
 ```
 
 ### Teste 1: Cookies HTTP-only
+
 ```
 1. Network → Qualquer request
 2. Procurar "Set-Cookie" header
@@ -138,11 +150,13 @@ npm run test:e2e
 ```
 
 ### ✅ Validação
+
 - [ ] Cookie tem "HttpOnly"
 - [ ] Cookie tem "Secure"
 - [ ] Cookie tem "SameSite"
 
 ### Teste 2: Headers de Segurança
+
 ```
 1. Console → digite:
 fetch('/api/auth/me').then(r => {
@@ -158,6 +172,7 @@ fetch('/api/auth/me').then(r => {
 ```
 
 ### ✅ Validação
+
 - [ ] Headers de segurança presentes
 - [ ] Nenhum warning de segurança
 
@@ -176,6 +191,7 @@ fetch('/api/auth/me').then(r => {
 ```
 
 ### ✅ Validação
+
 - [ ] Performance: > 80
 - [ ] Accessibility: > 90
 - [ ] Best Practices: > 85
@@ -194,6 +210,7 @@ npm run build
 ```
 
 **Aguardar até ver:**
+
 ```
 ✓ Compiled successfully
 ✓ Collecting page data
@@ -203,6 +220,7 @@ Route (pages)                         Size
 ```
 
 ### ✅ Validação
+
 - [ ] Viu "Compiled successfully"
 - [ ] Nenhum erro
 - [ ] Build time < 5s
@@ -220,6 +238,7 @@ npm run start
 ```
 
 **Aguardar até ver:**
+
 ```
 ready - started server on 0.0.0.0:3000
 ```
@@ -233,6 +252,7 @@ ready - started server on 0.0.0.0:3000
 ```
 
 ### ✅ Validação
+
 - [ ] Login funciona
 - [ ] Dashboard aparece
 - [ ] Sem erros
@@ -246,6 +266,7 @@ ready - started server on 0.0.0.0:3000
 ### 📍 Ação 1: Criar Conta em Vercel/Netlify
 
 **Opção A: Vercel (Recomendado)**
+
 ```
 1. Ir para https://vercel.com
 2. Click "Sign up"
@@ -254,6 +275,7 @@ ready - started server on 0.0.0.0:3000
 ```
 
 **Opção B: Netlify**
+
 ```
 1. Ir para https://netlify.com
 2. Click "Sign up"
@@ -262,6 +284,7 @@ ready - started server on 0.0.0.0:3000
 ```
 
 ### ✅ Validação
+
 - [ ] Conta criada
 - [ ] Repository conectado
 - [ ] Preview deployment funcionando
@@ -269,6 +292,7 @@ ready - started server on 0.0.0.0:3000
 ### 📍 Ação 2: Configurar Environment Variables
 
 **Em Vercel:**
+
 ```
 1. Settings → Environment Variables
 2. Adicionar:
@@ -278,12 +302,14 @@ ready - started server on 0.0.0.0:3000
 ```
 
 **Em Netlify:**
+
 ```
 1. Site settings → Build & deploy → Environment
 2. Adicionar mesmas variáveis
 ```
 
 ### ✅ Validação
+
 - [ ] Variáveis adicionadas
 - [ ] Valores corretos
 - [ ] Nenhuma variável vazia
@@ -291,16 +317,19 @@ ready - started server on 0.0.0.0:3000
 ### 📍 Ação 3: Fazer Deploy
 
 **Vercel:**
+
 ```bash
 vercel deploy --prod
 ```
 
 **Netlify:**
+
 ```bash
 netlify deploy --prod
 ```
 
 ### ✅ Validação
+
 - [ ] Deploy iniciou
 - [ ] Viu URL: https://seu-app.vercel.app
 - [ ] Aguardar ~3-5 minutos para completar
@@ -316,12 +345,14 @@ curl -I https://seu-app.vercel.app
 ```
 
 **Esperado:**
+
 ```
 HTTP/1.1 200 OK
 x-content-type-options: nosniff
 ```
 
 ### ✅ Validação
+
 - [ ] Status 200
 - [ ] Headers de segurança presentes
 
@@ -334,6 +365,7 @@ x-content-type-options: nosniff
 ```
 
 ### ✅ Validação
+
 - [ ] Login funciona em produção
 - [ ] Dashboard carrega
 - [ ] Sem erros
@@ -347,6 +379,7 @@ x-content-type-options: nosniff
 ```
 
 ### ✅ Validação
+
 - [ ] Sentry conectado
 - [ ] Sem erros inesperados
 - [ ] Alertas funcionando
@@ -360,6 +393,7 @@ x-content-type-options: nosniff
 ### 📍 Ação: Notificar Stakeholders
 
 **Criar mensagem:**
+
 ```
 Assunto: NexxoHub v1.0 - Deployment Completo! 🎉
 
@@ -386,6 +420,7 @@ Claude Team
 ```
 
 ### 📍 Enviar para:
+
 - [ ] Executivos
 - [ ] Product Managers
 - [ ] Usuários finais
@@ -398,6 +433,7 @@ Claude Team
 ### Problema 1: Teste E2E falha com "timeout"
 
 **Solução:**
+
 ```bash
 # Aumentar timeout
 export PLAYWRIGHT_TEST_TIMEOUT=60000
@@ -407,6 +443,7 @@ npm run test:e2e
 ### Problema 2: "Cannot find module"
 
 **Solução:**
+
 ```bash
 npm install
 npm run test:e2e
@@ -415,11 +452,13 @@ npm run test:e2e
 ### Problema 3: Login não funciona
 
 **Verificar:**
+
 1. Usuário existe no Supabase? ✅
 2. Senha está correta? ✅
 3. Supabase está online? ✅
 
 **Ação:**
+
 ```bash
 # Testar API
 curl http://localhost:3000/api/auth/me
@@ -429,6 +468,7 @@ curl http://localhost:3000/api/auth/me
 ### Problema 4: Erro de CORS
 
 **Solução:**
+
 1. Ir para Supabase Dashboard
 2. Settings → API → Allowed origins
 3. Adicionar seu domínio de produção
@@ -437,6 +477,7 @@ curl http://localhost:3000/api/auth/me
 ### Problema 5: Database connection failed
 
 **Solução:**
+
 1. Verificar Supabase está online
 2. Verificar credenciais em .env
 3. Verificar NEXT_PUBLIC_SUPABASE_URL está correto
@@ -446,6 +487,7 @@ curl http://localhost:3000/api/auth/me
 ## ✅ CHECKLIST FINAL
 
 ### Antes de Passar para Produção
+
 - [ ] Passo 1: Testes E2E passam (6/6) ✅
 - [ ] Passo 2: Testes Manuais OK ✅
 - [ ] Passo 3: Segurança validada ✅
@@ -481,15 +523,19 @@ TOTAL:                          56 minutos
 ## 🎯 Decisão: O Que Fazer Agora?
 
 ### Opção A: Executar Tudo (56 min)
+
 Faça todos os passos 1-9. No final, plataforma estará em produção.
 
 ### Opção B: Testes + Deploy (30 min)
+
 Faça apenas passos 1, 5, 6, 7, 8. Deploy rápido.
 
 ### Opção C: Só Testes (20 min)
+
 Faça apenas passos 1, 2, 3. Validar que funciona localmente.
 
 ### ✅ Recomendação
+
 Comece com **Opção C** (só testes locais). Se passar, depois faça **Opção A** (full deployment).
 
 ---
@@ -522,4 +568,3 @@ npm run test:e2e
 **Documento Preparado Por:** Claude Agent Team  
 **Data:** 24 de junho de 2026  
 **Próximo Passo:** Execute npm run dev em um terminal, depois npm run test:e2e em outro
-

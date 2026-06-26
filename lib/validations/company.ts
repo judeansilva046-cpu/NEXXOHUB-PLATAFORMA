@@ -1,16 +1,21 @@
 import { z } from 'zod';
 
-export const createCompanySchema = z.object({
-  name: z.string().trim().min(3, 'Nome deve ter no mínimo 3 caracteres').max(255),
-  cnpj: z.string().trim().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/, 'CNPJ inválido'),
-  phone: z.string().trim().optional(),
-  email: z.string().trim().email('Email inválido').optional(),
-  address: z.string().trim().min(5, 'Endereço deve ter no mínimo 5 caracteres').max(500),
-  organization_id: z.string().uuid().optional(),
+export const companySchema = z.object({
+  clinicId: z.string().uuid('Selecione uma clínica'),
+  legalName: z.string().trim().min(2, 'Informe a razão social').max(255),
+  name: z.string().trim().min(2, 'Informe o nome fantasia').max(255),
+  cnpj: z
+    .string()
+    .trim()
+    .regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/, 'CNPJ inválido'),
+  hrResponsible: z.string().trim().min(2, 'Informe o responsável de RH').max(255),
+  email: z.string().trim().email('Email inválido'),
+  phone: z.string().trim().min(8, 'Telefone inválido').max(30),
+  address: z.string().trim().min(5, 'Informe o endereço').max(500),
+  employeeCount: z.coerce.number().int().min(0).default(0),
+  status: z.enum(['active', 'inactive', 'archived']).default('active'),
 });
 
-export type CreateCompanyInput = z.infer<typeof createCompanySchema>;
-
-export const updateCompanySchema = createCompanySchema.partial();
-
-export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;
+export type CompanyInput = z.infer<typeof companySchema>;
+export const createCompanySchema = companySchema;
+export const updateCompanySchema = companySchema.partial();

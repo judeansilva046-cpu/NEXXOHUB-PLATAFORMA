@@ -6,9 +6,17 @@ dist/
 *.log
 .env.local
 .env.*.local
+.e2e-local.env
 .vercel
 playwright-report/
 test-results/
 coverage/
 *.tsbuildinfo
 supabase/.temp/
+
+# Local Netlify folder
+.netlify
+
+# Generated audit artifacts and temporary working files
+output/
+tmp/

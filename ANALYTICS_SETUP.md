@@ -3,6 +3,7 @@
 ## Por que Analytics?
 
 Você consegue entender:
+
 ```
 📈 Quantas pessoas usam seu app
 👥 Quem são (país, dispositivo, browser)
@@ -51,7 +52,7 @@ Copie este valor!
 ```
 1. Vá em Netlify → Site settings → Build & deploy → Environment
 2. Adicione nova variável:
-   
+
    Key: NEXT_PUBLIC_GA_MEASUREMENT_ID
    Value: (cole G-XXXXXXXXXX)
 
@@ -80,6 +81,7 @@ Vercel Analytics já vem incluído! Você só precisa:
 Após 5-10 minutos do deploy:
 
 ### Google Analytics:
+
 ```
 1. Acesse: https://analytics.google.com
 2. Vá em "Realtime"
@@ -89,6 +91,7 @@ Após 5-10 minutos do deploy:
 ```
 
 ### Vercel Analytics:
+
 ```
 1. Acesse Vercel Dashboard
 2. Clique em seu projeto
@@ -134,6 +137,7 @@ Após 5-10 minutos do deploy:
 ## 🎯 Dashboards que você vai usar
 
 ### Google Analytics:
+
 ```
 1. "Realtime" - Ver atividade ao vivo
 2. "Overview" - Resumo geral
@@ -143,6 +147,7 @@ Após 5-10 minutos do deploy:
 ```
 
 ### Vercel Analytics:
+
 ```
 1. "Analytics" - Overview geral
 2. "Web Vitals" - Performance do site
@@ -238,7 +243,7 @@ Você verá quebra por device type em "Device" → "Device category"
 
 ```
 Google Analytics: ✅ Gratuito
-Vercel Analytics: 
+Vercel Analytics:
   - Basic (Free) - Limitado
   - Pro (incluído com Pro) - Completo
 ```

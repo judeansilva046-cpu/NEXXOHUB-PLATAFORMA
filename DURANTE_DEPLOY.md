@@ -61,6 +61,7 @@
 ### Erros comuns durante build:
 
 #### 1. "Cannot find module"
+
 ```
 Causa: Falta dependência no package.json
 Solução:
@@ -72,6 +73,7 @@ Solução:
 ```
 
 #### 2. "npm ci vs npm install"
+
 ```
 Se vir erro tipo "package-lock.json required"
 Solução: (já resolvemos isso antes, não deve ocorrer)
@@ -82,6 +84,7 @@ Solução: (já resolvemos isso antes, não deve ocorrer)
 ```
 
 #### 3. "SUPABASE_URL is undefined"
+
 ```
 Causa: Variáveis de ambiente não foram adicionadas
 Solução:
@@ -95,6 +98,7 @@ Solução:
 ```
 
 #### 4. "Build timeout"
+
 ```
 Causa: Build levou mais de 15 minutos
 Solução:
@@ -104,6 +108,7 @@ Solução:
 ```
 
 #### 5. "Next.js version mismatch"
+
 ```
 Causa: Versão do Node incompatível
 Solução:
@@ -131,6 +136,7 @@ Solução:
 ```
 
 ### Se tudo funcionar:
+
 ```
 🎉 PARABÉNS! Seu NexxoHub está em produção!
 
@@ -158,6 +164,7 @@ Próximos passos (opcionais):
 ## 🔄 Se Precisar Fazer Deploy Novamente
 
 ### Opção 1: Push para GitHub (automático)
+
 ```bash
 # Faça mudanças no código
 git add .
@@ -169,6 +176,7 @@ git push origin main
 ```
 
 ### Opção 2: Trigger Manual no Netlify
+
 ```
 1. Vá em "Deploys"
 2. Clique em "Trigger deploy"
@@ -177,6 +185,7 @@ git push origin main
 ```
 
 ### Opção 3: Reverter Deploy Anterior
+
 ```
 1. Vá em "Deploys"
 2. Encontre o deploy que funcionava

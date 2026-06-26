@@ -74,7 +74,7 @@ export function getAuthErrorMessage(error: AuthError | null | undefined): string
 export function formatAuthErrorLog(
   action: string,
   error: AuthError | null | undefined,
-  details?: Record<string, any>
+  details?: Record<string, unknown>
 ) {
   return {
     action,

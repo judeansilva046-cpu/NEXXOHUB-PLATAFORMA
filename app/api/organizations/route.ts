@@ -1,14 +1,9 @@
 import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthenticationError, getErrorResponse } from '../../../lib/errors';
-import { createOrganizationSchema } from '../../../lib/validations/organization';
 
 type UserOrg = {
   organization_id?: string;
-};
-
-type OrganizationData = {
-  id?: string;
 };
 
 export async function GET(_req: NextRequest) {
@@ -57,51 +52,13 @@ export async function GET(_req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const body = await req.json();
-    const validatedData = createOrganizationSchema.parse(body);
-
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
-      .insert([validatedData])
-      .select()
-      .single();
-
-    const organization = org as unknown as OrganizationData;
-
-    if (orgError || !organization?.id) {
-      throw new Error('Failed to create organization');
-    }
-
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ organization_id: organization.id })
-      .eq('id', user.id);
-
-    if (updateError) {
-      throw new Error('Failed to update user organization');
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: org,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
-  }
+  void req;
+  return NextResponse.json(
+    {
+      statusCode: 405,
+      code: 'METHOD_NOT_ALLOWED',
+      message: 'Organizações são provisionadas durante o cadastro.',
+    },
+    { status: 405, headers: { Allow: 'GET' } }
+  );
 }

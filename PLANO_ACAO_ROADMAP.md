@@ -2,13 +2,14 @@
 
 **Data de Criação:** Junho de 2026  
 **Duração Estimada:** 8-12 semanas  
-**Equipe Recomendada:** 2-3 desenvolvedores full-stack  
+**Equipe Recomendada:** 2-3 desenvolvedores full-stack
 
 ---
 
 ## FASE 0: PREPARAÇÃO (1-2 dias)
 
 ### 0.1 Setup de Ambiente
+
 - [ ] Clonar repositório
 - [ ] Instalar Node.js v18+
 - [ ] `npm install`
@@ -18,6 +19,7 @@
 **Tempo:** 1 hora
 
 ### 0.2 Configurar Git Workflow
+
 - [ ] Criar branches de desenvolvimento
 - [ ] Setup de pull request template
 - [ ] Configurar protection rules
@@ -26,6 +28,7 @@
 **Tempo:** 1 hora
 
 ### 0.3 Setup de Ferramentas de Desenvolvimento
+
 - [ ] Configurar ESLint
 - [ ] Configurar Prettier
 - [ ] Configurar Husky
@@ -34,6 +37,7 @@
 **Tempo:** 1 hora
 
 ### 0.4 Documentação Inicial
+
 - [ ] README.md detalhado
 - [ ] Setup guide
 - [ ] Arquitetura diagram
@@ -48,6 +52,7 @@
 ## FASE 1: SEGURANÇA CRÍTICA (2-3 dias)
 
 ### 1.1 Middleware & Autenticação
+
 **Prioridade:** 🔴 CRÍTICO
 
 ```bash
@@ -58,10 +63,12 @@
 ```
 
 **Arquivos a modificar:**
+
 - `middleware.ts` (refactor completo)
 - `lib/supabase.ts` (adicionar helpers)
 
 **Checklist:**
+
 - [ ] Middleware protege todas as rotas
 - [ ] Usuários não autenticados redirecionados ao login
 - [ ] Token refresh automático
@@ -70,6 +77,7 @@
 **Tempo:** 2-3 horas
 
 ### 1.2 Headers de Segurança
+
 **Prioridade:** 🔴 CRÍTICO
 
 ```bash
@@ -77,6 +85,7 @@
 ```
 
 **Checklist:**
+
 - [ ] X-Content-Type-Options
 - [ ] X-Frame-Options
 - [ ] X-XSS-Protection
@@ -86,6 +95,7 @@
 **Tempo:** 1 hora
 
 ### 1.3 Variáveis de Ambiente
+
 **Prioridade:** 🔴 CRÍTICO
 
 ```bash
@@ -94,6 +104,7 @@
 ```
 
 **Checklist:**
+
 - [ ] NEXT_PUBLIC_SUPABASE_URL
 - [ ] NEXT_PUBLIC_SUPABASE_ANON_KEY
 - [ ] SUPABASE_SERVICE_ROLE_KEY (apenas server)
@@ -103,6 +114,7 @@
 **Tempo:** 1 hora
 
 ### 1.4 Validação de Input
+
 **Prioridade:** 🔴 CRÍTICO
 
 ```bash
@@ -110,10 +122,12 @@ npm install zod @hookform/react-hook-form
 ```
 
 **Criar:**
+
 - `lib/validation/schemas.ts` (Zod schemas)
 - `lib/validation/errors.ts` (Custom errors)
 
 **Checklist:**
+
 - [ ] Schemas para auth criados
 - [ ] Schemas para users criados
 - [ ] Middleware de validação
@@ -122,14 +136,17 @@ npm install zod @hookform/react-hook-form
 **Tempo:** 3-4 horas
 
 ### 1.5 RLS no Supabase
+
 **Prioridade:** 🔴 CRÍTICO
 
 **Ações:**
+
 - [ ] Ativar RLS em todas as tabelas
 - [ ] Criar policies básicas
 - [ ] Testar acesso
 
 **Sugestão de policies:**
+
 ```sql
 -- Users veem apenas sua própria organização
 -- Organizações veem apenas seu próprio tenant
@@ -152,6 +169,7 @@ npx tailwindcss init -p
 ```
 
 **Modificar:**
+
 - `tailwind.config.ts` (adicionar paths)
 - `app/globals.css` (imports)
 
@@ -218,6 +236,7 @@ npx husky add .husky/pre-commit "npx lint-staged"
 ### 3.1 Planejamento de Schema
 
 **Tabelas Necessárias:**
+
 1. `organizations` - Orgs principais
 2. `users` - Usuários do sistema
 3. `user_roles` - Roles por usuário
@@ -236,6 +255,7 @@ npx husky add .husky/pre-commit "npx lint-staged"
 ### 3.2 Criar Migrations SQL
 
 **Estrutura:**
+
 ```
 supabase/migrations/
   ├── 001_initial_schema.sql
@@ -244,6 +264,7 @@ supabase/migrations/
 ```
 
 **Checklist:**
+
 - [ ] Organizations table com hierarquia
 - [ ] Users table com autenticação
 - [ ] Clinics & Companies
@@ -292,6 +313,7 @@ CREATE INDEX idx_clinics_org_id ON clinics(organization_id);
 ### 4.1 Pages de Autenticação
 
 **Criar:**
+
 - `app/auth/login/page.tsx` - Login
 - `app/auth/register/page.tsx` - Registro
 - `app/auth/forgot-password/page.tsx` - Reset de senha
@@ -303,6 +325,7 @@ CREATE INDEX idx_clinics_org_id ON clinics(organization_id);
 ### 4.2 Autenticação Flows
 
 **Implementar:**
+
 - Email/Password login
 - Email/Password register
 - Email verification
@@ -326,6 +349,7 @@ export const authClient = {
 ### 4.3 Protected Layouts
 
 **Criar:**
+
 - `app/layout.tsx` - Layout raiz
 - `app/(auth)/layout.tsx` - Auth layout
 - `app/(dashboard)/layout.tsx` - Dashboard layout com navbar
@@ -335,6 +359,7 @@ export const authClient = {
 ### 4.4 User Context/Store
 
 **Implementar com Zustand:**
+
 ```typescript
 // lib/stores/user.ts
 export const useUserStore = create((set) => ({
@@ -366,6 +391,7 @@ export const useUserStore = create((set) => ({
 ### 5.1 Criar Componentes Base
 
 **Usar shadcn/ui para:**
+
 - Button
 - Input
 - Form
@@ -382,6 +408,7 @@ export const useUserStore = create((set) => ({
 ### 5.2 Criar Componentes Custom
 
 **Componentes a criar:**
+
 - `components/ui/Skeleton.tsx`
 - `components/ui/LoadingSpinner.tsx`
 - `components/ui/Avatar.tsx`
@@ -395,6 +422,7 @@ export const useUserStore = create((set) => ({
 ### 5.3 Criar Layouts
 
 **Layouts:**
+
 - AuthLayout (minimal)
 - DashboardLayout (com sidebar)
 - AdminLayout (com mais opções)
@@ -404,6 +432,7 @@ export const useUserStore = create((set) => ({
 ### 5.4 Criar Pages Template
 
 **Templates:**
+
 - Dashboard home
 - Users list
 - User detail
@@ -464,6 +493,7 @@ export async function requireAuth(req: NextRequest) {
 ### 6.3 Implementar CRUD de Usuários
 
 **Endpoints:**
+
 - `GET /api/users` - Listar usuários
 - `POST /api/users` - Criar usuário
 - `GET /api/users/[id]` - Obter usuário
@@ -471,6 +501,7 @@ export async function requireAuth(req: NextRequest) {
 - `DELETE /api/users/[id]` - Deletar usuário
 
 **Validações:**
+
 - Email único
 - Senha mínimo 8 caracteres
 - Role válido
@@ -505,6 +536,7 @@ export async function requireAuth(req: NextRequest) {
 ### 7.1 Criar Dashboard Principal
 
 **Componentes:**
+
 - Welcome card
 - Quick stats
 - Recent activity
@@ -515,6 +547,7 @@ export async function requireAuth(req: NextRequest) {
 ### 7.2 Criar Navegação
 
 **Componentes:**
+
 - Header com user menu
 - Sidebar com links
 - Mobile navigation
@@ -524,6 +557,7 @@ export async function requireAuth(req: NextRequest) {
 ### 7.3 Criar Pages de Listagem
 
 **Pages:**
+
 - Users list com filtro e paginação
 - Organizations list
 - Clinics list
@@ -533,6 +567,7 @@ export async function requireAuth(req: NextRequest) {
 ### 7.4 Criar Pages de Detalhes
 
 **Pages:**
+
 - User detail com edição
 - Organization detail
 - Clinic detail
@@ -542,6 +577,7 @@ export async function requireAuth(req: NextRequest) {
 ### 7.5 Criar Settings Page
 
 **Sections:**
+
 - Profile settings
 - Password change
 - Notifications
@@ -564,6 +600,7 @@ npm install -D vitest @testing-library/react
 **Coverage target:** > 70%
 
 **Testes para:**
+
 - Validações (Zod schemas)
 - Hooks customizados
 - Utilitários
@@ -574,6 +611,7 @@ npm install -D vitest @testing-library/react
 ### 8.2 Testes de Integração
 
 **Testes para:**
+
 - Fluxo de autenticação
 - CRUD de usuários
 - CRUD de organizações
@@ -591,6 +629,7 @@ npm install -D @playwright/test
 ### 8.4 Testes Manuais
 
 **Checklist:**
+
 - [ ] Login/Logout funciona
 - [ ] CRUD de todas entidades
 - [ ] Validações funcionam
@@ -623,6 +662,7 @@ npm install -D @playwright/test
 ```
 
 **Stages:**
+
 - Lint
 - Test
 - Build
@@ -634,6 +674,7 @@ npm install -D @playwright/test
 ### 9.2 Configurar Monitoring
 
 **Ferramentas:**
+
 - Sentry (error tracking)
 - Vercel Analytics
 - Posthog (user analytics)
@@ -643,6 +684,7 @@ npm install -D @playwright/test
 ### 9.3 Preparar Para Produção
 
 **Checklist:**
+
 - [ ] Environment variables configuradas
 - [ ] Secrets configurados
 - [ ] Domínio configurado
@@ -654,6 +696,7 @@ npm install -D @playwright/test
 ### 9.4 Deploy Inicial
 
 **Processo:**
+
 - Deploy para staging
 - Testes em staging
 - Deploy para produção
@@ -715,21 +758,27 @@ npm install -D @playwright/test
 ## CRONOGRAMA DETALHADO
 
 ### Semana 1
+
 **Fase 0-1:** Setup & Segurança Crítica
+
 - Seg-Ter: Setup, Git, Tools
 - Qua-Sex: Middleware, Headers, RLS
 
 **Horas:** 20 horas
 
 ### Semana 2
+
 **Fase 1-2:** Segurança + Dependencies
+
 - Seg-Ter: Validação, RLS
 - Qua-Sex: Dependencies, Tailwind, shadcn
 
 **Horas:** 20 horas
 
 ### Semana 3
+
 **Fase 3:** Database Schema
+
 - Seg-Ter: Schema design
 - Qua-Qui: SQL migrations
 - Sex: Índices e testes
@@ -737,7 +786,9 @@ npm install -D @playwright/test
 **Horas:** 22 horas
 
 ### Semana 4
+
 **Fase 4:** Autenticação
+
 - Seg-Ter: Auth pages
 - Qua-Qui: Auth flows
 - Sex: Testes
@@ -745,7 +796,9 @@ npm install -D @playwright/test
 **Horas:** 20 horas
 
 ### Semana 5
+
 **Fase 5-6:** Componentes & APIs
+
 - Seg-Ter: Componentes
 - Qua-Qui: Layouts
 - Sex: APIs de auth
@@ -753,7 +806,9 @@ npm install -D @playwright/test
 **Horas:** 20 horas
 
 ### Semana 6
+
 **Fase 6:** APIs Completas
+
 - Seg-Ter: CRUD de users
 - Qua-Qui: CRUD de orgs
 - Sex: CRUD de clinics
@@ -761,7 +816,9 @@ npm install -D @playwright/test
 **Horas:** 20 horas
 
 ### Semana 7
+
 **Fase 7:** Dashboard
+
 - Seg-Ter: Dashboard principal
 - Qua-Qui: Pages de listagem
 - Sex: Pages de detalhes
@@ -769,14 +826,18 @@ npm install -D @playwright/test
 **Horas:** 20 horas
 
 ### Semana 8
+
 **Fase 8:** Testes
+
 - Seg-Qua: Unit tests
 - Qui-Fri: Integration tests & E2E
 
 **Horas:** 20 horas
 
 ### Semana 9
+
 **Fase 9:** Deployment
+
 - Seg-Ter: CI/CD setup
 - Qua-Qui: Monitoring
 - Sex: Deploy e testes em prod
@@ -784,7 +845,9 @@ npm install -D @playwright/test
 **Horas:** 15 horas
 
 ### Semana 10
+
 **Fase 10:** Documentação
+
 - Seg-Ter: Docs técnicas
 - Qua-Qui: Docs de usuário
 - Sex: Training & handover
@@ -795,24 +858,24 @@ npm install -D @playwright/test
 
 ## ESTIMATIVA TOTAL
 
-| Fase | Horas | Semanas |
-|------|-------|---------|
-| 0: Preparação | 5 | 0.25 |
-| 1: Segurança | 15 | 0.75 |
-| 2: Setup | 5.5 | 0.27 |
-| 3: Database | 15 | 0.75 |
-| 4: Autenticação | 18 | 0.9 |
-| 5: UI | 16 | 0.8 |
-| 6: APIs | 17 | 0.85 |
-| 7: Dashboard | 17 | 0.85 |
-| 8: Testes | 19 | 0.95 |
-| 9: Deploy | 10 | 0.5 |
-| 10: Documentação | 10 | 0.5 |
-| **TOTAL** | **147.5** | **7.4** |
+| Fase             | Horas     | Semanas |
+| ---------------- | --------- | ------- |
+| 0: Preparação    | 5         | 0.25    |
+| 1: Segurança     | 15        | 0.75    |
+| 2: Setup         | 5.5       | 0.27    |
+| 3: Database      | 15        | 0.75    |
+| 4: Autenticação  | 18        | 0.9     |
+| 5: UI            | 16        | 0.8     |
+| 6: APIs          | 17        | 0.85    |
+| 7: Dashboard     | 17        | 0.85    |
+| 8: Testes        | 19        | 0.95    |
+| 9: Deploy        | 10        | 0.5     |
+| 10: Documentação | 10        | 0.5     |
+| **TOTAL**        | **147.5** | **7.4** |
 
 **Com 1 developer:** 10 semanas  
 **Com 2 developers:** 5-6 semanas  
-**Com 3 developers:** 3-4 semanas  
+**Com 3 developers:** 3-4 semanas
 
 ---
 
@@ -828,13 +891,13 @@ npm install -D @playwright/test
 
 ## RISKS & MITIGATIONS
 
-| Risk | Mitigation |
-|------|-----------|
-| Delays em schema | Planejamento antecipado |
-| Security bugs | Code review mandatória |
+| Risk               | Mitigation               |
+| ------------------ | ------------------------ |
+| Delays em schema   | Planejamento antecipado  |
+| Security bugs      | Code review mandatória   |
 | Performance issues | Monitoring desde o start |
-| Bugs em produção | CI/CD robusta |
-| Knowledge gap | Documentação completa |
+| Bugs em produção   | CI/CD robusta            |
+| Knowledge gap      | Documentação completa    |
 
 ---
 

@@ -15,10 +15,7 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (error || !user) {
-      return NextResponse.json(
-        { success: false, hasSession: false },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, hasSession: false }, { status: 401 });
     }
 
     return NextResponse.json({
@@ -33,9 +30,6 @@ export async function GET() {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('Verify session error:', message);
 
-    return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

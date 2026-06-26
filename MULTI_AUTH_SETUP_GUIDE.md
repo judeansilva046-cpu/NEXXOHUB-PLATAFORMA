@@ -8,6 +8,7 @@
 ## 📋 O QUE FOI IMPLEMENTADO
 
 ### **Frontend (Pronto! ✅)**
+
 - ✅ Email + Senha (funcionando)
 - ✅ Celular via OTP (SMS/WhatsApp)
 - ✅ Magic Link (email sem senha)
@@ -16,6 +17,7 @@
 - ✅ UI com abas para alternar entre métodos
 
 ### **Backend (Você precisa configurar)**
+
 - ⏳ Google OAuth
 - ⏳ GitHub OAuth
 - ⏳ Phone OTP (Twilio)
@@ -29,6 +31,7 @@
 ✅ **Já funciona!** Não precisa fazer nada.
 
 **Verificar:**
+
 - Supabase Dashboard → Authentication → Providers
 - Email deveria estar ✅ Enabled
 
@@ -40,6 +43,7 @@
 
 1. Vá em: https://console.cloud.google.com/
 2. Crie um novo projeto (se não tiver):
+
    - Nome: `NexxoHub`
    - Clique "CREATE"
 
@@ -48,6 +52,7 @@
 5. Escolha "Web application"
 6. Nome: `NexxoHub Web Client`
 7. **URIs autorizadas de redirecionamento:**
+
    ```
    http://localhost:3000/auth/callback
    https://illustrious-cascaron-bd22da2.netlify.app/auth/callback
@@ -70,6 +75,7 @@
 5. Clique "Save"
 
 #### **Verificação:**
+
 ```
 ✅ Google provider deve estar "Enabled"
 ✅ Verde ao lado do nome
@@ -84,6 +90,7 @@
 1. Vá em: https://github.com/settings/developers
 2. Clique "New OAuth App"
 3. Preencha:
+
    - **Application name:** `NexxoHub`
    - **Homepage URL:** `https://illustrious-cascaron-bd22da2.netlify.app`
    - **Authorization callback URL:**
@@ -107,6 +114,7 @@
 5. Clique "Save"
 
 #### **Verificação:**
+
 ```
 ✅ GitHub provider deve estar "Enabled"
 ✅ Verde ao lado do nome
@@ -139,6 +147,7 @@
 6. Clique "Save"
 
 #### **Verificação:**
+
 ```
 ✅ Phone provider deve estar "Enabled"
 ✅ Verde ao lado do nome
@@ -173,6 +182,7 @@ GITHUB_CLIENT_SECRET=seu_github_client_secret
 ## 🧪 TESTANDO CADA MÉTODO
 
 ### **Email + Senha**
+
 ```
 1. Vá para login page
 2. Clique aba "Email"
@@ -182,6 +192,7 @@ GITHUB_CLIENT_SECRET=seu_github_client_secret
 ```
 
 ### **Celular (SMS)**
+
 ```
 1. Clique aba "Celular"
 2. Insira: +55 11 99999-9999 (seu número real)
@@ -192,6 +203,7 @@ GITHUB_CLIENT_SECRET=seu_github_client_secret
 ```
 
 ### **Magic Link**
+
 ```
 1. Clique aba "Link"
 2. Email: seu@email.com
@@ -202,6 +214,7 @@ GITHUB_CLIENT_SECRET=seu_github_client_secret
 ```
 
 ### **Google**
+
 ```
 1. Clique botão "Google"
 2. Faça login com sua conta Google
@@ -210,6 +223,7 @@ GITHUB_CLIENT_SECRET=seu_github_client_secret
 ```
 
 ### **GitHub**
+
 ```
 1. Clique botão "GitHub"
 2. Faça login com sua conta GitHub
@@ -222,6 +236,7 @@ GITHUB_CLIENT_SECRET=seu_github_client_secret
 ## 📊 FLUXO DE CADA MÉTODO
 
 ### **Email + Senha**
+
 ```
 User → Digite email + senha → Click Entrar
   → authClient.signIn() → Supabase Auth
@@ -229,6 +244,7 @@ User → Digite email + senha → Click Entrar
 ```
 
 ### **Phone OTP**
+
 ```
 User → Digite celular → Click "Enviar Código"
   → authClient.signInWithPhone() → Twilio envia SMS
@@ -238,6 +254,7 @@ User → Digite celular → Click "Enviar Código"
 ```
 
 ### **Magic Link**
+
 ```
 User → Digite email → Click "Enviar Link"
   → authClient.signInWithMagicLink() → Supabase envia email
@@ -247,6 +264,7 @@ User → Digite email → Click "Enviar Link"
 ```
 
 ### **Google OAuth**
+
 ```
 User → Click "Google"
   → authClient.signInWithGoogle() → Redireciona para Google
@@ -256,6 +274,7 @@ User → Click "Google"
 ```
 
 ### **GitHub OAuth**
+
 ```
 User → Click "GitHub"
   → authClient.signInWithGitHub() → Redireciona para GitHub
@@ -269,6 +288,7 @@ User → Click "GitHub"
 ## 🛡️ SEGURANÇA
 
 ### **Boas Práticas Implementadas:**
+
 - ✅ Cookies apenas em HTTPS (produção)
 - ✅ Redireção automática de callback
 - ✅ Validação de email confirmado
@@ -277,6 +297,7 @@ User → Click "GitHub"
 - ✅ Rate limiting de OTP (Supabase)
 
 ### **O que você deve fazer:**
+
 - ⏳ Configurar HTTPS em produção (Netlify faz automaticamente)
 - ⏳ Configurar domínios permitidos em Supabase
 - ⏳ Usar HTTPS redirect em production
@@ -315,6 +336,7 @@ User → Click "GitHub"
 Se algo não funcionar:
 
 1. **Verificar logs:**
+
    - DevTools → Console (F12)
    - Procurar por erros de OAuth
    - Supabase Dashboard → Logs

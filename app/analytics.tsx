@@ -1,57 +1,40 @@
 'use client';
 
 import { Suspense, useEffect } from 'react';
-import Script from 'next/script';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 function AnalyticsTracker() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.gtag) {
-      const url = pathname + (searchParams ? `?${searchParams.toString()}` : '');
+    const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+    if (!measurementId || typeof window === 'undefined') return;
+
+    if (!window.gtag) {
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = (...args: unknown[]) => window.dataLayer?.push(args);
+      window.gtag('js', new Date());
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+      document.head.appendChild(script);
+    }
+
+    if (window.gtag) {
       window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-XXXXXXXXXX', {
-        page_path: url,
+        page_path: pathname,
         page_title: document.title,
+        allow_google_signals: false,
       });
     }
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   return null;
 }
 
 export function Analytics() {
-  return (
-    <>
-      <Suspense fallback={null}>
-        <AnalyticsTracker />
-      </Suspense>
+  const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
-      {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-        <>
-          <Script
-            strategy="afterInteractive"
-            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
-          />
-          <Script
-            id="google-analytics"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-              __html: `
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}', {
-                  page_path: window.location.pathname,
-                });
-              `,
-            }}
-          />
-        </>
-      )}
-    </>
-  );
+  return <Suspense fallback={null}>{measurementId ? <AnalyticsTracker /> : null}</Suspense>;
 }
 
 declare global {

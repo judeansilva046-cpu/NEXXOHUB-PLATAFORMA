@@ -13,18 +13,18 @@ Antes da implantação, os bloqueadores P0 e P1 deste relatório precisam ser co
 
 ## Evidências executadas
 
-| Verificação | Resultado |
-|---|---|
-| `npm run typecheck` | Falhou: 3 erros |
-| `npm run lint` | Falhou: 1 erro e 17 avisos |
-| `npm run build` | Falhou: módulo `recharts` ausente |
-| Vitest | 40 testes passaram; 9 falharam |
-| Separação Vitest/Playwright | Falhou: 5 suítes E2E são coletadas pelo Vitest |
-| `npm audit` | 39 vulnerabilidades: 1 crítica, 6 altas, 28 moderadas e 4 baixas |
-| Supabase Security Advisor | 3 erros de RLS e 1 tabela com RLS sem política |
+| Verificação                  | Resultado                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| `npm run typecheck`          | Falhou: 3 erros                                                                      |
+| `npm run lint`               | Falhou: 1 erro e 17 avisos                                                           |
+| `npm run build`              | Falhou: módulo `recharts` ausente                                                    |
+| Vitest                       | 40 testes passaram; 9 falharam                                                       |
+| Separação Vitest/Playwright  | Falhou: 5 suítes E2E são coletadas pelo Vitest                                       |
+| `npm audit`                  | 39 vulnerabilidades: 1 crítica, 6 altas, 28 moderadas e 4 baixas                     |
+| Supabase Security Advisor    | 3 erros de RLS e 1 tabela com RLS sem política                                       |
 | Supabase Performance Advisor | 4 FKs sem índice, 10 políticas RLS não otimizadas e políticas permissivas duplicadas |
-| Build visual/autenticado | Não homologável enquanto o build falha |
-| Estado Git | Branch `master` sem commit inicial; todos os arquivos estão sem rastreamento |
+| Build visual/autenticado     | Não homologável enquanto o build falha                                               |
+| Estado Git                   | Branch `master` sem commit inicial; todos os arquivos estão sem rastreamento         |
 
 ## Bloqueadores P0 — críticos
 
@@ -293,17 +293,17 @@ Produção só deve ser liberada após:
 
 ## Critério atual de decisão
 
-| Área | Estado |
-|---|---|
-| Segurança de aplicação | Reprovada |
-| Segurança do banco | Reprovada |
-| Build | Reprovado |
-| Tipos/lint | Reprovados |
-| Testes | Reprovados |
-| Dependências | Reprovadas |
-| CI/CD | Reprovado |
-| Prontidão para staging | Não |
-| Prontidão para produção | Não |
+| Área                    | Estado     |
+| ----------------------- | ---------- |
+| Segurança de aplicação  | Reprovada  |
+| Segurança do banco      | Reprovada  |
+| Build                   | Reprovado  |
+| Tipos/lint              | Reprovados |
+| Testes                  | Reprovados |
+| Dependências            | Reprovadas |
+| CI/CD                   | Reprovado  |
+| Prontidão para staging  | Não        |
+| Prontidão para produção | Não        |
 
 ## Fontes técnicas
 

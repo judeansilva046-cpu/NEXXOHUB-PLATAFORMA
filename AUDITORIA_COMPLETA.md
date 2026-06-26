@@ -13,6 +13,7 @@ A plataforma NexxoHub é um SaaS multi-tenant em estágio muito inicial, com ape
 **Nível de Implementação:** ~5% concluído
 
 ### Pontuação Geral
+
 - **Frontend:** 5% (apenas página home)
 - **Backend:** 0% (nenhuma API)
 - **Database:** 0% (nenhum schema)
@@ -29,6 +30,7 @@ A plataforma NexxoHub é um SaaS multi-tenant em estágio muito inicial, com ape
 ### 1.1 FRONTEND (5% concluído)
 
 #### Estrutura Atual
+
 ```
 NexxoHub/
 ├── app/
@@ -41,6 +43,7 @@ NexxoHub/
 ```
 
 #### Componentes Encontrados
+
 - ✗ **INEXISTENTE:** Dashboard
 - ✗ **INEXISTENTE:** Componentes reutilizáveis (Button, Input, Card, etc)
 - ✗ **INEXISTENTE:** Layouts (Header, Sidebar, Footer)
@@ -55,32 +58,35 @@ NexxoHub/
 #### Problemas Identificados
 
 **CRÍTICO**
+
 1. Nenhum sistema de roteamento implementado
 2. Nenhuma estrutura de páginas de negócio
 3. Componentes de UI totalmente ausentes
 4. Sem sistema de estado global (Context/Redux/Zustand)
 
 **MÉDIO**
+
 1. TypeScript configurado mas não usado efetivamente
 2. Sem padrão de component library
 3. Sem sistema de temas/CSS
 4. Sem responsividade definida
 
 #### Dependencies Incompletas
+
 ```json
 {
   "missing": [
-    "tailwindcss",         // Mencionado mas não está em devDeps
-    "shadcn/ui",          // Mencionado mas não está instalado
-    "@radix-ui/react-*",  // UI components base
-    "lucide-react",       // Icons
-    "zod",                // Validação de schemas
+    "tailwindcss", // Mencionado mas não está em devDeps
+    "shadcn/ui", // Mencionado mas não está instalado
+    "@radix-ui/react-*", // UI components base
+    "lucide-react", // Icons
+    "zod", // Validação de schemas
     "@hookform/react-hook-form", // Gerenciamento de formulários
     "axios ou fetch-wrapper", // HTTP client
     "zustand ou context-api", // State management
     "react-query ou swr", // Data fetching
-    "next/navigation",    // Apenas partial
-    "clsx ou classnames", // Class management
+    "next/navigation", // Apenas partial
+    "clsx ou classnames" // Class management
   ]
 }
 ```
@@ -90,6 +96,7 @@ NexxoHub/
 ### 1.2 BACKEND (0% concluído)
 
 #### Estrutura de APIs Necessárias
+
 - ✗ **INEXISTENTE:** `/api/auth/*` - Autenticação
 - ✗ **INEXISTENTE:** `/api/organizations/*` - Gerenciamento de orgs
 - ✗ **INEXISTENTE:** `/api/clinics/*` - Gerenciamento de clínicas
@@ -104,6 +111,7 @@ NexxoHub/
 #### Problemas Identificados
 
 **CRÍTICO**
+
 1. Nenhuma API Route implementada
 2. Sem validação de requisições
 3. Sem tratamento de erros
@@ -111,6 +119,7 @@ NexxoHub/
 5. Sem autenticação em rotas
 
 **MÉDIO**
+
 1. Sem rate limiting
 2. Sem CORS configurado
 3. Sem versionamento de API
@@ -121,6 +130,7 @@ NexxoHub/
 ### 1.3 BANCO DE DADOS (0% concluído)
 
 #### Schema Necessário
+
 ```
 TABELAS FALTANTES:
 - organizations (orgs principais)
@@ -139,6 +149,7 @@ TABELAS FALTANTES:
 #### Problemas Identificados
 
 **CRÍTICO**
+
 1. Nenhuma migração Supabase implementada
 2. Sem schema SQL definido
 3. Sem Row Level Security (RLS) configurado
@@ -146,6 +157,7 @@ TABELAS FALTANTES:
 5. Sem relacionamentos definidos
 
 **MÉDIO**
+
 1. Sem soft deletes
 2. Sem timestamps de auditoria (created_at, updated_at)
 3. Sem enums para status
@@ -155,6 +167,7 @@ TABELAS FALTANTES:
 ### 1.4 AUTENTICAÇÃO (20% concluído)
 
 #### Implementação Atual
+
 ```typescript
 // middleware.ts - Básico mas não suficiente
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
@@ -170,6 +183,7 @@ export async function middleware(req: NextRequest) {
 #### Problemas Identificados
 
 **CRÍTICO**
+
 1. ⚠️ Middleware não protege rotas (aplica apenas a `/`)
 2. ⚠️ Sem redirect para login se não autenticado
 3. ⚠️ Sem tratamento de token expirado
@@ -177,6 +191,7 @@ export async function middleware(req: NextRequest) {
 5. ⚠️ Sem proteção de rutas do backend
 
 **MÉDIO**
+
 1. Sem logout implementado
 2. Sem multi-factor authentication
 3. Sem social login
@@ -184,6 +199,7 @@ export async function middleware(req: NextRequest) {
 5. Sem password reset flow
 
 #### Variáveis de Ambiente
+
 ```
 CONFIGURADO:
 - NEXT_PUBLIC_SUPABASE_URL
@@ -207,6 +223,7 @@ FALTANDO:
 **CRÍTICO - RESOLVA IMEDIATAMENTE**
 
 1. **Exposição de Service Role Key**
+
    ```
    RISCO: Chave de admin do Supabase pode estar no .env.example
    IMPACTO: Acesso total ao banco de dados
@@ -214,6 +231,7 @@ FALTANDO:
    ```
 
 2. **Sem proteção contra CSRF**
+
    ```
    RISCO: Formulários não protegidos
    IMPACTO: Requisições maliciosas podem ser executadas
@@ -221,6 +239,7 @@ FALTANDO:
    ```
 
 3. **Sem validação de entrada**
+
    ```
    RISCO: Injeção SQL, XSS
    IMPACTO: Acesso não autorizado, roubo de dados
@@ -228,6 +247,7 @@ FALTANDO:
    ```
 
 4. **Middleware insuficiente**
+
    ```
    RISCO: Apenas aplica a "/" - outras rotas desprotegidas
    IMPACTO: Acesso direto a APIs sem autenticação
@@ -263,6 +283,7 @@ FALTANDO:
 5. **API Performance:** Não há APIs
 
 #### Recomendações
+
 - Implementar code splitting desde o início
 - Usar dynamic imports para lazy loading
 - Implementar caching estratégico
@@ -273,20 +294,19 @@ FALTANDO:
 ### 1.7 CONFIGURAÇÃO & DEPLOYMENT
 
 #### Vercel Configuration
+
 ```json
 {
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "env": [
-    "NEXT_PUBLIC_SUPABASE_URL",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY"
-  ]
+  "env": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]
 }
 ```
 
 **Problemas:**
+
 1. ✗ Sem SUPABASE_SERVICE_ROLE_KEY em produção (OK)
 2. ✗ Sem variáveis secretas configuradas
 3. ✗ Sem domínios customizados
@@ -297,13 +317,14 @@ FALTANDO:
 ### 1.8 DEPENDÊNCIAS (Package.json Issues)
 
 #### Dependências Presentes (MÍNIMO)
+
 ```json
 {
-  "react": "^19.0.0",           // OK - Latest
-  "react-dom": "^19.0.0",       // OK - Latest
-  "next": "^15.0.0",            // OK - Latest
+  "react": "^19.0.0", // OK - Latest
+  "react-dom": "^19.0.0", // OK - Latest
+  "next": "^15.0.0", // OK - Latest
   "@supabase/supabase-js": "^2.43.0", // OK
-  "typescript": "^5.0.0"        // OK
+  "typescript": "^5.0.0" // OK
 }
 ```
 
@@ -371,12 +392,14 @@ Autenticação:
 ### 1.9 TYPESCRIPT CONFIGURATION
 
 #### Análise
+
 - ✓ Strict mode habilitado
 - ✓ resolveJsonModule ativado
 - ✓ Paths configurados
 - ✓ Target ES2020
 
 **Problema:** Paths configurados como `@/*` -> `./` é muito genérico. Deveria ser:
+
 ```json
 {
   "@/*": ["./*"],
@@ -391,10 +414,12 @@ Autenticação:
 ### 1.10 DOCUMENTAÇÃO
 
 #### O que Existe
+
 - README.md básico
 - .env.example
 
 #### O que Falta
+
 - ✗ API Documentation
 - ✗ Architecture Diagram
 - ✗ Database Schema Diagram
@@ -410,42 +435,42 @@ Autenticação:
 
 ### 2.1 Segurança
 
-| ID | Problema | Severidade | Tempo Est. |
-|---|----------|-----------|-----------|
-| SEC-001 | Middleware insuficiente - não protege todas rotas | CRÍTICO | 2h |
-| SEC-002 | Sem validação de entrada | CRÍTICO | 4h |
-| SEC-003 | Sem RLS configurado no Supabase | CRÍTICO | 3h |
-| SEC-004 | Service Role Key pode estar exposta | CRÍTICO | 1h |
-| SEC-005 | Sem CSRF protection | CRÍTICO | 3h |
-| SEC-006 | Sem headers de segurança | CRÍTICO | 2h |
-| SEC-007 | Sem rate limiting | CRÍTICO | 3h |
+| ID      | Problema                                          | Severidade | Tempo Est. |
+| ------- | ------------------------------------------------- | ---------- | ---------- |
+| SEC-001 | Middleware insuficiente - não protege todas rotas | CRÍTICO    | 2h         |
+| SEC-002 | Sem validação de entrada                          | CRÍTICO    | 4h         |
+| SEC-003 | Sem RLS configurado no Supabase                   | CRÍTICO    | 3h         |
+| SEC-004 | Service Role Key pode estar exposta               | CRÍTICO    | 1h         |
+| SEC-005 | Sem CSRF protection                               | CRÍTICO    | 3h         |
+| SEC-006 | Sem headers de segurança                          | CRÍTICO    | 2h         |
+| SEC-007 | Sem rate limiting                                 | CRÍTICO    | 3h         |
 
 ### 2.2 Funcionalidade
 
-| ID | Problema | Severidade | Tempo Est. |
-|---|----------|-----------|-----------|
-| FUNC-001 | Zero APIs de negócio | CRÍTICO | - |
-| FUNC-002 | Zero schema de database | CRÍTICO | - |
-| FUNC-003 | Zero componentes de UI | CRÍTICO | - |
-| FUNC-004 | Autenticação incompleta | CRÍTICO | 8h |
-| FUNC-005 | Sem logout | CRÍTICO | 1h |
+| ID       | Problema                | Severidade | Tempo Est. |
+| -------- | ----------------------- | ---------- | ---------- |
+| FUNC-001 | Zero APIs de negócio    | CRÍTICO    | -          |
+| FUNC-002 | Zero schema de database | CRÍTICO    | -          |
+| FUNC-003 | Zero componentes de UI  | CRÍTICO    | -          |
+| FUNC-004 | Autenticação incompleta | CRÍTICO    | 8h         |
+| FUNC-005 | Sem logout              | CRÍTICO    | 1h         |
 
 ---
 
 ## 3. PROBLEMAS MÉDIOS
 
-| ID | Problema | Severidade | Impacto |
-|---|----------|-----------|---------|
-| MED-001 | Dependências de UI não instaladas | MÉDIO | Impossível fazer build |
-| MED-002 | Sem sistema de estado global | MÉDIO | Difícil gerenciar dados |
-| MED-003 | Sem data fetching layer | MÉDIO | APIs lentas |
-| MED-004 | Sem tratamento de erros | MÉDIO | UX ruim |
-| MED-005 | Sem logging estruturado | MÉDIO | Difícil debugar |
-| MED-006 | Sem testes automatizados | MÉDIO | Regressões |
-| MED-007 | Sem linting/prettier | MÉDIO | Código inconsistente |
-| MED-008 | Environment variables incomplete | MÉDIO | Erro em produção |
-| MED-009 | Sem email service integrado | MÉDIO | Não pode enviar emails |
-| MED-010 | Sem integração com NR-1 | MÉDIO | Conformidade regulatória |
+| ID      | Problema                          | Severidade | Impacto                  |
+| ------- | --------------------------------- | ---------- | ------------------------ |
+| MED-001 | Dependências de UI não instaladas | MÉDIO      | Impossível fazer build   |
+| MED-002 | Sem sistema de estado global      | MÉDIO      | Difícil gerenciar dados  |
+| MED-003 | Sem data fetching layer           | MÉDIO      | APIs lentas              |
+| MED-004 | Sem tratamento de erros           | MÉDIO      | UX ruim                  |
+| MED-005 | Sem logging estruturado           | MÉDIO      | Difícil debugar          |
+| MED-006 | Sem testes automatizados          | MÉDIO      | Regressões               |
+| MED-007 | Sem linting/prettier              | MÉDIO      | Código inconsistente     |
+| MED-008 | Environment variables incomplete  | MÉDIO      | Erro em produção         |
+| MED-009 | Sem email service integrado       | MÉDIO      | Não pode enviar emails   |
+| MED-010 | Sem integração com NR-1           | MÉDIO      | Conformidade regulatória |
 
 ---
 
@@ -619,6 +644,7 @@ cp .env.example .env.local
 ## 6. ROADMAP DE IMPLEMENTAÇÃO
 
 ### Sprint 1 (1 semana) - Setup & Segurança Crítica
+
 - [ ] Instalar dependências
 - [ ] Configurar Tailwind + shadcn
 - [ ] Implementar middleware de proteção
@@ -626,30 +652,35 @@ cp .env.example .env.local
 - [ ] Ativar RLS
 
 ### Sprint 2 (1 semana) - Autenticação & Auth UI
+
 - [ ] Implementar auth flows
 - [ ] Criar páginas de login/register
 - [ ] Implementar session management
 - [ ] Criar protected layout
 
 ### Sprint 3 (1 semana) - APIs Básicas
+
 - [ ] Implementar CRUD de usuários
 - [ ] Implementar CRUD de organizações
 - [ ] Adicionar validação e error handling
 - [ ] Criar documentação de API
 
 ### Sprint 4 (1 semana) - Dashboard & Navegação
+
 - [ ] Criar layout principal
 - [ ] Implementar navegação
 - [ ] Criar dashboard template
 - [ ] Adicionar user profile page
 
 ### Sprint 5 (1 semana) - Funcionalidades de Negócio
+
 - [ ] Implementar clinics management
 - [ ] Implementar companies management
 - [ ] Implementar employees management
 - [ ] Criar páginas básicas
 
 ### Sprint 6+ - Relatórios & Avançado
+
 - [ ] Sistema de relatórios
 - [ ] Avaliações psicossociais
 - [ ] Integrações
@@ -660,6 +691,7 @@ cp .env.example .env.local
 ## 7. CHECKLIST DE QUALIDADE
 
 ### Frontend
+
 - [ ] Componentes reutilizáveis criados
 - [ ] TypeScript strict mode em uso
 - [ ] Sem console.logs em produção
@@ -670,6 +702,7 @@ cp .env.example .env.local
 - [ ] Performance: CLS < 0.1
 
 ### Backend
+
 - [ ] Todas rotas autenticadas
 - [ ] Validação de input
 - [ ] Error handling padrão
@@ -679,6 +712,7 @@ cp .env.example .env.local
 - [ ] Tests > 70% coverage
 
 ### Database
+
 - [ ] RLS habilitado
 - [ ] Índices otimizados
 - [ ] Foreign keys com cascade
@@ -687,6 +721,7 @@ cp .env.example .env.local
 - [ ] Migrations versionadas
 
 ### Segurança
+
 - [ ] HTTPS everywhere
 - [ ] CSP headers
 - [ ] CSRF tokens
@@ -700,6 +735,7 @@ cp .env.example .env.local
 ## 8. ESTIMATIVA DE ESFORÇO
 
 ### Total para MVP
+
 - Setup & Dependências: 1-2 dias
 - Segurança: 2-3 dias
 - Autenticação: 2-3 dias
@@ -711,6 +747,7 @@ cp .env.example .env.local
 **TOTAL:** 15-25 dias (3-5 semanas) com 1 desenvolvedor full-stack
 
 ### Com 2 Desenvolvedores
+
 **TOTAL:** 1-2 semanas
 
 ---
@@ -802,12 +839,14 @@ Antes de começar qualquer desenvolvimento:
 ### Processo de Desenvolvimento
 
 1. **Antes de Iniciar**
+
    - [ ] Definir roadmap com stakeholders
    - [ ] Detalhar requirements
    - [ ] Design de UI/UX
    - [ ] Architecture review
 
 2. **Durante o Desenvolvimento**
+
    - [ ] Code reviews obrigatórias
    - [ ] Testes para cada feature
    - [ ] Branch protection rules
@@ -827,6 +866,7 @@ Antes de começar qualquer desenvolvimento:
 O projeto NexxoHub está em estágio muito inicial, com apenas scaffolding implementado. Não há funcionalidade de negócio pronta. O trabalho principal está adiante.
 
 **Principais ações necessárias:**
+
 1. Resolver problemas críticos de segurança
 2. Completar setup de dependências
 3. Implementar autenticação robusta

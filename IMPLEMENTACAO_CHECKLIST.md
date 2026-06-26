@@ -30,10 +30,7 @@ export async function POST(req: Request) {
 
     // Validação
     if (!email || !password) {
-      return Response.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
+      return Response.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
     // ✅ Usar server client
@@ -46,25 +43,16 @@ export async function POST(req: Request) {
     });
 
     if (error) {
-      return Response.json(
-        { error: error.message },
-        { status: 401 }
-      );
+      return Response.json({ error: error.message }, { status: 401 });
     }
 
     if (!data.session) {
-      return Response.json(
-        { error: 'No session returned' },
-        { status: 401 }
-      );
+      return Response.json({ error: 'No session returned' }, { status: 401 });
     }
 
     // ✅ Cookies já foram salvos pelo createClient()
     // ✅ Response tem Set-Cookie headers automaticamente
-    return Response.json(
-      { success: true, session: data.session },
-      { status: 200 }
-    );
+    return Response.json({ success: true, session: data.session }, { status: 200 });
   } catch (error) {
     console.error('SignIn error:', error);
     return getErrorResponse(error);
@@ -73,6 +61,7 @@ export async function POST(req: Request) {
 ```
 
 **Checklist:**
+
 - [ ] Arquivo criado em `app/api/auth/signin/route.ts`
 - [ ] Código copiado exatamente como mostrado
 - [ ] Imports estão corretos
@@ -100,7 +89,7 @@ export async function GET(request: Request) {
 
     if (code) {
       const supabase = await createClient();
-      
+
       // ✅ Exchange código para sessão
       const { error } = await supabase.auth.exchangeCodeForSession(code);
 
@@ -111,19 +100,16 @@ export async function GET(request: Request) {
     }
 
     // ❌ Erro: redireciona para login com erro
-    return NextResponse.redirect(
-      new URL('/auth/login?error=callback', request.url)
-    );
+    return NextResponse.redirect(new URL('/auth/login?error=callback', request.url));
   } catch (error) {
     console.error('Callback error:', error);
-    return NextResponse.redirect(
-      new URL('/auth/login?error=unexpected', request.url)
-    );
+    return NextResponse.redirect(new URL('/auth/login?error=unexpected', request.url));
   }
 }
 ```
 
 **Checklist:**
+
 - [ ] Arquivo criado em `app/api/auth/callback/route.ts`
 - [ ] Código copiado exatamente como mostrado
 - [ ] Imports estão corretos
@@ -138,8 +124,9 @@ export async function GET(request: Request) {
 **Arquivo:** `C:\Users\User\NEXXOHUB-PLATAFORMA\app\auth\login\page.tsx`
 
 **O que fazer:**
+
 - [ ] Abrir arquivo existente
-- [ ] Substituir função `handleSubmit` 
+- [ ] Substituir função `handleSubmit`
 - [ ] NÃO remover o resto do arquivo
 
 **Trocar DESTA parte:**
@@ -218,6 +205,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 ```
 
 **Checklist:**
+
 - [ ] Abri arquivo `/app/auth/login/page.tsx`
 - [ ] Localizei a função `handleSubmit`
 - [ ] Substituí apenas o conteúdo da função
@@ -233,6 +221,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 **Arquivo:** `C:\Users\User\NEXXOHUB-PLATAFORMA\middleware.ts`
 
 **O que fazer:**
+
 - [ ] Abrir arquivo existente
 - [ ] Encontrar seção de "Add security headers"
 - [ ] Adicionar novo header (veja abaixo)
@@ -270,6 +259,7 @@ return response;
 ```
 
 **Checklist:**
+
 - [ ] Abri arquivo `middleware.ts`
 - [ ] Localizei a seção de security headers
 - [ ] Adicionei o header CSP ANTES de `return response`
@@ -282,6 +272,7 @@ return response;
 ### Test 4.1: Teste Local - Ambiente de Desenvolvimento
 
 **Pré-requisitos:**
+
 - [ ] Terminal aberto
 - [ ] Certificado SSL configurado (ou localhost funcionando)
 - [ ] `.env.local` com variáveis Supabase corretas
@@ -298,6 +289,7 @@ npm run dev
 ```
 
 **Checklist:**
+
 - [ ] Dev server iniciado com sucesso
 - [ ] Nenhum erro no console
 - [ ] Acesso a http://localhost:3000 funciona
@@ -320,6 +312,7 @@ npm run dev
    - [ ] URL deve permanecer em `/dashboard` (sem redirecionar de volta)
 
 **Se algo deu errado:**
+
 - [ ] Verificar erro em Network tab > Response
 - [ ] Verificar logs em `npm run dev` (terminal)
 - [ ] Verificar `.env.local` tem variáveis corretas
@@ -338,6 +331,7 @@ npm run dev
    - [ ] `sb-xxxxx-auth-token.0` (se token > 4KB)
 
 **Se não ver cookies:**
+
 - [ ] Verificar Response Headers do POST (deve ter Set-Cookie)
 - [ ] Limpar browser cache e tentar novamente
 - [ ] Verificar se Supabase URL está correta em `.env.local`
@@ -399,10 +393,12 @@ Se ver erro:
 **Checklist:**
 
 - [ ] POST `/api/auth/signin` retorna 200?
+
   - Se não: Erro na autenticação (senha errada, etc)
   - Se sim: Continuar próxima verificação
 
 - [ ] Response Headers tem `Set-Cookie`?
+
   - Se não: Problema em `createClient()` no servidor
   - Se sim: Continuar próxima verificação
 
@@ -434,6 +430,7 @@ console.log('[middleware]', {
 ```
 
 Se `sessionExists: false`:
+
 - [ ] Cookies não foram salvos
 - [ ] Voltar para Debug 5.2
 
@@ -511,44 +508,53 @@ git reset --hard
 
 ## TEMPO TOTAL
 
-| Fase | Tarefa | Tempo | Status |
-|------|--------|-------|--------|
-| 1 | Criar API Routes | 30 min | ⏳ TODO |
-| 2 | Atualizar Login Page | 20 min | ⏳ TODO |
-| 3 | Melhorar Middleware | 10 min | ⏳ TODO |
-| 4 | Testes Manuais | 45 min | ⏳ TODO |
-| 5 | Debugging | 20 min | ⏳ OPCIONAL |
-| 6 | Verificação Final | 10 min | ⏳ TODO |
-| **TOTAL** | | **1h45min** | |
+| Fase      | Tarefa               | Tempo       | Status      |
+| --------- | -------------------- | ----------- | ----------- |
+| 1         | Criar API Routes     | 30 min      | ⏳ TODO     |
+| 2         | Atualizar Login Page | 20 min      | ⏳ TODO     |
+| 3         | Melhorar Middleware  | 10 min      | ⏳ TODO     |
+| 4         | Testes Manuais       | 45 min      | ⏳ TODO     |
+| 5         | Debugging            | 20 min      | ⏳ OPCIONAL |
+| 6         | Verificação Final    | 10 min      | ⏳ TODO     |
+| **TOTAL** |                      | **1h45min** |             |
 
 ---
 
 ## PERGUNTAS FREQUENTES (FAQ)
 
 ### P: Posso fazer isso em produção?
+
 **R:** Não. Teste primeiro localmente, depois em staging, depois em produção.
 
 ### P: Preciso limpar browser cache?
+
 **R:** Se tiver problemas, sim. Ir para DevTools > Application > Clear Site Data.
 
 ### P: E se esqueci de salvar um arquivo?
+
 **R:** Sem problema, vai dar erro. Salva e tenta de novo.
 
 ### P: Qual é o erro mais comum?
+
 **R:** Cookies não salvos porque POST `/api/auth/signin` não foi criado. Verificar que arquivo existe em `app/api/auth/signin/route.ts`.
 
 ### P: Como debugar se algo não funciona?
+
 **R:** Abra Console (DevTools) e cole:
+
 ```javascript
 console.log('Cookies:', document.cookie);
 fetch('/api/auth/signin', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email: 'test@test.com', password: 'test' })
-}).then(r => r.json()).then(console.log);
+  body: JSON.stringify({ email: 'test@test.com', password: 'test' }),
+})
+  .then((r) => r.json())
+  .then(console.log);
 ```
 
 ### P: Preciso mudar algo no banco de dados?
+
 **R:** Não. Apenas código cliente/servidor.
 
 ---
@@ -565,7 +571,7 @@ fetch('/api/auth/signin', {
 ---
 
 **Documentação Completa:** Veja também:
+
 - `AUDITORIA_MIDDLEWARE_COOKIES.md` - Diagnóstico técnico detalhado
 - `GUIA_TESTES_AUTENTICACAO.md` - Guia de testes completo
 - `PROBLEMA_TECNICO_DIAGRAMA.md` - Diagramas e fluxos visuais
-

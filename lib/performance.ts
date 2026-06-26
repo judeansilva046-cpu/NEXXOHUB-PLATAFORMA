@@ -57,10 +57,7 @@ export function measureComponentRender(componentName: string) {
 /**
  * Measure API call performance
  */
-export async function measureApiCall<T>(
-  name: string,
-  fn: () => Promise<T>,
-): Promise<T> {
+export async function measureApiCall<T>(name: string, fn: () => Promise<T>): Promise<T> {
   const startTime = performance.now();
 
   try {
@@ -88,19 +85,19 @@ export async function measureApiCall<T>(
 /**
  * Optimize large list rendering with virtualization
  */
-export interface VirtualizationOptions {
+export interface VirtualizationOptions<T = unknown> {
   itemHeight: number;
   containerHeight: number;
-  items: any[];
+  items: T[];
   buffer?: number;
 }
 
-export function getVisibleItems({
+export function getVisibleItems<T>({
   itemHeight,
   containerHeight,
   items,
   buffer = 5,
-}: VirtualizationOptions) {
+}: VirtualizationOptions<T>) {
   const visibleCount = Math.ceil(containerHeight / itemHeight);
   const visibleStart = Math.max(0, Math.floor(window.scrollY / itemHeight) - buffer);
   const visibleEnd = Math.min(items.length, visibleStart + visibleCount + buffer * 2);
@@ -116,9 +113,9 @@ export function getVisibleItems({
 /**
  * Debounce function for search/filter optimization
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
-  wait: number,
+  wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout;
 
@@ -136,9 +133,9 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Throttle function for scroll/resize optimization
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
-  limit: number,
+  limit: number
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
 
@@ -157,11 +154,19 @@ export function throttle<T extends (...args: any[]) => any>(
  * Memory usage monitoring
  */
 export function getMemoryUsage() {
-  if (typeof window !== 'undefined' && (performance as any).memory) {
+  const memoryPerformance = performance as Performance & {
+    memory?: {
+      usedJSHeapSize: number;
+      totalJSHeapSize: number;
+      jsHeapSizeLimit: number;
+    };
+  };
+
+  if (typeof window !== 'undefined' && memoryPerformance.memory) {
     return {
-      usedJSHeapSize: ((performance as any).memory.usedJSHeapSize / 1048576).toFixed(2) + ' MB',
-      totalJSHeapSize: ((performance as any).memory.totalJSHeapSize / 1048576).toFixed(2) + ' MB',
-      jsHeapSizeLimit: ((performance as any).memory.jsHeapSizeLimit / 1048576).toFixed(2) + ' MB',
+      usedJSHeapSize: (memoryPerformance.memory.usedJSHeapSize / 1048576).toFixed(2) + ' MB',
+      totalJSHeapSize: (memoryPerformance.memory.totalJSHeapSize / 1048576).toFixed(2) + ' MB',
+      jsHeapSizeLimit: (memoryPerformance.memory.jsHeapSizeLimit / 1048576).toFixed(2) + ' MB',
     };
   }
   return null;

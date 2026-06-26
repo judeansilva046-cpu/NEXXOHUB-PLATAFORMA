@@ -23,6 +23,7 @@ npm run test:e2e:ui           # Playwright with UI
 ## Environment Variables
 
 Required in `.env.local`:
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -52,17 +53,18 @@ The hierarchy is: **Organization → Clinics / Companies → Employees**
 
 There are **two different Supabase client factories** — use the right one:
 
-| Context | Import | Usage |
-|---|---|---|
-| Browser / Client Component | `lib/supabase/client.ts` → `supabase` | auth helpers `createBrowserClient` |
-| Server Component / API Route | `lib/supabase/server.ts` → `createClient()` | `@supabase/ssr` `createServerClient` with cookies |
-| Auth utilities (login, signup) | `lib/supabase/auth.ts` → `authClient` | thin wrappers over `supabase.auth.*` |
+| Context                        | Import                                      | Usage                                             |
+| ------------------------------ | ------------------------------------------- | ------------------------------------------------- |
+| Browser / Client Component     | `lib/supabase/client.ts` → `supabase`       | auth helpers `createBrowserClient`                |
+| Server Component / API Route   | `lib/supabase/server.ts` → `createClient()` | `@supabase/ssr` `createServerClient` with cookies |
+| Auth utilities (login, signup) | `lib/supabase/auth.ts` → `authClient`       | thin wrappers over `supabase.auth.*`              |
 
 `lib/supabase.ts` is a legacy file using the raw `createClient`; prefer the files above.
 
 ### API Routes Pattern
 
 All routes in `app/api/` follow the same pattern:
+
 1. `createClient()` from `lib/supabase/server`
 2. Authenticate via `supabase.auth.getUser()` — throw `AuthenticationError` if missing
 3. Fetch `users` row to get `organization_id` (and `role` when write access needed)
@@ -74,12 +76,14 @@ Role check for mutations: only `role === 'admin'` can create/update/delete; thro
 ### Error Handling
 
 Custom error hierarchy in `lib/errors.ts`:
+
 - `AppError` (base) → `ValidationError` (400), `AuthenticationError` (401), `AuthorizationError` (403), `NotFoundError` (404), `ConflictError` (409), `InternalServerError` (500)
 - `getErrorResponse(error)` converts any thrown value to `{ statusCode, code, message }`
 
 ### Middleware
 
 `middleware.ts` runs on all non-API, non-static routes:
+
 - Unauthenticated requests to `/dashboard/*` → redirect to `/auth/login`
 - Authenticated requests to `/auth/*` → redirect to `/dashboard`
 - Adds security headers (`X-Frame-Options`, `X-Content-Type-Options`, etc.)

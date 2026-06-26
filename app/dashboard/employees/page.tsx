@@ -1,10 +1,23 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../../components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -14,11 +27,13 @@ import {
   DialogTrigger,
 } from '../../../components/ui/dialog';
 import { EmployeeForm } from '../../../components/forms/employee-form';
-import { Employee } from '../../../types';
+import { Company, Employee } from '../../../types';
 import { toast } from 'sonner';
+import type { EmployeeInput } from '../../../lib/validations/employee';
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,27 +56,41 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     fetchEmployees();
+    fetch('/api/companies', { cache: 'no-store' })
+      .then((response) => response.json())
+      .then((result) => setCompanies(result.data || []))
+      .catch(() => setCompanies([]));
   }, []);
 
   const filteredEmployees = useMemo(() => {
-    return employees.filter((employee) =>
-      employee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(searchTerm.toLowerCase())
+    return employees.filter(
+      (employee) =>
+        employee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [employees, searchTerm]);
 
-  const handleCreateEmployee = async (_data: any) => {
+  const handleCreateEmployee = async (data: EmployeeInput) => {
     try {
-      // For now, we'll just show a message since we need companyId
-      // In the future, add company selector to the form
-      toast.error('Por favor, selecione uma empresa');
-      throw new Error('Company ID required');
+      const res = await fetch('/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result?.error?.message || 'Erro ao criar colaborador');
+      }
+      toast.success('Colaborador criado com sucesso!');
+      setIsDialogOpen(false);
+      await fetchEmployees();
     } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar colaborador');
       throw err;
     }
   };
 
-  const handleUpdateEmployee = async (data: any) => {
+  const handleUpdateEmployee = async (data: EmployeeInput) => {
     if (!editingEmployee) return;
 
     try {
@@ -138,12 +167,11 @@ export default function EmployeesPage() {
               <DialogTitle>
                 {editingEmployee ? 'Editar Colaborador' : 'Novo Colaborador'}
               </DialogTitle>
-              <DialogDescription>
-                Preencha os dados do colaborador
-              </DialogDescription>
+              <DialogDescription>Preencha os dados do colaborador</DialogDescription>
             </DialogHeader>
             <EmployeeForm
               initialData={editingEmployee}
+              companies={companies}
               onSubmit={editingEmployee ? handleUpdateEmployee : handleCreateEmployee}
             />
           </DialogContent>
@@ -153,7 +181,9 @@ export default function EmployeesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Lista de Colaboradores</CardTitle>
-          <CardDescription>Total: {filteredEmployees.length} de {employees.length} colaborador(es)</CardDescription>
+          <CardDescription>
+            Total: {filteredEmployees.length} de {employees.length} colaborador(es)
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -190,7 +220,10 @@ export default function EmployeesPage() {
                       {new Date(employee.createdAt).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Dialog open={isDialogOpen && editingEmployee?.id === employee.id} onOpenChange={setIsDialogOpen}>
+                      <Dialog
+                        open={isDialogOpen && editingEmployee?.id === employee.id}
+                        onOpenChange={setIsDialogOpen}
+                      >
                         <DialogTrigger asChild>
                           <Button
                             variant="outline"
@@ -203,12 +236,11 @@ export default function EmployeesPage() {
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Editar Colaborador</DialogTitle>
-                            <DialogDescription>
-                              Atualize os dados do colaborador
-                            </DialogDescription>
+                            <DialogDescription>Atualize os dados do colaborador</DialogDescription>
                           </DialogHeader>
                           <EmployeeForm
                             initialData={employee}
+                            companies={companies}
                             onSubmit={handleUpdateEmployee}
                           />
                         </DialogContent>

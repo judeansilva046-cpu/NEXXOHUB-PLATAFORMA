@@ -9,30 +9,37 @@ The NexxoHub platform has a complete CI/CD pipeline configured with GitHub Actio
 ### 1. CI Pipeline (`ci.yml`)
 
 **Triggers**:
+
 - Push to `main` or `develop` branches
 - Pull requests to `main` or `develop`
 
 **Jobs**:
+
 1. **Lint & Format** - Code quality checks
+
    - ESLint
    - Prettier format check
    - TypeScript type checking
 
 2. **Unit Tests** - Run all unit tests
+
    - Vitest runner
    - Coverage reporting
    - Codecov upload
 
 3. **Build** - Verify build succeeds
+
    - Next.js build
    - Bundle analysis
    - Artifact storage
 
 4. **Security Checks** - Security validation
+
    - `npm audit` for vulnerabilities
    - Secret detection (Truffle Hog)
 
 5. **E2E Tests** - End-to-end tests (PR only)
+
    - Playwright tests
    - Cross-browser testing
    - Report artifacts
@@ -42,21 +49,26 @@ The NexxoHub platform has a complete CI/CD pipeline configured with GitHub Actio
 ### 2. Deploy Pipeline (`deploy.yml`)
 
 **Triggers**:
+
 - Push to `main` branch
 - File changes in specific paths
 - Manual trigger (`workflow_dispatch`)
 
 **Stages**:
+
 1. **Validation** - Pre-deploy checks
+
    - Full test suite
    - Build verification
 
 2. **Staging** - Deploy to staging environment
+
    - Vercel staging deployment
    - Smoke tests
    - Health checks
 
 3. **Production** - Deploy to production
+
    - Vercel production deployment
    - Smoke tests
    - Health checks
@@ -81,6 +93,7 @@ The NexxoHub platform has a complete CI/CD pipeline configured with GitHub Actio
 Set these in GitHub Settings → Secrets and Variables → Actions:
 
 #### Vercel Secrets
+
 ```
 VERCEL_TOKEN              # Vercel API token
 VERCEL_ORG_ID            # Vercel organization ID
@@ -89,6 +102,7 @@ VERCEL_PROJECT_ID_PRODUCTION # Production project ID
 ```
 
 #### Supabase Secrets
+
 ```
 SUPABASE_URL             # Supabase project URL
 SUPABASE_ANON_KEY        # Public anon key
@@ -96,11 +110,13 @@ SUPABASE_SERVICE_ROLE_KEY # Service role key (for E2E)
 ```
 
 #### Slack Secrets (Optional)
+
 ```
 SLACK_WEBHOOK            # Slack webhook URL for notifications
 ```
 
 #### Codecov Secrets (Optional)
+
 ```
 CODECOV_TOKEN            # Codecov.io token
 ```
@@ -108,22 +124,26 @@ CODECOV_TOKEN            # Codecov.io token
 ### Setup Steps
 
 1. **Get Vercel Token**:
+
    ```bash
    # Go to vercel.com → Settings → Tokens
    # Create new token, copy it
    ```
 
 2. **Add GitHub Secrets**:
+
    ```
    GitHub Repo → Settings → Secrets and Variables → Actions → New repository secret
    ```
 
 3. **Configure Staging Vercel Project**:
+
    ```
    vercel env pull  # Pull environment variables
    ```
 
 4. **Configure Production Vercel Project**:
+
    ```
    vercel env pull --environment=production
    ```
@@ -231,6 +251,7 @@ act push -b main
 ### Automatic Deployment Flow
 
 1. **Develop in Feature Branch**
+
    ```bash
    git checkout -b feature/my-feature
    # Make changes
@@ -238,16 +259,19 @@ act push -b main
    ```
 
 2. **Create Pull Request**
+
    - Push to GitHub
    - Click "Compare & pull request"
    - CI pipeline runs automatically ✅
 
 3. **Review & Approve**
+
    - Code review
    - All CI checks pass
    - Click "Merge pull request"
 
 4. **Deploy to Staging**
+
    - Automatic deployment to staging
    - Smoke tests run
    - Slack notification
@@ -303,6 +327,7 @@ https://vercel.com/dashboard
 ### Build Fails in CI but Works Locally
 
 1. **Clear cache**:
+
    ```bash
    rm -rf .next node_modules
    npm install
@@ -310,6 +335,7 @@ https://vercel.com/dashboard
    ```
 
 2. **Check Node version**:
+
    ```bash
    node --version  # Should be 18+
    ```
@@ -322,6 +348,7 @@ https://vercel.com/dashboard
 ### Tests Pass Locally but Fail in CI
 
 1. **Run in CI mode**:
+
    ```bash
    CI=true npm run test
    ```
@@ -334,6 +361,7 @@ https://vercel.com/dashboard
 ### Deployment Stuck
 
 1. **Check Vercel logs**:
+
    - Go to Vercel → Project → Deployments
    - Click on the stuck deployment
    - View build logs
@@ -348,10 +376,12 @@ https://vercel.com/dashboard
 ### Speed Up CI
 
 1. **Enable caching**:
+
    - Already configured with `npm ci`
    - Cache folder: `node_modules`
 
 2. **Parallel jobs**:
+
    - Lint, test, security run in parallel
    - Build waits for lint & test
 
@@ -362,6 +392,7 @@ https://vercel.com/dashboard
 ### Speed Up Deploy
 
 1. **Vercel caching**:
+
    - Already configured
    - Build artifacts cached
 
@@ -425,12 +456,12 @@ hotfix/...         # Critical production fix
 
 ### Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| "Failed to build" | Check logs in Actions tab |
-| "Tests failing" | Run `npm test` locally |
-| "Deploy stuck" | Check Vercel dashboard |
-| "Secrets not found" | Add to GitHub Secrets |
+| Issue               | Solution                  |
+| ------------------- | ------------------------- |
+| "Failed to build"   | Check logs in Actions tab |
+| "Tests failing"     | Run `npm test` locally    |
+| "Deploy stuck"      | Check Vercel dashboard    |
+| "Secrets not found" | Add to GitHub Secrets     |
 
 ### Getting Help
 

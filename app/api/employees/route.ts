@@ -1,141 +1,89 @@
-import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
+import { createClient } from '../../../lib/supabase/server';
 import { createEmployeeSchema } from '../../../lib/validations/employee';
+import { mapEmployee } from '../../../lib/domain-mappers';
+import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
 
-type UserProfile = {
-  organization_id?: string;
-  role?: string;
-};
+type Profile = { organization_id: string; role: string };
 
-type CompanyData = {
-  organization_id?: string;
-};
-
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const companyId = req.nextUrl.searchParams.get('companyId');
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile?.organization_id) {
-      throw new AuthenticationError();
-    }
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) throw new AuthenticationError();
 
     let query = supabase
       .from('employees')
-      .select(`
-        *,
-        companies(organization_id)
-      `)
-      .eq('companies.organization_id', profile.organization_id);
+      .select('*, companies(name)')
+      .order('created_at', { ascending: false });
+    const companyId = request.nextUrl.searchParams.get('companyId');
+    if (companyId) query = query.eq('company_id', companyId);
+    const { data, error } = await query;
+    if (error) throw error;
 
-    if (companyId) {
-      query = query.eq('company_id', companyId);
-    }
-
-    const { data: employees, error: employeesError } = await query.order('created_at', { ascending: false });
-
-    if (employeesError) {
-      throw new Error('Failed to fetch employees');
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: employees,
-    });
+    return NextResponse.json({ success: true, data: (data || []).map(mapEmployee) });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const result = getErrorResponse(error);
+    return NextResponse.json(result, { status: result.statusCode });
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) throw new AuthenticationError();
+    const { data: profileData } = await supabase
       .from('users')
       .select('organization_id, role')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
+    const profile = profileData as Profile | null;
+    if (!profile) throw new AuthenticationError();
+    if (!['admin', 'manager'].includes(profile.role)) throw new AuthorizationError();
 
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile?.organization_id) {
-      throw new AuthenticationError();
-    }
-
-    if (!profile.role || !['admin', 'manager'].includes(profile.role)) {
-      throw new AuthorizationError('Apenas administradores ou gerentes podem criar colaboradores');
-    }
-
-    const body = await req.json();
-    const { companyId, ...employeeData } = body;
-
+    const input = createEmployeeSchema.parse(await request.json());
     const { data: company } = await supabase
       .from('companies')
-      .select('organization_id')
-      .eq('id', companyId)
+      .select('id, organization_id, name')
+      .eq('id', input.companyId)
       .single();
-
-    const companyData = company as unknown as CompanyData;
-
-    if (!companyData || companyData.organization_id !== profile.organization_id) {
+    if (!company || company.organization_id !== profile.organization_id) {
       throw new AuthorizationError('Empresa não encontrada');
     }
 
-    const validatedData = createEmployeeSchema.parse(employeeData);
-
-    const { data: employee, error: employeeError } = await supabase
+    const { data, error } = await supabase
       .from('employees')
-      .insert([
-        {
-          company_id: companyId,
-          ...validatedData,
-        },
-      ])
-      .select()
+      .insert({
+        organization_id: profile.organization_id,
+        company_id: input.companyId,
+        full_name: input.fullName,
+        cpf: input.cpf,
+        registration: input.registration,
+        position: input.position,
+        department: input.department,
+        email: input.email,
+        phone: input.phone,
+        admission_date: input.admissionDate,
+        status: input.status,
+      })
+      .select('*, companies(name)')
       .single();
+    if (error) throw error;
 
-    if (employeeError) {
-      throw new Error('Failed to create employee');
-    }
+    await supabase.from('activity_events').insert({
+      organization_id: profile.organization_id,
+      actor_id: auth.user.id,
+      event_type: 'employee.created',
+      entity_type: 'employee',
+      entity_id: data.id,
+      title: 'Novo colaborador',
+      description: `${input.fullName} • ${company.name}`,
+    });
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: employee,
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, data: mapEmployee(data) }, { status: 201 });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const result = getErrorResponse(error);
+    return NextResponse.json(result, { status: result.statusCode });
   }
 }

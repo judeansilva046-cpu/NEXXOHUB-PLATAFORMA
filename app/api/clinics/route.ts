@@ -1,114 +1,81 @@
-import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
+import { createClient } from '../../../lib/supabase/server';
 import { createClinicSchema } from '../../../lib/validations/clinic';
+import { mapClinic } from '../../../lib/domain-mappers';
+import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
 
-type UserProfile = {
-  organization_id?: string;
-  role?: string;
-};
+type Profile = { organization_id: string; role: string };
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) throw new AuthenticationError();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile?.organization_id) {
-      throw new AuthenticationError();
-    }
-
-    const { data: clinics, error: clinicsError } = await supabase
+    const { data, error } = await supabase
       .from('clinics')
       .select('*')
-      .eq('organization_id', profile.organization_id)
       .order('created_at', { ascending: false });
+    if (error) throw error;
 
-    if (clinicsError) {
-      throw new Error('Failed to fetch clinics');
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: clinics,
-    });
+    return NextResponse.json({ success: true, data: (data || []).map(mapClinic) });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const result = getErrorResponse(error);
+    return NextResponse.json(result, { status: result.statusCode });
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) throw new AuthenticationError();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
+    const { data: profileData } = await supabase
       .from('users')
       .select('organization_id, role')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single();
+    const profile = profileData as Profile | null;
+    if (!profile) throw new AuthenticationError();
+    if (!['admin', 'manager'].includes(profile.role)) throw new AuthorizationError();
 
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile?.organization_id) {
-      throw new AuthenticationError();
-    }
-
-    if (profile.role !== 'admin') {
-      throw new AuthorizationError('Apenas administradores podem criar clínicas');
-    }
-
-    const body = await req.json();
-    const validatedData = createClinicSchema.parse(body);
-
-    const { data: clinic, error: clinicError } = await supabase
+    const input = createClinicSchema.parse(await request.json());
+    const { data, error } = await supabase
       .from('clinics')
-      .insert([
-        {
-          organization_id: profile.organization_id,
-          ...validatedData,
-        },
-      ])
+      .insert({
+        organization_id: profile.organization_id,
+        name: input.name,
+        cnpj: input.cnpj,
+        responsible_name: input.responsibleName,
+        email: input.email,
+        phone: input.phone,
+        address: input.address,
+        specialties: input.specialties
+          ? input.specialties
+              .split(',')
+              .map((item) => item.trim())
+              .filter(Boolean)
+          : [],
+        status: input.status,
+      })
       .select()
       .single();
+    if (error) throw error;
 
-    if (clinicError) {
-      throw new Error('Failed to create clinic');
-    }
+    await supabase.from('activity_events').insert({
+      organization_id: profile.organization_id,
+      actor_id: auth.user.id,
+      event_type: 'clinic.created',
+      entity_type: 'clinic',
+      entity_id: data.id,
+      title: 'Clínica cadastrada',
+      description: input.name,
+    });
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: clinic,
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, data: mapClinic(data) }, { status: 201 });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const result = getErrorResponse(error);
+    return NextResponse.json(result, { status: result.statusCode });
   }
 }

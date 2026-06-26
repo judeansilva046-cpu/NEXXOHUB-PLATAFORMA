@@ -3,6 +3,7 @@
 ## O que é Sentry?
 
 Sentry monitora **erros em produção** e alerta você automaticamente:
+
 - ❌ Erros JavaScript capturados em tempo real
 - 📍 Stack traces completas
 - 📊 Performance monitoring
@@ -48,7 +49,7 @@ No **Netlify Console**:
 ```
 1. Vá em "Site settings" → "Build & deploy" → "Environment"
 2. Adicione nova variável:
-   
+
    Key: NEXT_PUBLIC_SENTRY_DSN
    Value: (cole o DSN que copiou)
 
@@ -78,7 +79,7 @@ git push origin main
 // Abra DevTools (F12) → Console
 // Cole este comando:
 
-Sentry.captureException(new Error("Teste de erro Sentry"));
+Sentry.captureException(new Error('Teste de erro Sentry'));
 
 // Vá em Sentry.io → Issues
 // Você deve ver o erro aparecer em tempo real!

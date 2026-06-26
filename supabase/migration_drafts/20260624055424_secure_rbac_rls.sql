@@ -1,3 +1,4 @@
+-- DRAFT - superseded by the Phase 1 critical lockdown migrations.
 -- Secure RBAC tables exposed through the Supabase Data API.
 -- This migration is intentionally limited to RBAC and advisor findings.
 

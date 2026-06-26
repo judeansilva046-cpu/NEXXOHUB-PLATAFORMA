@@ -1,0 +1,1 @@
+-- Intentionally empty. This keeps `supabase db reset` deterministic.

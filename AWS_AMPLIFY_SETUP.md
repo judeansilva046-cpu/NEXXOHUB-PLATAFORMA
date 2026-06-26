@@ -22,6 +22,7 @@ NEXT_PUBLIC_APP_URL=https://seu-amplify-url.amplifyapp.com
 ```
 
 ### Como encontrar:
+
 1. Acesse **Supabase Dashboard**
 2. Vá em **Settings** → **API**
 3. Copie:
@@ -34,6 +35,7 @@ NEXT_PUBLIC_APP_URL=https://seu-amplify-url.amplifyapp.com
 ## 🌐 Passo 2: Conectar ao AWS Amplify
 
 ### 2.1 - Acessar AWS Amplify Console
+
 ```
 1. Vá para: https://console.aws.amazon.com/amplify/
 2. Clique em "Create app" → "Host web app"
@@ -42,6 +44,7 @@ NEXT_PUBLIC_APP_URL=https://seu-amplify-url.amplifyapp.com
 ```
 
 ### 2.2 - Autorizar GitHub
+
 ```
 1. Clique em "Authorize AWS Amplify on GitHub"
 2. Faça login na sua conta GitHub
@@ -50,6 +53,7 @@ NEXT_PUBLIC_APP_URL=https://seu-amplify-url.amplifyapp.com
 ```
 
 ### 2.3 - Selecionar Branch
+
 ```
 1. Selecione branch: main
 2. Clique em "Next"
@@ -60,6 +64,7 @@ NEXT_PUBLIC_APP_URL=https://seu-amplify-url.amplifyapp.com
 ## ⚙️ Passo 3: Configurar Build Settings
 
 ### 3.1 - Build Configuration
+
 ```
 1. Na tela "Configure build settings":
 2. Build command: npm run build
@@ -68,6 +73,7 @@ NEXT_PUBLIC_APP_URL=https://seu-amplify-url.amplifyapp.com
 ```
 
 ### 3.2 - Editar amplify.yml
+
 Já foi criado na raiz do seu projeto com as configurações corretas.
 
 ```yaml
@@ -132,6 +138,7 @@ frontend:
 ## 📊 Monitorar Deploy
 
 ### Durante o Build:
+
 ```
 1. Vá em "Deployments"
 2. Clique no deploy em progresso
@@ -144,6 +151,7 @@ frontend:
 ```
 
 ### Se houver erro:
+
 1. Clique na etapa que falhou
 2. Leia os logs
 3. Erros comuns:
@@ -222,6 +230,7 @@ No **Amplify Console**:
 ## ❓ Troubleshooting
 
 ### Build falha com "Cannot find module"
+
 ```
 Solução:
 1. Execute localmente: npm run build
@@ -231,6 +240,7 @@ Solução:
 ```
 
 ### Variáveis não são lidas no frontend
+
 ```
 Solução:
 1. Certifique-se que começa com NEXT_PUBLIC_
@@ -239,6 +249,7 @@ Solução:
 ```
 
 ### Supabase não conecta
+
 ```
 Solução:
 1. Verifique NEXT_PUBLIC_SUPABASE_URL
@@ -249,6 +260,7 @@ Solução:
 ```
 
 ### Timeout no build
+
 ```
 Solução:
 1. Verifique se npm ci está no preBuild
@@ -261,11 +273,13 @@ Solução:
 ## 🎉 Sucesso!
 
 Seu NexxoHub estará disponível em:
+
 ```
 https://main.xxxxx.amplifyapp.com
 ```
 
 Você terá:
+
 - ✅ Deploy automático em cada push para main
 - ✅ Preview de PRs antes de mergear
 - ✅ Logs detalhados

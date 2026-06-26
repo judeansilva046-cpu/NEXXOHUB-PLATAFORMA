@@ -73,6 +73,7 @@ Você pode fazer backup manual também:
 ## 📊 Backup Strategy para NexxoHub
 
 ### Tier Free (o que você tem):
+
 ```
 ✅ Backups automáticos diários
 ✅ Retenção 7 dias
@@ -81,6 +82,7 @@ Você pode fazer backup manual também:
 ```
 
 ### Tier Pro (quando crescer):
+
 ```
 ✅ Backups a cada hora
 ✅ Retenção 30 dias
@@ -93,6 +95,7 @@ Você pode fazer backup manual também:
 ## 🔐 Segurança do Backup
 
 Supabase:
+
 ```
 ✅ Criptografa backups em repouso
 ✅ Criptografa durante transmissão
@@ -105,18 +108,21 @@ Supabase:
 ## 📋 Retenção de Dados
 
 ### Plano Free:
+
 ```
 Backup automático: 7 dias atrás
 Você pode restaurar de até 7 dias atrás
 ```
 
 ### Quando PRO:
+
 ```
 Backup automático: 30 dias atrás
 Maior janela para recuperação
 ```
 
 ### Manual Backups:
+
 ```
 Você faz quantos quiser
 Sem limite de retenção
@@ -141,7 +147,7 @@ Ideal para antes de mudanças grandes
 Se seu banco de dados foi corrompido ou deletado:
 
 ```
-1. CALMA - Você tem backup! 
+1. CALMA - Você tem backup!
 2. Acesse Supabase Dashboard
 3. Vá em "Settings" → "Backups"
 4. Clique em "Restore from backup"
@@ -156,6 +162,7 @@ Se seu banco de dados foi corrompido ou deletado:
 ## 💡 Boas Práticas
 
 ### ✅ Faça backup manual ANTES de:
+
 ```
 - Grandes migrações de dados
 - Atualizações de schema
@@ -164,6 +171,7 @@ Se seu banco de dados foi corrompido ou deletado:
 ```
 
 ### ✅ Monitore:
+
 ```
 - Logs de backup em "Activity"
 - Alertas de falha via email
@@ -171,6 +179,7 @@ Se seu banco de dados foi corrompido ou deletado:
 ```
 
 ### ✅ Teste restauração:
+
 ```
 Uma vez por mês:
 1. Faça backup manual

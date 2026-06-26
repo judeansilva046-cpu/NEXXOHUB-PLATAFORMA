@@ -1,117 +1,66 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { loginForE2E } from './helpers/auth';
 
 test.describe('Complete CRUD Flow - Clinics', () => {
-  test('should complete create → read → update → delete flow', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
+    await loginForE2E(page);
     await page.goto('/dashboard/clinics');
+    await expect(
+      page.getByRole('heading', { name: 'Clínicas', exact: true })
+    ).toBeVisible();
+  });
 
-    // 1. READ - Verify initial state
-    expect(page.locator('h1:has-text("Clínicas")')).toBeVisible();
+  test('should complete create → read → update → delete flow', async ({ page }) => {
+    test.setTimeout(60_000);
+    const suffix = Date.now().toString().slice(-8);
+    const originalName = `Clínica E2E ${suffix}`;
+    const updatedName = `${originalName} Atualizada`;
 
-    const initialCountText = await page
-      .locator('[class*="CardDescription"]')
-      .textContent();
+    await page.getByRole('button', { name: '+ Nova Clínica' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Nova Clínica' });
+    await dialog.getByRole('textbox', { name: 'Nome' }).fill(originalName);
+    await dialog
+      .getByRole('textbox', { name: 'CNPJ' })
+      .fill(
+        `98.${suffix.slice(0, 3)}.${suffix.slice(3, 6)}/0001-${suffix.slice(6, 8)}`
+      );
+    await dialog.getByRole('textbox', { name: 'Responsável' }).fill('Responsável E2E');
+    await dialog.getByRole('textbox', { name: 'E-mail' }).fill(`e2e-${suffix}@example.test`);
+    await dialog.getByRole('textbox', { name: 'Telefone' }).fill('(11) 99999-9999');
+    await dialog.getByRole('textbox', { name: 'Endereço' }).fill('Rua E2E, 123');
+    await dialog.getByRole('textbox', { name: 'Especialidades' }).fill('Psicologia');
+    await dialog.getByRole('button', { name: 'Salvar clínica' }).click();
 
-    // 2. CREATE - Create a new clinic
-    await page.click('button:has-text("Nova Clínica")');
+    await expect(page.getByText(originalName)).toBeVisible();
+    const row = page.getByRole('row').filter({ hasText: originalName });
+    await row.getByRole('button', { name: 'Editar' }).click();
 
-    // Fill form
-    await page.fill('input[placeholder*="Nome"]', 'Clínica E2E Test');
-    await page.fill('input[placeholder*="CNPJ"]', '12.345.678/0001-99');
-    await page.fill('input[placeholder*="Telefone"]', '(11) 9999-9999');
-    await page.fill('input[placeholder*="Endereço"]', 'Rua E2E, 123');
+    const editDialog = page.getByRole('dialog');
+    await expect(editDialog).toBeVisible();
+    await expect(
+      editDialog.getByRole('heading', { name: 'Editar Clínica', exact: true })
+    ).toBeVisible();
+    await editDialog.getByRole('textbox', { name: 'Nome' }).fill(updatedName);
+    await editDialog.getByRole('button', { name: 'Salvar clínica' }).click();
+    await expect(page.getByText(updatedName)).toBeVisible();
 
-    // Submit
-    const submitButton = page.locator('button:has-text("Salvar")').first();
-    await submitButton.click();
-
-    // Wait for toast notification
-    const toastSuccess = page.locator('text=/sucesso|criada/i');
-    await expect(toastSuccess).toBeVisible({ timeout: 5000 });
-
-    // 3. READ - Verify clinic appears in list
-    await page.waitForTimeout(1000);
-    const searchInput = page.locator('input[placeholder*="Buscar"]');
-    await searchInput.fill('Clínica E2E Test');
-
-    await page.waitForTimeout(500);
-    expect(page.locator('text=/Clínica E2E Test/i')).toBeVisible();
-
-    // 4. UPDATE - Edit the clinic
-    const editButton = page.locator('button:has-text("Editar")').first();
-    await editButton.click();
-
-    // Change name
-    const nameInput = page.locator('input[placeholder*="Nome"]').first();
-    await nameInput.clear();
-    await nameInput.fill('Clínica E2E Test Updated');
-
-    // Save
-    const saveButton = page.locator('button:has-text("Salvar")').first();
-    await saveButton.click();
-
-    // Wait for success
-    await expect(toastSuccess).toBeVisible({ timeout: 5000 });
-
-    // Verify update
-    await page.waitForTimeout(1000);
-    expect(page.locator('text=/Clínica E2E Test Updated/i')).toBeVisible();
-
-    // 5. DELETE - Delete the clinic
-    await searchInput.clear();
-    await searchInput.fill('Clínica E2E Test Updated');
-
-    await page.waitForTimeout(500);
-    const deleteButton = page.locator('button:has-text("Deletar")').first();
-    await deleteButton.click();
-
-    // Confirm deletion
-    const confirmButton = page.locator('button:has-text("Confirmar")').first();
-    await confirmButton.click();
-
-    // Wait for success
-    await expect(toastSuccess).toBeVisible({ timeout: 5000 });
-
-    // Verify deletion
-    await page.waitForTimeout(1000);
-    const emptyMsg = page.locator('text=/nenhuma clínica/i');
-    const isDeletedVisible = await emptyMsg.isVisible().catch(() => false);
-    const stillExists = await page.locator('text=/Clínica E2E Test Updated/i')
-      .isVisible()
-      .catch(() => false);
-
-    expect(!stillExists || isDeletedVisible).toBe(true);
+    const updatedRow = page.getByRole('row').filter({ hasText: updatedName });
+    await updatedRow.getByRole('button', { name: 'Deletar' }).click();
+    await updatedRow.getByRole('button', { name: 'Confirmar' }).click();
+    await expect(page.getByText(updatedName)).toHaveCount(0);
   });
 
   test('should validate required fields', async ({ page }) => {
-    await page.goto('/dashboard/clinics');
-    await page.click('button:has-text("Nova Clínica")');
-
-    // Try to submit empty form
-    const submitButton = page.locator('button:has-text("Salvar")').first();
-    await submitButton.click();
-
-    // Should show validation error
-    const errorMsg = page.locator('text=/obrigatório|required|inválido/i');
-    await expect(errorMsg).toBeVisible({ timeout: 5000 });
+    await page.getByRole('button', { name: '+ Nova Clínica' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Nova Clínica' });
+    await dialog.getByRole('button', { name: 'Salvar clínica' }).click();
+    await expect(dialog.getByText('CNPJ inválido')).toBeVisible();
+    await expect(dialog.getByText('Email inválido')).toBeVisible();
   });
 
   test('should filter clinics by search', async ({ page }) => {
-    await page.goto('/dashboard/clinics');
-
-    const table = page.locator('table');
-    const hasTable = await table.isVisible().catch(() => false);
-
-    if (hasTable) {
-      const initialRowCount = await page.locator('tbody tr').count();
-
-      // Search with pattern that likely won't match
-      const searchInput = page.locator('input[placeholder*="Buscar"]');
-      await searchInput.fill('xyznonexistent12345');
-
-      await page.waitForTimeout(500);
-
-      const filteredRowCount = await page.locator('tbody tr').count();
-      expect(filteredRowCount <= initialRowCount).toBe(true);
-    }
+    const searchInput = page.getByPlaceholder('Buscar por nome ou CNPJ...');
+    await searchInput.fill('xyznonexistent12345');
+    await expect(page.getByText('Nenhuma clínica encontrada')).toBeVisible();
   });
 });

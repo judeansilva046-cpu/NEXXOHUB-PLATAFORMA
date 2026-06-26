@@ -1,21 +1,34 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../../components/ui/table';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '../../../components/ui/dialog';
 import { ClinicForm } from '../../../components/forms/clinic-form';
 import { Clinic } from '../../../types';
 import { toast } from 'sonner';
+import type { ClinicInput } from '../../../lib/validations/clinic';
 
 export default function ClinicsPage() {
   const [clinics, setClinics] = useState<Clinic[]>([]);
@@ -45,13 +58,14 @@ export default function ClinicsPage() {
 
   // Filter clinics based on search term
   const filteredClinics = useMemo(() => {
-    return clinics.filter((clinic) =>
-      clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      clinic.cnpj.includes(searchTerm)
+    return clinics.filter(
+      (clinic) =>
+        clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        clinic.cnpj.includes(searchTerm)
     );
   }, [clinics, searchTerm]);
 
-  const handleCreateClinic = async (data: any) => {
+  const handleCreateClinic = async (data: ClinicInput) => {
     try {
       const res = await fetch('/api/clinics', {
         method: 'POST',
@@ -59,7 +73,10 @@ export default function ClinicsPage() {
         body: JSON.stringify(data),
       });
 
-      if (!res.ok) throw new Error('Failed to create clinic');
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result?.error?.message || 'Erro ao criar clínica');
+      }
 
       toast.success('Clínica criada com sucesso!');
       setIsDialogOpen(false);
@@ -70,7 +87,7 @@ export default function ClinicsPage() {
     }
   };
 
-  const handleUpdateClinic = async (data: any) => {
+  const handleUpdateClinic = async (data: ClinicInput) => {
     if (!editingClinic) return;
 
     try {
@@ -80,7 +97,10 @@ export default function ClinicsPage() {
         body: JSON.stringify(data),
       });
 
-      if (!res.ok) throw new Error('Failed to update clinic');
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result?.error?.message || 'Erro ao atualizar clínica');
+      }
 
       toast.success('Clínica atualizada com sucesso!');
       setIsDialogOpen(false);
@@ -133,23 +153,26 @@ export default function ClinicsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Clínicas</h1>
           <p className="text-gray-600 mt-2">Gerenciar suas clínicas</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => setEditingClinic(null)}
-            >
-              + Nova Clínica
-            </Button>
-          </DialogTrigger>
+        <Button
+          className="bg-blue-600 hover:bg-blue-700"
+          onClick={() => {
+            setEditingClinic(null);
+            setIsDialogOpen(true);
+          }}
+        >
+          + Nova Clínica
+        </Button>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setEditingClinic(null);
+          }}
+        >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>
-                {editingClinic ? 'Editar Clínica' : 'Nova Clínica'}
-              </DialogTitle>
-              <DialogDescription>
-                Preencha os dados da clínica
-              </DialogDescription>
+              <DialogTitle>{editingClinic ? 'Editar Clínica' : 'Nova Clínica'}</DialogTitle>
+              <DialogDescription>Preencha os dados da clínica</DialogDescription>
             </DialogHeader>
             <ClinicForm
               initialData={editingClinic}
@@ -162,7 +185,9 @@ export default function ClinicsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Lista de Clínicas</CardTitle>
-          <CardDescription>Total: {filteredClinics.length} de {clinics.length} clínica(s)</CardDescription>
+          <CardDescription>
+            Total: {filteredClinics.length} de {clinics.length} clínica(s)
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -193,33 +218,18 @@ export default function ClinicsPage() {
                     <TableCell className="font-medium">{clinic.name}</TableCell>
                     <TableCell>{clinic.cnpj}</TableCell>
                     <TableCell>{clinic.phone || '-'}</TableCell>
-                    <TableCell>
-                      {new Date(clinic.createdAt).toLocaleDateString('pt-BR')}
-                    </TableCell>
+                    <TableCell>{new Date(clinic.createdAt).toLocaleDateString('pt-BR')}</TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Dialog open={isDialogOpen && editingClinic?.id === clinic.id} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingClinic(clinic)}
-                          >
-                            Editar
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Editar Clínica</DialogTitle>
-                            <DialogDescription>
-                              Atualize os dados da clínica
-                            </DialogDescription>
-                          </DialogHeader>
-                          <ClinicForm
-                            initialData={clinic}
-                            onSubmit={handleUpdateClinic}
-                          />
-                        </DialogContent>
-                      </Dialog>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingClinic(clinic);
+                          setIsDialogOpen(true);
+                        }}
+                      >
+                        Editar
+                      </Button>
 
                       {deleteConfirmId === clinic.id ? (
                         <div className="flex gap-2">

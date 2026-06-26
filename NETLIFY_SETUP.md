@@ -31,6 +31,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 ### Como encontrar no Supabase:
+
 1. Acesse **Supabase Dashboard**
 2. Vá em **Settings** → **API**
 3. Copie:
@@ -119,6 +120,7 @@ Functions directory: (deixar vazio)
 ## 📊 Monitorar Deploy
 
 ### Durante o Build:
+
 ```
 1. Vá em "Deploys"
 2. Clique no deploy em progresso
@@ -126,6 +128,7 @@ Functions directory: (deixar vazio)
 ```
 
 ### Status esperado:
+
 ```
 ✅ Building
 ✅ Deploying
@@ -138,6 +141,7 @@ Functions directory: (deixar vazio)
 ## 🎯 Configurações Pós-Deploy
 
 ### 1. Preview de Pull Requests (Automático!)
+
 ```
 Netlify cria URLs de preview automaticamente para cada PR
 Ótimo para testar antes de mergear para main
@@ -153,6 +157,7 @@ Netlify cria URLs de preview automaticamente para cada PR
 ```
 
 ### 3. HTTPS (Automático!)
+
 ```
 Netlify fornece SSL/TLS grátis para todos os domínios
 Renova automaticamente
@@ -227,6 +232,7 @@ No **Netlify Dashboard**:
 ## ❓ Troubleshooting
 
 ### Build falha com "Cannot find module"
+
 ```
 Solução:
 1. Certifique-se que package-lock.json está no Git
@@ -236,6 +242,7 @@ Solução:
 ```
 
 ### Variáveis não são lidas
+
 ```
 Solução:
 1. Certifique-se que começa com NEXT_PUBLIC_
@@ -245,6 +252,7 @@ Solução:
 ```
 
 ### Erro 500 no site
+
 ```
 Solução:
 1. Abra DevTools (F12)
@@ -254,6 +262,7 @@ Solução:
 ```
 
 ### Timeout no build
+
 ```
 Solução:
 1. Vá em "Build settings"
@@ -265,21 +274,22 @@ Solução:
 
 ## 🎉 Comparação: Netlify vs Vercel vs AWS Amplify
 
-| Aspecto | Netlify | Vercel | AWS Amplify |
-|--------|---------|--------|------------|
-| Setup | ⭐⭐⭐ Muito fácil | ⭐⭐⭐ Muito fácil | ⭐⭐ Moderado |
-| Performance | ⭐⭐⭐⭐ Excelente | ⭐⭐⭐⭐⭐ Perfeito | ⭐⭐⭐⭐ Muito bom |
-| Free Tier | ⭐⭐⭐⭐ Generoso | ⭐⭐ Limitado | ⭐⭐⭐ Bom |
-| Suporte Next.js | ⭐⭐⭐⭐ Plugin dedicado | ⭐⭐⭐⭐⭐ Nativo | ⭐⭐⭐ Bom |
-| Preview PRs | ⭐⭐⭐⭐⭐ Automático | ⭐⭐⭐⭐ Automático | ⭐⭐⭐ Requer config |
-| Customização | ⭐⭐⭐⭐ Muito | ⭐⭐⭐ Moderada | ⭐⭐⭐⭐⭐ Total |
-| Preço | ⭐⭐⭐⭐ Transparente | ⭐⭐⭐ Justo | ⭐⭐ Pode crescer |
+| Aspecto         | Netlify                  | Vercel              | AWS Amplify          |
+| --------------- | ------------------------ | ------------------- | -------------------- |
+| Setup           | ⭐⭐⭐ Muito fácil       | ⭐⭐⭐ Muito fácil  | ⭐⭐ Moderado        |
+| Performance     | ⭐⭐⭐⭐ Excelente       | ⭐⭐⭐⭐⭐ Perfeito | ⭐⭐⭐⭐ Muito bom   |
+| Free Tier       | ⭐⭐⭐⭐ Generoso        | ⭐⭐ Limitado       | ⭐⭐⭐ Bom           |
+| Suporte Next.js | ⭐⭐⭐⭐ Plugin dedicado | ⭐⭐⭐⭐⭐ Nativo   | ⭐⭐⭐ Bom           |
+| Preview PRs     | ⭐⭐⭐⭐⭐ Automático    | ⭐⭐⭐⭐ Automático | ⭐⭐⭐ Requer config |
+| Customização    | ⭐⭐⭐⭐ Muito           | ⭐⭐⭐ Moderada     | ⭐⭐⭐⭐⭐ Total     |
+| Preço           | ⭐⭐⭐⭐ Transparente    | ⭐⭐⭐ Justo        | ⭐⭐ Pode crescer    |
 
 ---
 
 ## 📞 Próximos Passos
 
 1. **Adicionar package-lock.json** (se não tiver)
+
    ```bash
    npm install
    git add package-lock.json

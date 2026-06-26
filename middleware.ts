@@ -1,99 +1,111 @@
-import {
-  createServerClient,
-  type CookieOptions,
-  type SetAllCookies,
-} from '@supabase/ssr';
+import { createServerClient, type CookieOptions, type SetAllCookies } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import {
+  isProtectedPortalPath,
+  portalConfig,
+  portalFromRequest,
+  type PortalType,
+} from './lib/portal';
+import { getPublicEnvironment } from './lib/env';
 
-export async function middleware(req: NextRequest) {
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const hostname = request.headers.get('host') || request.nextUrl.hostname;
+  const requestedPortal = portalFromRequest(hostname, pathname);
+  const isAuthPage = pathname.startsWith('/auth');
+  const isProtected = isProtectedPortalPath(pathname);
+
   try {
-    let res = NextResponse.next({ request: req });
+    const { supabaseUrl, supabaseAnonKey } = getPublicEnvironment();
+    let response = NextResponse.next({ request });
     let cookiesToSet: { name: string; value: string; options: CookieOptions }[] = [];
 
-    // ============================================================================
-    // CREATE SUPABASE CLIENT WITH PROPER COOKIE HANDLING
-    // ============================================================================
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return req.cookies.getAll();
-          },
-          setAll: ((updatedCookies) => {
-            cookiesToSet = updatedCookies;
-            updatedCookies.forEach(({ name, value }) => req.cookies.set(name, value));
-            res = NextResponse.next({ request: req });
-            updatedCookies.forEach(({ name, value, options }) => {
-              res.cookies.set(name, value, options);
-            });
-          }) satisfies SetAllCookies,
-        },
-      }
-    );
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: ((updatedCookies) => {
+          cookiesToSet = updatedCookies;
+          updatedCookies.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          updatedCookies.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        }) satisfies SetAllCookies,
+      },
+    });
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const pathname = req.nextUrl.pathname;
-    const isAuthPage = pathname.startsWith('/auth');
-    const isDashboardPage = pathname.startsWith('/dashboard');
-    const isApiRoute = pathname.startsWith('/api');
-
-    // Skip middleware for API routes
-    if (isApiRoute) {
-      return res;
-    }
-
-    // ============================================================================
-    // ROUTE PROTECTION LOGIC - NO LOOPS
-    // ============================================================================
-
-    // Case 1: User NOT authenticated trying to access /dashboard
-    if (!user && isDashboardPage) {
-      const redirect = NextResponse.redirect(new URL('/auth/login', req.url));
+    const redirectWithCookies = (url: URL) => {
+      const redirect = NextResponse.redirect(url);
       cookiesToSet.forEach(({ name, value, options }) =>
         redirect.cookies.set(name, value, options)
       );
       return redirect;
+    };
+
+    if (!user && isProtected) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('portal', requestedPortal);
+      return redirectWithCookies(loginUrl);
     }
 
-    // Case 2: User authenticated trying to access /auth/* (only redirect once)
+    let memberships: Array<{ portal: PortalType }> = [];
+    if (user) {
+      const { data } = await supabase
+        .from('portal_memberships')
+        .select('portal')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+      memberships = (data || []) as Array<{ portal: PortalType }>;
+    }
+
+    if (user && isProtected) {
+      const hasPortalAccess = memberships.some(
+        (membership) => membership.portal === requestedPortal
+      );
+      if (!hasPortalAccess) {
+        const deniedUrl = new URL('/access-denied', request.url);
+        deniedUrl.searchParams.set('portal', requestedPortal);
+        return redirectWithCookies(deniedUrl);
+      }
+    }
+
     if (user && isAuthPage) {
-      const redirect = NextResponse.redirect(new URL('/dashboard', req.url));
-      cookiesToSet.forEach(({ name, value, options }) =>
-        redirect.cookies.set(name, value, options)
-      );
-      return redirect;
+      const preferredPortal =
+        memberships.find((item) => item.portal === requestedPortal)?.portal ||
+        memberships[0]?.portal ||
+        'nexxohub';
+      return redirectWithCookies(new URL(portalConfig[preferredPortal].home, request.url));
     }
 
-    // ============================================================================
-    // SECURITY HEADERS
-    // ============================================================================
-    res.headers.set('X-Content-Type-Options', 'nosniff');
-    res.headers.set('X-Frame-Options', 'SAMEORIGIN');
-    res.headers.set('X-XSS-Protection', '1; mode=block');
-    res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('X-Nexxohub-Portal', requestedPortal);
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    return response;
+  } catch (error) {
+    console.error('[MIDDLEWARE_ERROR]', error);
+    if (isProtected) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('portal', requestedPortal);
+      loginUrl.searchParams.set('error', 'Serviço de autenticação indisponível.');
+      return NextResponse.redirect(loginUrl);
+    }
 
-    return res;
-  } catch (err) {
-    console.error('[MIDDLEWARE_ERROR]', err);
-    return NextResponse.next();
+    const response = NextResponse.next();
+    response.headers.set('X-Nexxohub-Portal', requestedPortal);
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    return response;
   }
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

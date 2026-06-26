@@ -1,7 +1,7 @@
 # MELHORIAS RECOMENDADAS
 
 **Data:** Junho de 2026  
-**Foco:** Qualidade, Performance, Escalabilidade  
+**Foco:** Qualidade, Performance, Escalabilidade
 
 ---
 
@@ -12,6 +12,7 @@
 **Benefício:** Separação clara de responsabilidades
 
 **Estrutura Proposta:**
+
 ```
 /app
   - Páginas e rotas
@@ -58,11 +59,13 @@
 **Benefício:** UI consistente, fácil de manter
 
 **Recomendação:** Usar Storybook
+
 ```bash
 npx storybook@latest init
 ```
 
 **Componentes Base:**
+
 ```
 Button
 Input
@@ -94,6 +97,7 @@ Tags
 **Benefício:** Garantir integridade de dados
 
 **Implementação:**
+
 ```typescript
 // lib/validation/schemas.ts
 import { z } from 'zod';
@@ -118,6 +122,7 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 **Benefício:** APIs previsíveis
 
 **Padrão Recomendado:**
+
 ```typescript
 // Success
 {
@@ -149,9 +154,9 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 
 ```typescript
 // components/ui/Skeleton.tsx
-export function Skeleton({ 
-  className, 
-  ...props 
+export function Skeleton({
+  className,
+  ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
@@ -185,11 +190,13 @@ function UsersSkeleton() {
 **Benefício:** Feedback ao usuário
 
 **Recomendação:** Usar Sonner ou React Toastify
+
 ```bash
 npm install sonner
 ```
 
 **Uso:**
+
 ```typescript
 import { toast } from 'sonner';
 
@@ -325,9 +332,9 @@ export async function loggingMiddleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   const response = NextResponse.next();
-  
+
   const duration = Date.now() - startTime;
-  
+
   console.log({
     timestamp: new Date().toISOString(),
     method: req.method,
@@ -353,7 +360,7 @@ export async function loggingMiddleware(req: NextRequest) {
 export class ValidationError extends Error {
   constructor(
     public field: string,
-    message: string,
+    message: string
   ) {
     super(message);
     this.name = 'ValidationError';
@@ -406,8 +413,8 @@ const apiClient = axios.create({
 
 // Response interceptor
 apiClient.interceptors.response.use(
-  response => response.data,
-  error => {
+  (response) => response.data,
+  (error) => {
     if (error.response?.status === 401) {
       // Redirect to login
     }
@@ -427,6 +434,7 @@ export default apiClient;
 **Benefício:** Compatibilidade futura
 
 **Estrutura:**
+
 ```
 /api/v1/
   /auth
@@ -491,7 +499,7 @@ USING (
     SELECT organization_id FROM users WHERE id = auth.uid()
   )
   AND id IN (
-    SELECT clinic_id FROM user_roles 
+    SELECT clinic_id FROM user_roles
     WHERE user_id = auth.uid() AND role = 'manager'
   )
 );
@@ -509,7 +517,7 @@ USING (
 // lib/supabase/queries.ts
 export async function getOrganizationUsers(orgId: string) {
   const supabase = createServerClient();
-  
+
   return supabase
     .from('users')
     .select('id, email, name, role, created_at')
@@ -519,10 +527,11 @@ export async function getOrganizationUsers(orgId: string) {
 
 export async function getUserWithRole(userId: string) {
   const supabase = createServerClient();
-  
+
   return supabase
     .from('users')
-    .select(`
+    .select(
+      `
       *,
       roles (
         id,
@@ -532,7 +541,8 @@ export async function getUserWithRole(userId: string) {
           name
         )
       )
-    `)
+    `
+    )
     .eq('id', userId)
     .single();
 }
@@ -664,6 +674,7 @@ CREATE INDEX idx_api_keys_user ON api_keys(user_id);
 ### 6.1 Implementar Database Query Optimization
 
 **Técnicas:**
+
 - Usar índices em foreign keys
 - Usar índices em campos de busca
 - Denormalizar dados quando necessário
@@ -674,9 +685,7 @@ CREATE INDEX idx_api_keys_user ON api_keys(user_id);
 const data = await supabase.from('users').select('*');
 
 // Bom: Select apenas o necessário
-const data = await supabase
-  .from('users')
-  .select('id, email, name, role');
+const data = await supabase.from('users').select('id, email, name, role');
 ```
 
 **Tempo:** 2-3 horas
@@ -695,11 +704,7 @@ export async function cachedGetUser(userId: string) {
   return unstable_cache(
     async () => {
       const supabase = createServerClient();
-      return supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      return supabase.from('users').select('*').eq('id', userId).single();
     },
     [`user-${userId}`],
     { revalidate: 3600 } // 1 hora
@@ -772,31 +777,31 @@ npm install @vercel/analytics @posthog/nextjs
 
 ## RESUMO DE MELHORIAS
 
-| Área | Melhoria | Tempo | Impacto |
-|------|----------|-------|---------|
-| Arquitetura | Layer Pattern | 8h | Alto |
-| Arquitetura | Design System | 20h | Alto |
-| Frontend | Skeleton System | 2h | Médio |
-| Frontend | Toast/Notifications | 1h | Médio |
-| Frontend | Modal System | 2h | Médio |
-| Frontend | Form Validation | 2h | Alto |
-| Frontend | Breadcrumb | 1h | Baixo |
-| Backend | Request Logging | 1h | Médio |
-| Backend | Error Handling | 2h | Alto |
-| Backend | Interceptors | 1h | Médio |
-| Backend | API Versioning | 1h | Médio |
-| Database | Audit Logs | 4h | Médio |
-| Database | RLS Policies | 4h | Alto |
-| Database | Query Functions | 3h | Médio |
-| Segurança | CORS Whitelist | 1h | Alto |
-| Segurança | Security Headers | 1h | Alto |
-| Segurança | Input Sanitization | 1h | Alto |
-| Segurança | API Keys | 3h | Médio |
-| Performance | Query Optimization | 3h | Alto |
-| Performance | Caching | 2h | Alto |
-| Performance | CDN | 1h | Médio |
-| Monitoring | Error Tracking | 2h | Médio |
-| Monitoring | Analytics | 2h | Médio |
+| Área        | Melhoria            | Tempo | Impacto |
+| ----------- | ------------------- | ----- | ------- |
+| Arquitetura | Layer Pattern       | 8h    | Alto    |
+| Arquitetura | Design System       | 20h   | Alto    |
+| Frontend    | Skeleton System     | 2h    | Médio   |
+| Frontend    | Toast/Notifications | 1h    | Médio   |
+| Frontend    | Modal System        | 2h    | Médio   |
+| Frontend    | Form Validation     | 2h    | Alto    |
+| Frontend    | Breadcrumb          | 1h    | Baixo   |
+| Backend     | Request Logging     | 1h    | Médio   |
+| Backend     | Error Handling      | 2h    | Alto    |
+| Backend     | Interceptors        | 1h    | Médio   |
+| Backend     | API Versioning      | 1h    | Médio   |
+| Database    | Audit Logs          | 4h    | Médio   |
+| Database    | RLS Policies        | 4h    | Alto    |
+| Database    | Query Functions     | 3h    | Médio   |
+| Segurança   | CORS Whitelist      | 1h    | Alto    |
+| Segurança   | Security Headers    | 1h    | Alto    |
+| Segurança   | Input Sanitization  | 1h    | Alto    |
+| Segurança   | API Keys            | 3h    | Médio   |
+| Performance | Query Optimization  | 3h    | Alto    |
+| Performance | Caching             | 2h    | Alto    |
+| Performance | CDN                 | 1h    | Médio   |
+| Monitoring  | Error Tracking      | 2h    | Médio   |
+| Monitoring  | Analytics           | 2h    | Médio   |
 
 **TOTAL:** 65-80 horas
 
@@ -805,6 +810,7 @@ npm install @vercel/analytics @posthog/nextjs
 ## ROADMAP PROPOSTO
 
 ### Sprint 1-2 (Semanas 1-2): Fundamentos
+
 - [ ] Instalar dependências
 - [ ] Arquitetura em camadas
 - [ ] Design System básico
@@ -812,6 +818,7 @@ npm install @vercel/analytics @posthog/nextjs
 - [ ] RLS policies
 
 ### Sprint 3-4 (Semanas 3-4): UX & Forms
+
 - [ ] Skeleton system
 - [ ] Toast/Notifications
 - [ ] Modal system
@@ -819,6 +826,7 @@ npm install @vercel/analytics @posthog/nextjs
 - [ ] Error handling
 
 ### Sprint 5-6 (Semanas 5-6): Performance & Observability
+
 - [ ] Query optimization
 - [ ] Caching strategy
 - [ ] Error tracking
@@ -826,6 +834,7 @@ npm install @vercel/analytics @posthog/nextjs
 - [ ] Audit logs
 
 ### Sprint 7+ (Contínuo): Refinamento
+
 - [ ] API versioning
 - [ ] API keys
 - [ ] Input sanitization

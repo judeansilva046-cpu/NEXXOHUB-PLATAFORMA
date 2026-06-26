@@ -1,185 +1,111 @@
-import { createClient } from '../../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
-import { createOrganizationSchema } from '../../../../lib/validations/organization';
+import { createClient } from '../../../../lib/supabase/server';
+import { updateCompanySchema } from '../../../../lib/validations/company';
+import { mapCompany } from '../../../../lib/domain-mappers';
+import {
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  getErrorResponse,
+} from '../../../../lib/errors';
 
-type UserProfile = {
-  organization_id?: string;
-  role?: string;
-};
+type Profile = { organization_id: string; role: string };
+type Context = { params: { id: string } };
 
-type CompanyData = {
-  organization_id?: string;
-};
+async function context() {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) throw new AuthenticationError();
+  const { data } = await supabase
+    .from('users')
+    .select('organization_id, role')
+    .eq('id', auth.user.id)
+    .single();
+  if (!data) throw new AuthenticationError();
+  return { supabase, user: auth.user, profile: data as Profile };
+}
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: NextRequest, { params }: Context) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: company, error: companyError } = await supabase
+    const { supabase } = await context();
+    const { data, error } = await supabase
       .from('companies')
-      .select('*')
+      .select('*, clinics(name)')
       .eq('id', params.id)
       .single();
-
-    if (companyError || !company) {
-      throw new NotFoundError('Empresa');
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-    const companyData = company as unknown as CompanyData;
-
-    if (!profile || profile.organization_id !== companyData.organization_id) {
-      throw new AuthorizationError();
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: company,
-    });
+    if (error || !data) throw new NotFoundError('Empresa');
+    return NextResponse.json({ success: true, data: mapCompany(data) });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const result = getErrorResponse(error);
+    return NextResponse.json(result, { status: result.statusCode });
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: Context) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile || profile.role !== 'admin') {
-      throw new AuthorizationError();
-    }
-
-    const { data: company } = await supabase
+    const { supabase, user, profile } = await context();
+    if (!['admin', 'manager'].includes(profile.role)) throw new AuthorizationError();
+    const input = updateCompanySchema.parse(await request.json());
+    const update = {
+      ...(input.clinicId !== undefined && { clinic_id: input.clinicId }),
+      ...(input.legalName !== undefined && { legal_name: input.legalName }),
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.cnpj !== undefined && { cnpj: input.cnpj }),
+      ...(input.hrResponsible !== undefined && { hr_responsible: input.hrResponsible }),
+      ...(input.email !== undefined && { email: input.email }),
+      ...(input.phone !== undefined && { phone: input.phone }),
+      ...(input.address !== undefined && { address: input.address }),
+      ...(input.employeeCount !== undefined && { employee_count: input.employeeCount }),
+      ...(input.status !== undefined && { status: input.status }),
+    };
+    const { data, error } = await supabase
       .from('companies')
-      .select('organization_id')
+      .update(update)
       .eq('id', params.id)
+      .eq('organization_id', profile.organization_id)
+      .select('*, clinics(name)')
       .single();
-
-    const companyData = company as unknown as CompanyData;
-
-    if (!companyData || companyData.organization_id !== profile.organization_id) {
-      throw new NotFoundError('Empresa');
-    }
-
-    const body = await req.json();
-    const validatedData = createOrganizationSchema.partial().parse(body);
-
-    const { data: updatedCompany, error: updateError } = await supabase
-      .from('companies')
-      .update(validatedData)
-      .eq('id', params.id)
-      .select()
-      .single();
-
-    if (updateError) {
-      throw new Error('Failed to update company');
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: updatedCompany,
+    if (error || !data) throw new NotFoundError('Empresa');
+    await supabase.from('activity_events').insert({
+      organization_id: profile.organization_id,
+      actor_id: user.id,
+      event_type: 'company.updated',
+      entity_type: 'company',
+      entity_id: data.id,
+      title: 'Empresa atualizada',
+      description: data.name,
     });
+    return NextResponse.json({ success: true, data: mapCompany(data) });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const result = getErrorResponse(error);
+    return NextResponse.json(result, { status: result.statusCode });
   }
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: NextRequest, { params }: Context) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile || profile.role !== 'admin') {
-      throw new AuthorizationError();
-    }
-
-    const { data: company } = await supabase
-      .from('companies')
-      .select('organization_id')
-      .eq('id', params.id)
-      .single();
-
-    const companyData = company as unknown as CompanyData;
-
-    if (!companyData || companyData.organization_id !== profile.organization_id) {
-      throw new NotFoundError('Empresa');
-    }
-
-    const { error: deleteError } = await supabase
+    const { supabase, user, profile } = await context();
+    if (profile.role !== 'admin') throw new AuthorizationError();
+    const { data, error } = await supabase
       .from('companies')
       .delete()
-      .eq('id', params.id);
-
-    if (deleteError) {
-      throw new Error('Failed to delete company');
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Empresa deletada com sucesso',
+      .eq('id', params.id)
+      .eq('organization_id', profile.organization_id)
+      .select('id, name')
+      .single();
+    if (error || !data) throw new NotFoundError('Empresa');
+    await supabase.from('activity_events').insert({
+      organization_id: profile.organization_id,
+      actor_id: user.id,
+      event_type: 'company.deleted',
+      entity_type: 'company',
+      entity_id: data.id,
+      title: 'Empresa excluída',
+      description: data.name,
     });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const result = getErrorResponse(error);
+    return NextResponse.json(result, { status: result.statusCode });
   }
 }

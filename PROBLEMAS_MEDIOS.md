@@ -3,7 +3,7 @@
 **Data:** Junho de 2026  
 **Total de Problemas Médios:** 25  
 **Tempo Total Estimado:** 35-50 horas  
-**Prioridade:** Resolver após problemas críticos  
+**Prioridade:** Resolver após problemas críticos
 
 ---
 
@@ -13,17 +13,19 @@
 
 **ID:** FE-001  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Sem bibliotecas de state management (Zustand, Context, etc).
 
 **Consequência:**
+
 - Props drilling excessivo
 - Código difícil de manter
 - Performance ruim (re-renders)
 
 **Solução Recomendada:**
+
 ```bash
 npm install zustand
 # ou
@@ -31,6 +33,7 @@ npm install jotai
 ```
 
 Exemplo com Zustand:
+
 ```typescript
 import { create } from 'zustand';
 
@@ -49,23 +52,26 @@ const useUserStore = create((set) => ({
 
 **ID:** FE-002  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Sem React Query ou SWR para gerenciar requests.
 
 **Consequência:**
+
 - Múltiplas requisições
 - Cache manual
 - Loading states complicados
 - Race conditions
 
 **Solução Recomendada:**
+
 ```bash
 npm install @tanstack/react-query
 ```
 
 Exemplo:
+
 ```typescript
 import { useQuery } from '@tanstack/react-query';
 
@@ -75,7 +81,7 @@ function Users() {
     queryFn: async () => {
       const res = await fetch('/api/users');
       return res.json();
-    }
+    },
   });
 }
 ```
@@ -88,12 +94,13 @@ function Users() {
 
 **ID:** FE-003  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Mesmo com Tailwind instalado, componentes base não estão criados.
 
 **Componentes Faltando:**
+
 - Button
 - Input
 - Form
@@ -124,17 +131,19 @@ npx shadcn-ui@latest add form
 
 **ID:** FE-004  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Erros não são capturados graciosamente.
 
 **Consequência:**
+
 - App quebra completamente
 - Usuário vê tela branca
 - Não há feedback
 
 **Solução:**
+
 ```typescript
 'use client';
 
@@ -158,13 +167,14 @@ export function ErrorBoundary({ children }: ErrorBoundaryProps) {
 
 **ID:** FE-005  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Não há padrão para mostrar loading/skeleton.
 
 **Solução:**
 Criar componentes:
+
 - `<Skeleton />`
 - `<LoadingSpinner />`
 - `<LoadingButton />`
@@ -177,12 +187,13 @@ Criar componentes:
 
 **ID:** BE-001  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Sem tratamento padronizado de erros nas APIs.
 
 **Solução:**
+
 ```typescript
 export class AppError extends Error {
   constructor(
@@ -196,17 +207,13 @@ export class AppError extends Error {
 
 export async function handleError(error: unknown) {
   if (error instanceof AppError) {
-    return new Response(
-      JSON.stringify({ error: error.code, message: error.message }),
-      { status: error.statusCode }
-    );
+    return new Response(JSON.stringify({ error: error.code, message: error.message }), {
+      status: error.statusCode,
+    });
   }
-  
+
   console.error('Unexpected error:', error);
-  return new Response(
-    JSON.stringify({ error: 'INTERNAL_SERVER_ERROR' }),
-    { status: 500 }
-  );
+  return new Response(JSON.stringify({ error: 'INTERNAL_SERVER_ERROR' }), { status: 500 });
 }
 ```
 
@@ -218,12 +225,13 @@ export async function handleError(error: unknown) {
 
 **ID:** BE-002  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Sem logging de requests/erros.
 
 **Solução:**
+
 ```bash
 npm install winston pino
 # ou usar Vercel Functions logging
@@ -233,8 +241,8 @@ npm install winston pino
 import { logger } from '@/lib/logger';
 
 export async function POST(req: Request) {
-  logger.info('Creating user', { 
-    timestamp: new Date().toISOString() 
+  logger.info('Creating user', {
+    timestamp: new Date().toISOString(),
   });
   // ...
 }
@@ -248,13 +256,14 @@ export async function POST(req: Request) {
 
 **ID:** BE-003  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 APIs sem versionamento.
 
 **Solução:**
 Estruturar como:
+
 ```
 /api/v1/users
 /api/v1/organizations
@@ -269,13 +278,14 @@ Estruturar como:
 
 **ID:** BE-004  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Sem limite de resultados.
 
 **Solução:**
 Implementar offset/limit ou cursor pagination:
+
 ```typescript
 const limit = Math.min(parseInt(req.query.limit || '10'), 100);
 const offset = parseInt(req.query.offset || '0');
@@ -294,12 +304,13 @@ const { data, count } = await supabase
 
 **ID:** BE-005  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Sem swagger/OpenAPI documentation.
 
 **Solução:**
+
 ```bash
 npm install swagger-jsdoc swagger-ui-express
 ```
@@ -312,12 +323,13 @@ npm install swagger-jsdoc swagger-ui-express
 
 **ID:** DB-001  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Queries podem ser lentas sem índices.
 
 **Solução:**
+
 ```sql
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_organizations_id ON organizations(id);
@@ -332,13 +344,14 @@ CREATE INDEX idx_users_org_id ON users(organization_id);
 
 **ID:** DB-002  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Sem possibilidade de recuperar dados deletados.
 
 **Solução:**
 Adicionar coluna `deleted_at`:
+
 ```sql
 ALTER TABLE users ADD COLUMN deleted_at TIMESTAMP;
 
@@ -354,14 +367,15 @@ SELECT * FROM users WHERE deleted_at IS NULL;
 
 **ID:** DB-003  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Sem rastreamento de quando dados foram criados/modificados.
 
 **Solução:**
+
 ```sql
-ALTER TABLE users 
+ALTER TABLE users
   ADD COLUMN created_at TIMESTAMP DEFAULT NOW(),
   ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
 ```
@@ -374,12 +388,13 @@ ALTER TABLE users
 
 **ID:** DB-004  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Foreign keys não estão definidos.
 
 **Solução:**
+
 ```sql
 ALTER TABLE clinics
   ADD CONSTRAINT fk_clinics_organization
@@ -395,13 +410,14 @@ ALTER TABLE clinics
 
 **ID:** AUTH-001  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto (segurança)  
+**Impacto:** Alto (segurança)
 
 **Problema:**
 Sem proteção contra força bruta/roubo de senha.
 
 **Solução:**
 Implementar 2FA no Supabase:
+
 ```typescript
 // Gerar secret TOTP
 const { data } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
@@ -418,7 +434,7 @@ await supabase.auth.mfa.challengeFactor({ factorId: data.id });
 
 **ID:** AUTH-002  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Sem logout em múltiplos dispositivos.
@@ -434,20 +450,21 @@ Implementar session invalidation.
 
 **ID:** AUTH-003  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Sem integração com Google, GitHub, etc.
 
 **Solução:**
 Configurar em Supabase:
+
 ```typescript
 // Enable GitHub OAuth em Supabase dashboard
 // Usar no cliente:
 
 const { error } = await supabase.auth.signInWithOAuth({
   provider: 'github',
-  options: { redirectTo: `${location.origin}/auth/callback` }
+  options: { redirectTo: `${location.origin}/auth/callback` },
 });
 ```
 
@@ -459,13 +476,14 @@ const { error } = await supabase.auth.signInWithOAuth({
 
 **ID:** PERF-001  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Bundle JavaScript potencialmente grande.
 
 **Solução:**
 Usar dynamic imports:
+
 ```typescript
 import dynamic from 'next/dynamic';
 
@@ -482,13 +500,14 @@ const HeavyComponent = dynamic(() => import('@/components/Heavy'), {
 
 **ID:** PERF-002  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Imagens não otimizadas.
 
 **Solução:**
 Usar Next.js Image:
+
 ```typescript
 import Image from 'next/image';
 
@@ -509,12 +528,13 @@ import Image from 'next/image';
 
 **ID:** QA-001  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Sem enforcement de padrão de código.
 
 **Solução:**
+
 ```bash
 npm install -D eslint @typescript-eslint/eslint-plugin prettier
 npx eslint --init
@@ -528,12 +548,13 @@ npx eslint --init
 
 **ID:** QA-002  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Baixo  
+**Impacto:** Baixo
 
 **Problema:**
 Formatação inconsistente.
 
 **Solução:**
+
 ```bash
 npm install -D prettier
 # Criar .prettierrc
@@ -547,12 +568,13 @@ npm install -D prettier
 
 **ID:** QA-003  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Médio  
+**Impacto:** Médio
 
 **Problema:**
 Código ruim pode ser commitado.
 
 **Solução:**
+
 ```bash
 npm install -D husky lint-staged
 
@@ -568,12 +590,13 @@ npx husky add .husky/pre-commit "npx lint-staged"
 
 **ID:** TEST-001  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Nenhum teste automatizado.
 
 **Solução:**
+
 ```bash
 npm install -D vitest @testing-library/react
 ```
@@ -586,13 +609,14 @@ npm install -D vitest @testing-library/react
 
 **ID:** TEST-002  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Sem testes de fluxo completo.
 
 **Solução:**
 Implementar testes de integração com MSW:
+
 ```bash
 npm install -D msw
 ```
@@ -605,13 +629,14 @@ npm install -D msw
 
 **ID:** CICD-001  
 **Severidade:** 🟠 MÉDIO  
-**Impacto:** Alto  
+**Impacto:** Alto
 
 **Problema:**
 Sem verificações antes de deploy.
 
 **Solução:**
 Configurar GitHub Actions:
+
 ```yaml
 name: CI
 
@@ -636,6 +661,7 @@ jobs:
 ## RESUMO POR CATEGORIA
 
 ### Frontend (5 problemas)
+
 - State management
 - Data fetching
 - UI components
@@ -645,6 +671,7 @@ jobs:
 **Tempo Total:** 15-18 horas
 
 ### Backend (5 problemas)
+
 - Error handling
 - Logging
 - API versioning
@@ -654,6 +681,7 @@ jobs:
 **Tempo Total:** 10-12 horas
 
 ### Database (4 problemas)
+
 - Índices
 - Soft deletes
 - Timestamps
@@ -662,6 +690,7 @@ jobs:
 **Tempo Total:** 3-4 horas
 
 ### Autenticação (3 problemas)
+
 - MFA
 - Session management
 - OAuth
@@ -669,12 +698,14 @@ jobs:
 **Tempo Total:** 8-10 horas
 
 ### Performance (2 problemas)
+
 - Code splitting
 - Image optimization
 
 **Tempo Total:** 3 horas
 
 ### Code Quality (3 problemas)
+
 - ESLint
 - Prettier
 - Git hooks
@@ -682,12 +713,14 @@ jobs:
 **Tempo Total:** 2.5 horas
 
 ### Testing (2 problemas)
+
 - Unit tests
 - Integration tests
 
 **Tempo Total:** 9-14 horas
 
 ### CI/CD (1 problema)
+
 - GitHub Actions
 
 **Tempo Total:** 2 horas
@@ -697,6 +730,7 @@ jobs:
 ## MATRIZ DE PRIORIDADE
 
 ### Alta Prioridade (Resolver em 1-2 semanas)
+
 - FE-001: State management
 - FE-002: Data fetching
 - FE-003: UI components
@@ -708,6 +742,7 @@ jobs:
 **Tempo:** 20-25 horas
 
 ### Média Prioridade (Resolver em 2-4 semanas)
+
 - FE-004-005: Error handling & Loading
 - BE-003-005: Versionamento, Paginação, Docs
 - AUTH-001-003: MFA, Sessions, OAuth
@@ -718,6 +753,7 @@ jobs:
 **Tempo:** 25-30 horas
 
 ### Baixa Prioridade (Resolver em 1-2 meses)
+
 - DB-002-004: Soft deletes, Timestamps, FKs
 - CICD-001: GitHub Actions
 - PERF-003+: Outras otimizações
@@ -735,4 +771,4 @@ jobs:
 
 ---
 
-**Documento gerado:** Junho de 2026  
+**Documento gerado:** Junho de 2026

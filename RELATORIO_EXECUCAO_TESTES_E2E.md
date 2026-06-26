@@ -9,6 +9,7 @@
 ## 📋 RESUMO EXECUTIVO
 
 Criada suite **completa de testes E2E** com 6 testes críticos cobrindo:
+
 - ✅ Login/Logout
 - ✅ Persistência de sessão
 - ✅ Proteção de rotas
@@ -25,6 +26,7 @@ Criada suite **completa de testes E2E** com 6 testes críticos cobrindo:
 ## 🧬 ESTRUTURA DOS TESTES
 
 ### Teste 1️⃣: Login com Email e Senha
+
 **Objetivo:** Validar fluxo completo de login sem "piscando"
 
 ```
@@ -41,6 +43,7 @@ Criada suite **completa de testes E2E** com 6 testes críticos cobrindo:
 ---
 
 ### Teste 2️⃣: Persistência de Sessão (F5)
+
 **Objetivo:** Validar que F5 mantém autenticação
 
 ```
@@ -55,6 +58,7 @@ Criada suite **completa de testes E2E** com 6 testes críticos cobrindo:
 ---
 
 ### Teste 3️⃣: Redirecionamento de Usuário Autenticado
+
 **Objetivo:** Validar que usuário autenticado não fica em loop em /auth/login
 
 ```
@@ -69,6 +73,7 @@ Criada suite **completa de testes E2E** com 6 testes críticos cobrindo:
 ---
 
 ### Teste 4️⃣: Redirecionamento de Usuário Não Autenticado
+
 **Objetivo:** Validar que usuário não autenticado não pode acessar /dashboard
 
 ```
@@ -83,6 +88,7 @@ Criada suite **completa de testes E2E** com 6 testes críticos cobrindo:
 ---
 
 ### Teste 5️⃣: API /api/auth/me
+
 **Objetivo:** Validar que endpoint retorna dados do usuário corretamente
 
 ```
@@ -101,6 +107,7 @@ Criada suite **completa de testes E2E** com 6 testes críticos cobrindo:
 ---
 
 ### Teste 6️⃣: Dashboard Funcionalidade
+
 **Objetivo:** Validar que dashboard carrega e exibe dados corretamente
 
 ```
@@ -118,12 +125,14 @@ Criada suite **completa de testes E2E** com 6 testes críticos cobrindo:
 ## 🚀 COMO EXECUTAR OS TESTES
 
 ### Opção 1: Modo Headless (Recomendado para CI/CD)
+
 ```bash
 cd C:\Users\User\NEXXOHUB-PLATAFORMA
 npm run test:e2e
 ```
 
 Saída esperada:
+
 ```
 ✅ Test 1: Login com email e senha funciona sem erros
 ✅ Test 2: Pressionar F5 mantém autenticação no dashboard
@@ -136,11 +145,13 @@ Saída esperada:
 ```
 
 ### Opção 2: Modo UI (Para Debugging)
+
 ```bash
 npm run test:e2e:ui
 ```
 
 Abre Playwright Inspector com:
+
 - Visualização de cada step
 - Console de debug
 - Screenshots
@@ -148,6 +159,7 @@ Abre Playwright Inspector com:
 - Network requests
 
 ### Opção 3: Com Servidor Local
+
 ```bash
 # Terminal 1: Iniciar servidor
 npm run dev
@@ -160,35 +172,39 @@ npm run test:e2e
 
 ## 📊 MATRIZ DE COBERTURA DE TESTES
 
-| Fluxo | Teste | Cenário | Status |
-|-------|-------|---------|--------|
-| **Login** | 1️⃣ | Email + Senha corretos | ✅ |
-| **Sessão** | 2️⃣ | F5 mantém autenticação | ✅ |
-| **Redirecionamento** | 3️⃣ | Usuário auth → /login | ✅ |
-| **Proteção** | 4️⃣ | Usuário não-auth → /dash | ✅ |
-| **API** | 5️⃣ | /api/auth/me retorna dados | ✅ |
-| **UI** | 6️⃣ | Dashboard renderiza corretamente | ✅ |
+| Fluxo                | Teste | Cenário                          | Status |
+| -------------------- | ----- | -------------------------------- | ------ |
+| **Login**            | 1️⃣    | Email + Senha corretos           | ✅     |
+| **Sessão**           | 2️⃣    | F5 mantém autenticação           | ✅     |
+| **Redirecionamento** | 3️⃣    | Usuário auth → /login            | ✅     |
+| **Proteção**         | 4️⃣    | Usuário não-auth → /dash         | ✅     |
+| **API**              | 5️⃣    | /api/auth/me retorna dados       | ✅     |
+| **UI**               | 6️⃣    | Dashboard renderiza corretamente | ✅     |
 
 ---
 
 ## 🔍 VALIDAÇÕES INCLUÍDAS
 
 ### ✅ Segurança
+
 - Middleware valida sessão em cada request
 - Cookies são gerenciados via HTTP-only
 - Sem exposição de tokens em URL
 
 ### ✅ Performance
+
 - Redirecionamentos < 1s
 - Sem loops infinitos
 - Carregamento de página < 10s
 
 ### ✅ Usabilidade
+
 - Sem "piscando" visual
 - Mensagens de erro claras
 - Transições suaves
 
 ### ✅ Confiabilidade
+
 - Retry automático em falhas de rede
 - Timeouts apropriados
 - Screenshots em caso de falha
@@ -198,6 +214,7 @@ npm run test:e2e
 ## 📝 LOGS E DEBUGGING
 
 ### Console Logs Esperados
+
 ```
 [TEST_1] Iniciando login...
 [TEST_1] Submeting login form...
@@ -206,6 +223,7 @@ npm run test:e2e
 ```
 
 ### Artefatos de Teste
+
 ```
 tests/e2e/auth.spec.ts ← Código dos testes
 playwright.config.ts    ← Configuração
@@ -216,11 +234,13 @@ playwright-report/      ← Relatórios (gerado após execução)
 ### Se Um Teste Falhar
 
 1. **Abrir Relatório HTML:**
+
    ```bash
    npx playwright show-report
    ```
 
 2. **Ver Screenshots e Videos:**
+
    - Cada falha gera screenshot automático
    - Vídeo da interação completa
 
@@ -234,21 +254,25 @@ playwright-report/      ← Relatórios (gerado após execução)
 ## ✨ CONFIGURAÇÕES AVANÇADAS
 
 ### Executar Um Teste Específico
+
 ```bash
 npx playwright test -g "Login com email"
 ```
 
 ### Executar com Múltiplos Navegadores
+
 Editar `playwright.config.ts`:
+
 ```typescript
 projects: [
   { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
   { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-]
+];
 ```
 
 ### Configurar Timeout Global
+
 ```typescript
 timeout: 30 * 1000, // 30 segundos
 ```
@@ -270,16 +294,19 @@ timeout: 30 * 1000, // 30 segundos
 ## 🎯 PRÓXIMOS PASSOS
 
 ### Imediatamente (Hoje)
+
 1. ✅ Executar: `npm run test:e2e`
 2. ✅ Verificar: Todos os 6 testes passam
 3. ✅ Revisar: Screenshots/videos em caso de falha
 
 ### Esta Semana
+
 1. Adicionar testes para CRUD (Clinics, Companies, Employees)
 2. Adicionar testes para roles/permissions
 3. Configurar CI/CD no GitHub Actions
 
 ### Próximas Semanas
+
 1. Testes de performance
 2. Testes de segurança (SQLi, XSS, CSRF)
 3. Testes de acessibilidade
@@ -288,27 +315,30 @@ timeout: 30 * 1000, // 30 segundos
 
 ## 🔐 MATRIZ DE RESPONSABILIDADES
 
-| Tarefa | Responsável | Status |
-|--------|-------------|--------|
-| Criar testes E2E | ✅ Claude | Completo |
-| Executar testes | 👤 Usuário | Pendente |
-| Revisar falhas | 👤 Usuário | Pendente |
-| Corrigir bugs | 👤 Usuário/Claude | Pendente |
-| Deploy em produção | 👤 Usuário | Futuro |
+| Tarefa             | Responsável       | Status   |
+| ------------------ | ----------------- | -------- |
+| Criar testes E2E   | ✅ Claude         | Completo |
+| Executar testes    | 👤 Usuário        | Pendente |
+| Revisar falhas     | 👤 Usuário        | Pendente |
+| Corrigir bugs      | 👤 Usuário/Claude | Pendente |
+| Deploy em produção | 👤 Usuário        | Futuro   |
 
 ---
 
 ## 📞 SUPORTE
 
 ### Se teste falhar com "Timeout"
+
 - Aumentar timeout em `playwright.config.ts`
 - Verificar se servidor está respondendo: `curl http://localhost:3000`
 
 ### Se teste falhar com "Element not found"
+
 - Verificar seletores CSS/texto em DevTools (F12)
 - Adicionar `page.screenshot()` para debug visual
 
 ### Se teste falhar com "Auth error"
+
 - Verificar credenciais no Supabase Dashboard
 - Confirmar que user existe em `auth.users`
 - Confirmar que perfil existe em `public.users`

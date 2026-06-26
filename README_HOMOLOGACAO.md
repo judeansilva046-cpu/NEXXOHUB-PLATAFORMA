@@ -114,6 +114,22 @@ npm run test:e2e
 
 ---
 
+### Opção 1b: Testes Automáticos em homologação/staging com domínio correto
+
+Use esta opção quando a plataforma já estiver implantada em um servidor de homologação ou staging com o domínio real configurado.
+
+```powershell
+$env:PLAYWRIGHT_TEST_BASE_URL='https://app.seudominio.com'
+$env:PLAYWRIGHT_TEST_EMAIL='teste@staging.com'
+$env:PLAYWRIGHT_TEST_PASSWORD='SenhaSegura123!'
+$env:SKIP_WEB_SERVER=1
+npm run test:e2e
+```
+
+> Importante: não execute estes testes em produção real com dados de usuários finais. Use apenas homologação/staging.
+
+---
+
 ### Opção 2: Testes Manuais
 
 ```

@@ -2,7 +2,7 @@
 
 **Status**: ✅ Ready to Implement  
 **Level**: Production-Grade  
-**Updated**: June 21, 2026  
+**Updated**: June 21, 2026
 
 ---
 
@@ -42,18 +42,18 @@ npm install @sentry/nextjs --save
 ### Configure in `next.config.js`
 
 ```typescript
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV,
-  
+
   // Performance monitoring
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-  
+
   // Release tracking
   release: process.env.NEXT_PUBLIC_APP_VERSION,
-  
+
   // Error filtering
   beforeSend(event) {
     // Filter out certain errors
@@ -130,6 +130,7 @@ Vercel Dashboard → Analytics
 ```
 
 Metrics tracked:
+
 - **LCP** (Largest Contentful Paint) → Target: < 2.5s
 - **FID** (First Input Delay) → Target: < 100ms
 - **CLS** (Cumulative Layout Shift) → Target: < 0.1
@@ -143,9 +144,9 @@ import { reportWebVitals } from '@/lib/performance';
 // In app/layout.tsx
 import { reportWebVitals } from 'web-vitals';
 
-reportWebVitals(metric => {
+reportWebVitals((metric) => {
   console.log(metric);
-  
+
   // Send to analytics
   if (typeof window !== 'undefined') {
     const body = JSON.stringify(metric);
@@ -158,8 +159,8 @@ reportWebVitals(metric => {
 
 ```sql
 -- View slow queries
-SELECT 
-  query, 
+SELECT
+  query,
   calls,
   mean_exec_time,
   max_exec_time
@@ -175,24 +176,21 @@ ALTER DATABASE nexxohub SET log_min_duration_statement = 1000;  -- 1 second
 
 ```typescript
 // Measure API calls
-export async function measureApiCall<T>(
-  name: string,
-  fn: () => Promise<T>,
-): Promise<T> {
+export async function measureApiCall<T>(name: string, fn: () => Promise<T>): Promise<T> {
   const startTime = performance.now();
-  
+
   try {
     const result = await fn();
     const duration = performance.now() - startTime;
-    
+
     // Log performance
     console.log(`${name} completed in ${duration}ms`);
-    
+
     // Send to monitoring
     if (duration > 1000) {
       Sentry.captureMessage(`Slow API: ${name} took ${duration}ms`, 'warning');
     }
-    
+
     return result;
   } catch (error) {
     Sentry.captureException(error);
@@ -223,7 +221,7 @@ const logger = winston.createLogger({
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
-    winston.format.json(),
+    winston.format.json()
   ),
   defaultMeta: { service: 'nexxohub-api' },
   transports: [
@@ -232,13 +230,12 @@ const logger = winston.createLogger({
       format: winston.format.combine(
         winston.format.colorize(),
         winston.format.printf(
-          ({ level, message, timestamp }) =>
-            `${timestamp} [${level}] ${message}`,
-        ),
+          ({ level, message, timestamp }) => `${timestamp} [${level}] ${message}`
+        )
       ),
       level: process.env.NODE_ENV === 'production' ? 'warn' : 'debug',
     }),
-    
+
     // File output (production)
     new DailyRotateFile({
       filename: 'logs/application-%DATE%.log',
@@ -247,7 +244,7 @@ const logger = winston.createLogger({
       maxDays: '14d',
       level: 'info',
     }),
-    
+
     // Error log file
     new DailyRotateFile({
       filename: 'logs/error-%DATE%.log',
@@ -271,9 +268,9 @@ import logger from '@/lib/logger';
 export async function POST(req: Request) {
   try {
     logger.info('Creating clinic', { user: userId });
-    
+
     const result = await createClinic(data);
-    
+
     logger.info('Clinic created successfully', { clinicId: result.id });
     return NextResponse.json(result);
   } catch (error) {
@@ -317,14 +314,13 @@ gzip logs/application-*.log
 export async function GET() {
   try {
     // Check database
-    const { data: result } = await supabase
-      .from('organizations')
-      .select('id')
-      .limit(1);
-    
+    const { data: result } = await supabase.from('organizations').select('id').limit(1);
+
     // Check auth
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     return NextResponse.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -362,7 +358,7 @@ Uptime Robot → Alert Contacts
 
 ```sql
 -- Check active connections
-SELECT 
+SELECT
   count(*) as total_connections,
   sum(case when state = 'active' then 1 else 0 end) as active,
   sum(case when state = 'idle' then 1 else 0 end) as idle
@@ -403,6 +399,7 @@ Vercel → Project → Analytics
 ```
 
 Shows:
+
 - ✅ Core Web Vitals distribution
 - ✅ Edge function performance
 - ✅ Cache effectiveness
@@ -416,6 +413,7 @@ Vercel → Project → Monitor
 ```
 
 Displays:
+
 - Build status
 - Deployment status
 - Function invocations
@@ -527,13 +525,13 @@ export async function GET() {
 
 ### Alert Channels
 
-| Channel | Use Case | Urgency |
-|---------|----------|---------|
-| Slack #alerts | Critical issues | Immediate |
-| Email | Important events | Within 1 hour |
-| SMS | Outages | Immediate |
-| PagerDuty | On-call escalation | Immediate |
-| Webhooks | Custom integrations | Variable |
+| Channel       | Use Case            | Urgency       |
+| ------------- | ------------------- | ------------- |
+| Slack #alerts | Critical issues     | Immediate     |
+| Email         | Important events    | Within 1 hour |
+| SMS           | Outages             | Immediate     |
+| PagerDuty     | On-call escalation  | Immediate     |
+| Webhooks      | Custom integrations | Variable      |
 
 ### Alert Rules
 
@@ -645,12 +643,12 @@ export async function POST(req: Request) {
 
 ### Escalation Levels
 
-| Level | Threshold | Action |
-|-------|-----------|--------|
-| Info | Normal event | Log only |
-| Warning | Minor issue | Notify team |
-| Alert | Service degraded | Page on-call |
-| Critical | Service down | All hands on deck |
+| Level    | Threshold        | Action            |
+| -------- | ---------------- | ----------------- |
+| Info     | Normal event     | Log only          |
+| Warning  | Minor issue      | Notify team       |
+| Alert    | Service degraded | Page on-call      |
+| Critical | Service down     | All hands on deck |
 
 ---
 
@@ -707,34 +705,37 @@ Security Alerts:
 
 ## 12. Recommended Tools Summary
 
-| Tool | Purpose | Cost | Status |
-|------|---------|------|--------|
-| Vercel | Hosting + Analytics | Included | ✅ In use |
-| Supabase | Database | Free/Pro | ✅ In use |
-| Sentry | Error tracking | Free/Pro | ⏳ Ready |
-| UptimeRobot | Uptime monitoring | Free | ⏳ Ready |
-| Slack | Notifications | Free | ✅ Available |
-| PagerDuty | Incident management | Free/Pro | ⏳ Ready |
-| LogRocket | Session replay | Paid | ⏳ Optional |
-| Datadog | Full monitoring | Paid | ⏳ Enterprise |
+| Tool        | Purpose             | Cost     | Status        |
+| ----------- | ------------------- | -------- | ------------- |
+| Vercel      | Hosting + Analytics | Included | ✅ In use     |
+| Supabase    | Database            | Free/Pro | ✅ In use     |
+| Sentry      | Error tracking      | Free/Pro | ⏳ Ready      |
+| UptimeRobot | Uptime monitoring   | Free     | ⏳ Ready      |
+| Slack       | Notifications       | Free     | ✅ Available  |
+| PagerDuty   | Incident management | Free/Pro | ⏳ Ready      |
+| LogRocket   | Session replay      | Paid     | ⏳ Optional   |
+| Datadog     | Full monitoring     | Paid     | ⏳ Enterprise |
 
 ---
 
 ## Implementation Checklist
 
 ### Phase 1 (Ready Now)
+
 - [ ] Configure Sentry
 - [ ] Setup health check endpoint
 - [ ] Enable Vercel Analytics
 - [ ] Configure UptimeRobot
 
 ### Phase 2 (Next Week)
+
 - [ ] Implement Winston logging
 - [ ] Add Slack webhooks
 - [ ] Setup monitoring dashboard
 - [ ] Configure alert rules
 
 ### Phase 3 (Later)
+
 - [ ] Integrate PagerDuty
 - [ ] Add advanced analytics
 - [ ] Setup session replay
@@ -775,7 +776,7 @@ cp .env.example .env.local
 
 **Status**: ✅ Ready for Implementation  
 **Next Step**: Setup Sentry, Configure UptimeRobot  
-**Support**: Check documentation or contact team  
+**Support**: Check documentation or contact team
 
 ---
 

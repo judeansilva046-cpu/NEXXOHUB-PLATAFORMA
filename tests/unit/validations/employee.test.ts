@@ -1,110 +1,69 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createEmployeeSchema } from '../../../lib/validations/employee';
 
-describe('Employee Validation Schema', () => {
-  const validData = {
-    fullName: 'João Silva Santos',
-    email: 'joao@empresa.com',
-    position: 'Desenvolvedor Senior',
-    department: 'TI',
-    phone: '(11) 99999-9999',
-    gender: 'M' as const,
-    birthDate: '1990-05-15',
-    address: 'Rua das Flores, 123, Apt 456',
-  };
+const validEmployee = {
+  companyId: '11111111-1111-4111-8111-111111111111',
+  fullName: 'João Silva Santos',
+  cpf: '123.456.789-00',
+  registration: 'MAT-001',
+  position: 'Analista',
+  department: 'Recursos Humanos',
+  email: 'joao@empresa.com',
+  phone: '(11) 99999-9999',
+  admissionDate: '2024-05-15',
+  status: 'active' as const,
+};
 
-  it('validates correct employee data', () => {
-    const result = createEmployeeSchema.safeParse(validData);
-    expect(result.success).toBe(true);
+describe('Employee Validation Schema', () => {
+  it('validates complete employee data', () => {
+    expect(createEmployeeSchema.safeParse(validEmployee).success).toBe(true);
   });
 
-  it('rejects missing required fields', () => {
-    const invalidData = {
-      fullName: 'João Silva Santos',
-      email: 'joao@empresa.com',
-      // missing position, department, phone
-    };
-
-    const result = createEmployeeSchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+  it('requires a valid company', () => {
+    expect(createEmployeeSchema.safeParse({ ...validEmployee, companyId: '' }).success).toBe(false);
   });
 
   it('rejects invalid email', () => {
-    const invalidData = {
-      ...validData,
-      email: 'not-an-email',
-    };
-
-    const result = createEmployeeSchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+    expect(createEmployeeSchema.safeParse({ ...validEmployee, email: 'invalid' }).success).toBe(
+      false
+    );
   });
 
-  it('rejects name shorter than 3 characters', () => {
-    const invalidData = {
-      ...validData,
-      fullName: 'JJ',
-    };
-
-    const result = createEmployeeSchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+  it('rejects invalid CPF', () => {
+    expect(createEmployeeSchema.safeParse({ ...validEmployee, cpf: '123' }).success).toBe(false);
   });
 
-  it('rejects invalid birth date format', () => {
-    const invalidData = {
-      ...validData,
-      birthDate: 'invalid-date',
-    };
-
-    const result = createEmployeeSchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+  it('rejects invalid admission date', () => {
+    expect(
+      createEmployeeSchema.safeParse({ ...validEmployee, admissionDate: 'invalid' }).success
+    ).toBe(false);
   });
 
-  it('accepts valid gender values', () => {
-    const genders = ['M', 'F', 'O', 'N'];
-
-    genders.forEach(gender => {
-      const data = {
-        ...validData,
-        gender: gender as 'M' | 'F' | 'O' | 'N',
-      };
-      const result = createEmployeeSchema.safeParse(data);
-      expect(result.success).toBe(true);
-    });
+  it('requires registration', () => {
+    expect(createEmployeeSchema.safeParse({ ...validEmployee, registration: '' }).success).toBe(
+      false
+    );
   });
 
-  it('rejects invalid gender', () => {
-    const invalidData = {
-      ...validData,
-      gender: 'X' as any,
-    };
-
-    const result = createEmployeeSchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+  it('requires department', () => {
+    expect(createEmployeeSchema.safeParse({ ...validEmployee, department: '' }).success).toBe(
+      false
+    );
   });
 
-  it('accepts minimal employee data', () => {
-    const minimalData = {
-      fullName: 'Jane Doe',
-      email: 'jane@empresa.com',
-      position: 'Analista',
-      department: 'RH',
-    };
-
-    const result = createEmployeeSchema.safeParse(minimalData);
-    expect(result.success).toBe(true);
+  it('accepts supported statuses', () => {
+    for (const status of ['active', 'inactive', 'archived'] as const) {
+      expect(createEmployeeSchema.safeParse({ ...validEmployee, status }).success).toBe(true);
+    }
   });
 
   it('trims whitespace from text fields', () => {
-    const dataWithWhitespace = {
-      ...validData,
+    const result = createEmployeeSchema.parse({
+      ...validEmployee,
       fullName: '  João Silva Santos  ',
-      position: '  Desenvolvedor  ',
-    };
-
-    const result = createEmployeeSchema.safeParse(dataWithWhitespace);
-    if (result.success) {
-      expect(result.data.fullName).toBe('João Silva Santos');
-      expect(result.data.position).toBe('Desenvolvedor');
-    }
+      position: '  Analista  ',
+    });
+    expect(result.fullName).toBe('João Silva Santos');
+    expect(result.position).toBe('Analista');
   });
 });

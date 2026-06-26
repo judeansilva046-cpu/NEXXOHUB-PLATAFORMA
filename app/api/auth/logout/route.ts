@@ -1,32 +1,25 @@
-import { createClient } from '../../../../lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { createClient } from '../../../../lib/supabase/server';
+
+function jsonResponse(body: object, status: number) {
+  const response = NextResponse.json(body, { status });
+  response.headers.set('Cache-Control', 'no-store');
+  return response;
+}
 
 export async function POST() {
   try {
     const supabase = await createClient();
-
-    console.log('🔓 Logging out user');
-
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      console.error('Logout error:', error);
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
+      console.error('[LOGOUT_ERROR]', error);
+      return jsonResponse({ success: false, error: 'Não foi possível encerrar a sessão.' }, 500);
     }
 
-    // Redirecionar para login após logout
-    return NextResponse.json(
-      { success: true, message: 'Logged out successfully' },
-      { status: 200 }
-    );
-  } catch (err: unknown) {
-    console.error('Logout error:', err);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return jsonResponse({ success: true }, 200);
+  } catch (error) {
+    console.error('[LOGOUT_ERROR]', error);
+    return jsonResponse({ success: false, error: 'Não foi possível encerrar a sessão.' }, 500);
   }
 }

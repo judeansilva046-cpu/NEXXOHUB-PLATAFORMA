@@ -35,11 +35,6 @@ select is(
   'anon cannot read permissions'
 );
 
-insert into public.organizations (id, name, cnpj)
-values
-  ('10000000-0000-0000-0000-000000000001', 'Tenant A', '11.111.111/0001-11'),
-  ('20000000-0000-0000-0000-000000000002', 'Tenant B', '22.222.222/0001-22');
-
 insert into auth.users (
   id,
   instance_id,
@@ -63,7 +58,7 @@ values
     crypt('local-test-only', gen_salt('bf')),
     now(),
     '{}',
-    '{}',
+    '{"full_name":"Admin A","organization_name":"Tenant A","organization_cnpj":"11111111000111"}',
     now(),
     now()
   ),
@@ -76,7 +71,7 @@ values
     crypt('local-test-only', gen_salt('bf')),
     now(),
     '{}',
-    '{}',
+    '{"full_name":"Member A","organization_name":"Temporary Member Tenant","organization_cnpj":"33333333000133"}',
     now(),
     now()
   ),
@@ -89,45 +84,40 @@ values
     crypt('local-test-only', gen_salt('bf')),
     now(),
     '{}',
-    '{}',
+    '{"full_name":"Admin B","organization_name":"Tenant B","organization_cnpj":"22222222000122"}',
     now(),
     now()
   );
 
-insert into public.users (id, email, full_name, role, organization_id)
-values
-  (
-    'a0000000-0000-0000-0000-000000000001',
-    'admin-a@example.test',
-    'Admin A',
-    'admin',
-    '10000000-0000-0000-0000-000000000001'
+delete from public.portal_memberships
+where user_id = 'a0000000-0000-0000-0000-000000000002';
+
+update public.users
+set
+  organization_id = (
+    select organization_id
+    from public.users
+    where id = 'a0000000-0000-0000-0000-000000000001'
   ),
-  (
-    'a0000000-0000-0000-0000-000000000002',
-    'member-a@example.test',
-    'Member A',
-    'user',
-    '10000000-0000-0000-0000-000000000001'
-  ),
-  (
-    'b0000000-0000-0000-0000-000000000001',
-    'admin-b@example.test',
-    'Admin B',
-    'admin',
-    '20000000-0000-0000-0000-000000000002'
-  );
+  role = 'user'
+where id = 'a0000000-0000-0000-0000-000000000002';
 
 insert into public.roles (id, organization_id, name)
 values
   (
     'a1000000-0000-0000-0000-000000000001',
-    '10000000-0000-0000-0000-000000000001',
+    (
+      select organization_id from public.users
+      where id = 'a0000000-0000-0000-0000-000000000001'
+    ),
     'Tenant A Role'
   ),
   (
     'b1000000-0000-0000-0000-000000000001',
-    '20000000-0000-0000-0000-000000000002',
+    (
+      select organization_id from public.users
+      where id = 'b0000000-0000-0000-0000-000000000001'
+    ),
     'Tenant B Role'
   );
 

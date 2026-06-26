@@ -25,12 +25,14 @@ DevTools
 ### Passo 3: Fazer Login e Observar
 
 **Antes do login:**
+
 ```
 Cookies vazios
 ❌ Nenhum cookie com "sb-" encontrado
 ```
 
 **Após login bem-sucedido:**
+
 ```
 ✅ sb-xxxxx-auth-token
    Name: sb-xxxxx-auth-token
@@ -55,7 +57,7 @@ Abra a aba "Network" (próxima a "Elements/Inspector"):
 
    Set-Cookie: sb-xxxxx-auth-token=...; Path=/; Secure; HttpOnly
    Set-Cookie: sb-xxxxx-auth-token.0=...; Path=/; Secure; HttpOnly
-   
+
    ✅ Se ver isso, cookies foram enviados pelo servidor!
    ❌ Se não ver, há problema no endpoint
 ```
@@ -84,6 +86,7 @@ console.log('Cookies:', document.cookie);
 Após login, tente navegar para `https://seu-dominio.com/dashboard`
 
 **✅ Sucesso:**
+
 ```
 - Página carrega normalmente
 - URL permanece em /dashboard
@@ -92,6 +95,7 @@ Após login, tente navegar para `https://seu-dominio.com/dashboard`
 ```
 
 **❌ Falha:**
+
 ```
 - URL redireciona para /auth/login
 - Middleware BLOQUEOU a requisição
@@ -114,7 +118,7 @@ Procure nos logs por:
   - Session found: ✅
   - User ID: xxxxx-xxxxx-xxxxx
   - Redirecting: No
-  
+
   OU
 
 [middleware] GET /dashboard
@@ -192,16 +196,17 @@ const loginResponse = await fetch('/api/auth/signin', {
   }),
 });
 
-console.log('Status:', loginResponse.status);  // Deve ser 200
-console.log('Headers:', loginResponse.headers.get('set-cookie'));  // Cookies?
+console.log('Status:', loginResponse.status); // Deve ser 200
+console.log('Headers:', loginResponse.headers.get('set-cookie')); // Cookies?
 const data = await loginResponse.json();
-console.log('Response:', data);  // { success: true, session: {...} }
+console.log('Response:', data); // { success: true, session: {...} }
 
 // Agora verificar cookies
 console.log('Cookies após login:', document.cookie);
 ```
 
 **Saída esperada:**
+
 ```javascript
 Status: 200
 Headers: sb-xxxxx-auth-token=...; Path=/; Secure; HttpOnly
@@ -382,11 +387,13 @@ GET /auth/callback?code=xxxxx
 ### Problema 1: "Cookies vazios após login"
 
 **Causa:**
+
 - Endpoint `/api/auth/signin` não existe
 - Endpoint não retorna Set-Cookie headers
 - Cliente não aguarda resposta
 
 **Solução:**
+
 ```bash
 1. Verificar se existe app/api/auth/signin/route.ts
 2. Verificar logs: npm run dev
@@ -397,11 +404,13 @@ GET /auth/callback?code=xxxxx
 ### Problema 2: "Middleware redireciona de volta para /auth/login"
 
 **Causa:**
+
 - Cookies não foram salvos no navegador
 - Middleware não consegue ler os cookies
 - Session é null
 
 **Solução:**
+
 ```javascript
 // No console após "login":
 console.log('Cookies:', document.cookie);
@@ -414,11 +423,13 @@ console.log('Cookies:', document.cookie);
 ### Problema 3: "Loop infinito entre /auth/login e /dashboard"
 
 **Causa:**
+
 - Client faz `router.push('/dashboard')` ANTES de cookies serem salvos
 - Middleware vê session=null e redireciona de volta para /auth/login
 - Client faz login novamente = loop
 
 **Solução:**
+
 - Usar novo endpoint `/api/auth/signin` (server-side)
 - Aguardar response do servidor ANTES de redirect
 - Servidor salva cookies ANTES de responder
@@ -426,10 +437,12 @@ console.log('Cookies:', document.cookie);
 ### Problema 4: "HttpOnly cookies não aparecem no console"
 
 **Causa:**
+
 - Comportamento esperado! HttpOnly é proteção contra XSS
 - Cookies existem (enviados ao servidor) mas JS não pode acessá-los
 
 **Verificação:**
+
 ```bash
 1. DevTools > Application > Cookies
 2. Procurar por sb-xxxxx-auth-token
@@ -492,10 +505,10 @@ Cole no Console (DevTools) para teste rápido:
 ```javascript
 async function testAuth() {
   console.log('=== TESTE DE AUTENTICAÇÃO ===\n');
-  
+
   // 1. Verificar cookies antes
   console.log('1. Cookies antes:', document.cookie || '(vazio)');
-  
+
   // 2. Fazer login
   console.log('2. Tentando login...');
   const response = await fetch('/api/auth/signin', {
@@ -503,22 +516,24 @@ async function testAuth() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: 'seu@email.com',
-      password: 'sua-senha'
+      password: 'sua-senha',
     }),
   });
-  
+
   console.log('   Status:', response.status);
   console.log('   Cookies em Response Headers:', response.headers.get('set-cookie') || '(nenhum)');
-  
+
   // 3. Verificar cookies depois
   console.log('3. Cookies depois:', document.cookie || '(vazio)');
-  
+
   // 4. Fazer requisição para /dashboard
   console.log('4. Testando acesso a /dashboard...');
   const dashboardResponse = await fetch('/dashboard', { method: 'HEAD' });
   console.log('   Status:', dashboardResponse.status);
-  console.log('   ' + (dashboardResponse.status === 200 ? '✅ Acesso permitido' : '❌ Acesso negado'));
-  
+  console.log(
+    '   ' + (dashboardResponse.status === 200 ? '✅ Acesso permitido' : '❌ Acesso negado')
+  );
+
   console.log('\n=== FIM DO TESTE ===');
 }
 
@@ -531,7 +546,6 @@ async function testAuth() {
 ## REFERÊNCIAS E LINKS
 
 - Supabase Auth Helpers: https://supabase.com/docs/guides/auth/auth-helpers/nextjs
-- NextJS Middleware: https://nextjs.org/docs/advanced-features/middleware  
+- NextJS Middleware: https://nextjs.org/docs/advanced-features/middleware
 - HTTP Cookies: https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies
 - HttpOnly Cookies: https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies
-

@@ -153,6 +153,7 @@ t=30ms    ┌──────────────────────�
 ```
 
 **Problema Core:**
+
 ```
 ┌─────────────────────────────────────────┐
 │ RACE CONDITION                          │
@@ -313,6 +314,7 @@ t=45ms    ┌──────────────────────�
 ```
 
 **Problema Resolvido:**
+
 ```
 ┌──────────────────────────────────────────┐
 │ SEM RACE CONDITION AGORA                 │
@@ -340,7 +342,7 @@ t=45ms    ┌──────────────────────�
 
 ```typescript
 // lib/supabase/auth.ts
-const supabase = createClient(url, anonKey);  // Browser client
+const supabase = createClient(url, anonKey); // Browser client
 
 export const signIn = async (email: string, password: string) => {
   // ❌ Problema: signIn em client
@@ -348,10 +350,10 @@ export const signIn = async (email: string, password: string) => {
     email,
     password,
   });
-  
+
   // ❌ Problema: Cookies salvos ASSINCRONAMENTE
   //    (dentro de setTimeout do SDK)
-  
+
   // ❌ Problema: router.push() executa ANTES de cookies salvos
   return { data, error };
 };
@@ -359,11 +361,12 @@ export const signIn = async (email: string, password: string) => {
 // app/auth/login/page.tsx
 const { data, error } = await authClient.signIn(email, password);
 if (data?.session) {
-  router.push('/dashboard');  // ❌ TOO FAST!
+  router.push('/dashboard'); // ❌ TOO FAST!
 }
 ```
 
 **Timeline:**
+
 ```
 signIn()        → session recebida (async)
 router.push()   → executa IMEDIATAMENTE (sync)
@@ -378,17 +381,17 @@ Middleware      → vê cookies VAZIOS
 ```typescript
 // app/api/auth/signin/route.ts
 export async function POST(req: Request) {
-  const supabase = await createClient();  // Server client
-  
+  const supabase = await createClient(); // Server client
+
   // ✅ signIn no servidor
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
-  
+
   // ✅ Cookies salvos SINCRONAMENTE no cookieStore
   // ✅ Set-Cookie headers adicionados à Response
-  
+
   return Response.json(
     { success: true, session: data.session },
     { status: 200 }
@@ -400,11 +403,12 @@ export async function POST(req: Request) {
 const response = await fetch('/api/auth/signin', { POST });
 if (response.ok) {
   const data = await response.json();
-  router.push('/dashboard');  // ✅ SAFE NOW!
+  router.push('/dashboard'); // ✅ SAFE NOW!
 }
 ```
 
 **Timeline:**
+
 ```
 fetch(/api/auth/signin)
   ├─ Server: signIn() → session
@@ -470,7 +474,7 @@ Middleware       → vê cookies ✅
 ┌──────────────────────────────────┐
 │ createClient() [Server]          │
 │                                  │
-│ export async function createClient| 
+│ export async function createClient|
 │   const cookieStore = cookies()  │
 │   return createServerClient(     │
 │     URL, ANONKEY, {              │
@@ -563,7 +567,7 @@ Middleware       → vê cookies ✅
 ```javascript
 // ✅ NECESSÁRIO: Cookies no REQUEST
 Headers: {
-  Cookie: "sb-xxxxx-auth-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  Cookie: 'sb-xxxxx-auth-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
 }
 
 // ✅ createMiddlewareClient lê esses cookies
@@ -579,15 +583,15 @@ Headers: {
 
 ## RESUMO: ANTES vs DEPOIS
 
-| Aspecto | ANTES (❌ Quebrado) | DEPOIS (✅ Correto) |
-|---------|------------------|-------------------|
-| **Onde signIn** | Client (browser) | Server (API route) |
-| **Cookie Save** | Async (setTimeout) | Sync (antes de Response) |
-| **Timing** | Race condition | Ordem garantida |
-| **Set-Cookie** | Não enviado pelo servidor | Enviado via Response headers |
-| **Middleware** | Vê cookies vazios | Vê cookies salvos |
-| **Resultado** | Redireciona para login | Permite acesso |
-| **UX** | Loop infinito | Sucesso de primeira |
+| Aspecto         | ANTES (❌ Quebrado)       | DEPOIS (✅ Correto)          |
+| --------------- | ------------------------- | ---------------------------- |
+| **Onde signIn** | Client (browser)          | Server (API route)           |
+| **Cookie Save** | Async (setTimeout)        | Sync (antes de Response)     |
+| **Timing**      | Race condition            | Ordem garantida              |
+| **Set-Cookie**  | Não enviado pelo servidor | Enviado via Response headers |
+| **Middleware**  | Vê cookies vazios         | Vê cookies salvos            |
+| **Resultado**   | Redireciona para login    | Permite acesso               |
+| **UX**          | Loop infinito             | Sucesso de primeira          |
 
 ---
 
@@ -605,10 +609,7 @@ export async function POST(req: Request) {
     const { email, password } = body;
 
     if (!email || !password) {
-      return Response.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
+      return Response.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
     const supabase = await createClient();
@@ -618,16 +619,10 @@ export async function POST(req: Request) {
     });
 
     if (error) {
-      return Response.json(
-        { error: error.message },
-        { status: 401 }
-      );
+      return Response.json({ error: error.message }, { status: 401 });
     }
 
-    return Response.json(
-      { success: true, session: data.session },
-      { status: 200 }
-    );
+    return Response.json({ success: true, session: data.session }, { status: 200 });
   } catch (error) {
     return getErrorResponse(error);
   }
@@ -671,4 +666,3 @@ export async function GET(request: Request) {
 4. ⏳ Testar manualmente
 5. ⏳ Verificar cookies em DevTools
 6. ⏳ Celebrar! 🎉
-

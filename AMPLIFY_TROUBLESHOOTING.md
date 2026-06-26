@@ -3,6 +3,7 @@
 ## ❌ Erro: "The dependency install command failed"
 
 ### 🔍 Causa
+
 Falta `package-lock.json` no repositório. AWS Amplify precisa dele para instalar dependências com segurança.
 
 ---
@@ -33,11 +34,13 @@ git push origin main
 ## ⚙️ O que foi mudado
 
 ### amplify.yml atualizado
+
 - Mudou de `npm ci` para `npm install` (mais flexível)
 - Adicionado cache do npm
 - Mantém as configurações de build
 
 ### Próxima ação no Amplify
+
 ```
 1. Vá em "Deployments"
 2. Encontre o deploy que falhou
@@ -67,6 +70,7 @@ git push origin main
 ### Verifique:
 
 1. **Node Version no Amplify**
+
    ```
    1. Vá em "Build settings"
    2. Clique em "Edit"
@@ -75,6 +79,7 @@ git push origin main
    ```
 
 2. **Limpar cache do Amplify**
+
    ```
    1. Build settings
    2. Clique em "Clear cache"
@@ -82,6 +87,7 @@ git push origin main
    ```
 
 3. **Verificar package.json localmente**
+
    ```bash
    npm audit
    npm ls
@@ -109,6 +115,7 @@ No Amplify Console, durante o build:
 ```
 
 Para ver os erros:
+
 ```
 1. Clique no deployment que falhou
 2. Vá em "Logs"
@@ -122,6 +129,7 @@ Para ver os erros:
 ## 🎯 Resumo - 3 Passos Finais
 
 ### Passo 1: No seu computador
+
 ```bash
 cd C:\Users\User\NEXXOHUB-PLATAFORMA
 npm install
@@ -131,6 +139,7 @@ git push origin main
 ```
 
 ### Passo 2: No Amplify Console
+
 ```
 1. Vá em "Deployments"
 2. Clique em "Redeploy this version"
@@ -138,6 +147,7 @@ git push origin main
 ```
 
 ### Passo 3: Testar
+
 ```
 1. Acesse a URL do Amplify
 2. Teste login, criar dados, etc

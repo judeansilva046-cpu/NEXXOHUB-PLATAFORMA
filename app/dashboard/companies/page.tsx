@@ -1,10 +1,23 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../../components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -14,11 +27,13 @@ import {
   DialogTrigger,
 } from '../../../components/ui/dialog';
 import { CompanyForm } from '../../../components/forms/company-form';
-import { Company } from '../../../types';
+import { Clinic, Company } from '../../../types';
 import { toast } from 'sonner';
+import type { CompanyInput } from '../../../lib/validations/company';
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,16 +56,21 @@ export default function CompaniesPage() {
 
   useEffect(() => {
     fetchCompanies();
+    fetch('/api/clinics')
+      .then((response) => response.json())
+      .then((result) => setClinics(result.data || []))
+      .catch(() => setClinics([]));
   }, []);
 
   const filteredCompanies = useMemo(() => {
-    return companies.filter((company) =>
-      company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.cnpj.includes(searchTerm)
+    return companies.filter(
+      (company) =>
+        company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        company.cnpj.includes(searchTerm)
     );
   }, [companies, searchTerm]);
 
-  const handleCreateCompany = async (data: any) => {
+  const handleCreateCompany = async (data: CompanyInput) => {
     try {
       const res = await fetch('/api/companies', {
         method: 'POST',
@@ -58,7 +78,10 @@ export default function CompaniesPage() {
         body: JSON.stringify(data),
       });
 
-      if (!res.ok) throw new Error('Failed to create company');
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result?.error?.message || 'Erro ao criar empresa');
+      }
 
       toast.success('Empresa criada com sucesso!');
       setIsDialogOpen(false);
@@ -69,7 +92,7 @@ export default function CompaniesPage() {
     }
   };
 
-  const handleUpdateCompany = async (data: any) => {
+  const handleUpdateCompany = async (data: CompanyInput) => {
     if (!editingCompany) return;
 
     try {
@@ -79,7 +102,10 @@ export default function CompaniesPage() {
         body: JSON.stringify(data),
       });
 
-      if (!res.ok) throw new Error('Failed to update company');
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result?.error?.message || 'Erro ao atualizar empresa');
+      }
 
       toast.success('Empresa atualizada com sucesso!');
       setIsDialogOpen(false);
@@ -143,15 +169,12 @@ export default function CompaniesPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>
-                {editingCompany ? 'Editar Empresa' : 'Nova Empresa'}
-              </DialogTitle>
-              <DialogDescription>
-                Preencha os dados da empresa
-              </DialogDescription>
+              <DialogTitle>{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
+              <DialogDescription>Preencha os dados da empresa</DialogDescription>
             </DialogHeader>
             <CompanyForm
               initialData={editingCompany}
+              clinics={clinics}
               onSubmit={editingCompany ? handleUpdateCompany : handleCreateCompany}
             />
           </DialogContent>
@@ -161,7 +184,9 @@ export default function CompaniesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Lista de Empresas</CardTitle>
-          <CardDescription>Total: {filteredCompanies.length} de {companies.length} empresa(s)</CardDescription>
+          <CardDescription>
+            Total: {filteredCompanies.length} de {companies.length} empresa(s)
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -192,11 +217,12 @@ export default function CompaniesPage() {
                     <TableCell className="font-medium">{company.name}</TableCell>
                     <TableCell>{company.cnpj}</TableCell>
                     <TableCell>{company.phone || '-'}</TableCell>
-                    <TableCell>
-                      {new Date(company.createdAt).toLocaleDateString('pt-BR')}
-                    </TableCell>
+                    <TableCell>{new Date(company.createdAt).toLocaleDateString('pt-BR')}</TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Dialog open={isDialogOpen && editingCompany?.id === company.id} onOpenChange={setIsDialogOpen}>
+                      <Dialog
+                        open={isDialogOpen && editingCompany?.id === company.id}
+                        onOpenChange={setIsDialogOpen}
+                      >
                         <DialogTrigger asChild>
                           <Button
                             variant="outline"
@@ -209,12 +235,11 @@ export default function CompaniesPage() {
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Editar Empresa</DialogTitle>
-                            <DialogDescription>
-                              Atualize os dados da empresa
-                            </DialogDescription>
+                            <DialogDescription>Atualize os dados da empresa</DialogDescription>
                           </DialogHeader>
                           <CompanyForm
                             initialData={company}
+                            clinics={clinics}
                             onSubmit={handleUpdateCompany}
                           />
                         </DialogContent>

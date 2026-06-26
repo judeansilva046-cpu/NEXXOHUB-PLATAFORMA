@@ -1,145 +1,130 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createOrganizationSchema, type CreateOrganizationInput } from '../../lib/validations/organization';
+import { useForm } from 'react-hook-form';
+import { companySchema, type CompanyInput } from '../../lib/validations/company';
+import type { Clinic, Company } from '../../types';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '../ui/form';
-import { useState } from 'react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
-interface CompanyFormProps {
-  initialData?: any;
-  onSubmit: (data: CreateOrganizationInput) => Promise<void>;
-  isLoading?: boolean;
-}
-
-export function CompanyForm({ initialData, onSubmit, isLoading }: CompanyFormProps) {
-  const [error, setError] = useState<string | null>(null);
-
-  const form = useForm<CreateOrganizationInput>({
-    resolver: zodResolver(createOrganizationSchema),
-    defaultValues: initialData || {
-      name: '',
-      cnpj: '',
-      phone: '',
-      website: '',
-      description: '',
+export function CompanyForm({
+  initialData,
+  clinics,
+  onSubmit,
+}: {
+  initialData?: Company | null;
+  clinics: Clinic[];
+  onSubmit: (data: CompanyInput) => Promise<void>;
+}) {
+  const form = useForm<CompanyInput>({
+    resolver: zodResolver(companySchema),
+    defaultValues: {
+      clinicId: initialData?.clinicId || '',
+      legalName: initialData?.legalName || '',
+      name: initialData?.name || '',
+      cnpj: initialData?.cnpj || '',
+      hrResponsible: initialData?.hrResponsible || '',
+      email: initialData?.email || '',
+      phone: initialData?.phone || '',
+      address: initialData?.address || '',
+      employeeCount: initialData?.employeeCount || 0,
+      status: initialData?.status || 'active',
     },
   });
 
-  const handleSubmit = async (data: CreateOrganizationInput) => {
-    try {
-      setError(null);
-      await onSubmit(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar');
-    }
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded p-3">
-            <p className="text-red-600 text-sm">{error}</p>
-          </div>
-        )}
-
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="max-h-[70vh] space-y-4 overflow-y-auto pr-1"
+      >
         <FormField
           control={form.control}
-          name="name"
+          name="clinicId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nome da Empresa</FormLabel>
+              <FormLabel>Clínica responsável</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Empresa XYZ" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="cnpj"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CNPJ</FormLabel>
-              <FormControl>
-                <Input placeholder="12.345.678/0001-90" {...field} />
-              </FormControl>
-              <FormDescription>
-                Formato: XX.XXX.XXX/XXXX-XX
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Telefone</FormLabel>
-              <FormControl>
-                <Input placeholder="(11) 99999-9999" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="website"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Website</FormLabel>
-              <FormControl>
-                <Input placeholder="https://exemplo.com.br" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <textarea
-                  placeholder="Descrição da empresa"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                <select
+                  className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
                   {...field}
-                />
+                >
+                  <option value="">Selecione uma clínica</option>
+                  {clinics.map((clinic) => (
+                    <option key={clinic.id} value={clinic.id}>
+                      {clinic.name}
+                    </option>
+                  ))}
+                </select>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
-        <div className="flex justify-end gap-3 pt-4">
-          <Button
-            type="submit"
-            disabled={isLoading || form.formState.isSubmitting}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isLoading || form.formState.isSubmitting ? 'Salvando...' : 'Salvar'}
-          </Button>
-        </div>
+        {[
+          ['legalName', 'Razão Social', 'Empresa Exemplo S.A.'],
+          ['name', 'Nome Fantasia', 'Empresa Exemplo'],
+          ['cnpj', 'CNPJ', '12.345.678/0001-90'],
+          ['hrResponsible', 'Responsável de RH', 'Nome do responsável'],
+          ['email', 'E-mail', 'rh@empresa.com.br'],
+          ['phone', 'Telefone', '(11) 99999-9999'],
+          ['address', 'Endereço', 'Rua, número, cidade - UF'],
+        ].map(([name, label, placeholder]) => (
+          <FormField
+            key={name}
+            control={form.control}
+            name={name as keyof CompanyInput}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{label}</FormLabel>
+                <FormControl>
+                  <Input placeholder={placeholder} {...field} value={String(field.value ?? '')} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ))}
+        <FormField
+          control={form.control}
+          name="employeeCount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Quantidade de colaboradores</FormLabel>
+              <FormControl>
+                <Input type="number" min={0} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <FormControl>
+                <select
+                  className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                  {...field}
+                >
+                  <option value="active">Ativa</option>
+                  <option value="inactive">Inativa</option>
+                  <option value="archived">Arquivada</option>
+                </select>
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <Button
+          type="submit"
+          disabled={form.formState.isSubmitting}
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
+          {form.formState.isSubmitting ? 'Salvando...' : 'Salvar empresa'}
+        </Button>
       </form>
     </Form>
   );

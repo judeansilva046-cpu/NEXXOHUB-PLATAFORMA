@@ -8,12 +8,14 @@
 4. Procure por: `judeansilva319@gmail.com`
 
 ### Se NÃO encontrar:
+
 - ❌ **PROBLEMA ENCONTRADO!** O usuário não existe em `auth.users`
 - Solução: Criar manualmente a conta com:
   - Email: `judeansilva319@gmail.com`
   - Senha: `Judean16@`
 
 ### Se encontrar:
+
 - ✅ Usuário existe
 - Próximo passo: Verificar se está confirmado
 
@@ -22,10 +24,12 @@
 ## PASSO 2: Se encontrou - Verificar status
 
 Na página do usuário em Auth → Users, procure por:
+
 - **Email Confirmed?** Deve ser **SIM**
 - **Status**: Deve ser **Active**
 
 ### Se NÃO confirmado:
+
 - Clique em "**Verify Email**" para confirmar
 
 ---
@@ -39,6 +43,7 @@ https://illustrious-cascaron-bd22da2.netlify.app/api/auth/debug?email=judeansilv
 ```
 
 Isso vai retornar:
+
 - ✅ `success: true` = Login funcionando
 - ❌ `success: false` = Mostrará exatamente o erro
 
@@ -54,8 +59,8 @@ Copie o `error.message` e `error.code` e nos mostre.
 
 ```sql
 -- Query para ver se usuário existe
-SELECT id, email, email_confirmed_at, created_at 
-FROM auth.users 
+SELECT id, email, email_confirmed_at, created_at
+FROM auth.users
 WHERE email = 'judeansilva319@gmail.com';
 ```
 

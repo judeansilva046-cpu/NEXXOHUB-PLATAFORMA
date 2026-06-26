@@ -10,7 +10,10 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, public field?: string) {
+  constructor(
+    message: string,
+    public field?: string
+  ) {
     super(400, 'VALIDATION_ERROR', message);
     this.name = 'ValidationError';
   }
@@ -56,6 +59,14 @@ export function isAppError(error: unknown): error is AppError {
 }
 
 export function getErrorResponse(error: unknown) {
+  if (error instanceof ZodError) {
+    return {
+      statusCode: 400,
+      code: 'VALIDATION_ERROR',
+      message: error.issues[0]?.message || 'Dados inválidos',
+    };
+  }
+
   if (isAppError(error)) {
     return {
       statusCode: error.statusCode,
@@ -65,17 +76,10 @@ export function getErrorResponse(error: unknown) {
     };
   }
 
-  if (error instanceof Error) {
-    return {
-      statusCode: 500,
-      code: 'INTERNAL_SERVER_ERROR',
-      message: error.message,
-    };
-  }
-
   return {
     statusCode: 500,
     code: 'INTERNAL_SERVER_ERROR',
-    message: 'Erro desconhecido',
+    message: 'Erro interno do servidor',
   };
 }
+import { ZodError } from 'zod';

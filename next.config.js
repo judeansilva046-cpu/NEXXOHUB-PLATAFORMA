@@ -1,9 +1,19 @@
 /** @type {import('next').NextConfig} */
+const scriptPolicy =
+  process.env.NODE_ENV === 'development'
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com"
+    : "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com";
+const connectPolicy =
+  process.env.NODE_ENV === 'development'
+    ? "connect-src 'self' http://127.0.0.1:54321 ws://127.0.0.1:54321 https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.ingest.sentry.io"
+    : "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.ingest.sentry.io";
+
 const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
   generateEtags: true,
+  outputFileTracingRoot: __dirname,
 
   // Image optimization
   images: {
@@ -32,8 +42,20 @@ const nextConfig = {
             value: 'SAMEORIGIN',
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'self'",
+              "object-src 'none'",
+              scriptPolicy,
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://*.supabase.co https://www.google-analytics.com",
+              "font-src 'self' data:",
+              connectPolicy,
+              'upgrade-insecure-requests',
+            ].join('; '),
           },
           {
             key: 'Referrer-Policy',
@@ -84,22 +106,11 @@ const nextConfig = {
 
   // Experimental optimizations
   experimental: {
-    optimizePackageImports: [
-      '@radix-ui/react-dialog',
-      'lucide-react',
-      '@supabase/supabase-js',
-    ],
+    optimizePackageImports: ['@radix-ui/react-dialog', 'lucide-react', '@supabase/supabase-js'],
   },
 
   // Production source maps disabled for smaller bundle
   productionBrowserSourceMaps: false,
-
-  // Environment variables
-  env: {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
-  },
 };
 
 module.exports = nextConfig;

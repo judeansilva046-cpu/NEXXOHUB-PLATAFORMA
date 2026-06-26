@@ -21,6 +21,7 @@ export default function RegisterPage() {
     confirmPassword: '',
     fullName: '',
     organizationName: '',
+    organizationCnpj: '',
   });
 
   const validateFormData = (): boolean => {
@@ -59,10 +60,13 @@ export default function RegisterPage() {
       console.log('Attempting registration with email:', formData.email);
       const validation = registerSchema.parse(formData);
 
-      const { error: authError } = await authClient.signUp(
-        validation.email,
-        validation.password
-      );
+      const { error: authError } = await authClient.signUp({
+        email: validation.email,
+        password: validation.password,
+        fullName: validation.fullName,
+        organizationName: validation.organizationName,
+        organizationCnpj: validation.organizationCnpj,
+      });
 
       if (authError) {
         const errorMessage = authError.message || 'Erro desconhecido ao registrar';
@@ -76,7 +80,7 @@ export default function RegisterPage() {
       }
 
       console.log('Registration successful, redirecting to email verification');
-      router.push('/auth/verify-email?email=' + encodeURIComponent(validation.email));
+      router.push('/auth/verify-email');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao registrar';
       console.error('Unexpected error during registration:', {
@@ -177,10 +181,31 @@ export default function RegisterPage() {
             />
 
             <InputField
+              id="organizationCnpj"
+              label="CNPJ da Organização"
+              type="text"
+              placeholder="Somente 14 números"
+              value={formData.organizationCnpj}
+              onChange={(value) => {
+                setFormData({
+                  ...formData,
+                  organizationCnpj: value.replace(/\D/g, '').slice(0, 14),
+                });
+                if (fieldErrors.organizationCnpj) {
+                  setFieldErrors({ ...fieldErrors, organizationCnpj: '' });
+                }
+              }}
+              error={fieldErrors.organizationCnpj}
+              required
+              disabled={isLoading}
+              minLength={14}
+            />
+
+            <InputField
               id="password"
               label="Senha"
               type="password"
-              placeholder="Mínimo 8 caracteres"
+              placeholder="12+ caracteres, maiúscula, número e símbolo"
               value={formData.password}
               onChange={(value) => {
                 setFormData({ ...formData, password: value });
@@ -192,7 +217,7 @@ export default function RegisterPage() {
               required
               disabled={isLoading}
               autoComplete="new-password"
-              minLength={8}
+              minLength={12}
             />
 
             <InputField
@@ -225,7 +250,10 @@ export default function RegisterPage() {
 
           <div className="mt-6 text-center text-sm text-gray-600">
             Já tem conta?{' '}
-            <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium transition">
+            <Link
+              href="/auth/login"
+              className="text-blue-600 hover:text-blue-700 font-medium transition"
+            >
               Faça login
             </Link>
           </div>

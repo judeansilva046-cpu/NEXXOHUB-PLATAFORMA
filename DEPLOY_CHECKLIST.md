@@ -2,7 +2,7 @@
 
 **Status**: Ready to Deploy  
 **Date**: June 21, 2026  
-**Next Step**: Follow this checklist step-by-step  
+**Next Step**: Follow this checklist step-by-step
 
 ---
 
@@ -11,6 +11,7 @@
 ### ✅ STEP 1: Supabase Setup (5 minutes)
 
 **What to do:**
+
 ```
 1. Go to: https://supabase.com
 2. Click "Start your project"
@@ -23,6 +24,7 @@
 ```
 
 **After creation:**
+
 ```
 1. Go to: Settings → API
 2. Copy these values:
@@ -32,6 +34,7 @@
 ```
 
 **Screenshot guide:**
+
 ```
 Dashboard → Settings (left sidebar) → API
 │
@@ -48,6 +51,7 @@ Dashboard → Settings (left sidebar) → API
 ### ✅ STEP 2: Run Database Migrations (3 minutes)
 
 **In Supabase Dashboard:**
+
 ```
 1. Click: SQL Editor (left sidebar)
 2. Click: New Query
@@ -58,6 +62,7 @@ Dashboard → Settings (left sidebar) → API
 ```
 
 **Expected result:**
+
 ```
 Success messages like:
 - Tables created
@@ -66,6 +71,7 @@ Success messages like:
 ```
 
 **Verify:**
+
 ```
 1. Go to: Table Editor (left sidebar)
 2. You should see:
@@ -84,6 +90,7 @@ Success messages like:
 ### ✅ STEP 3: Vercel Setup (5 minutes)
 
 **What to do:**
+
 ```
 1. Go to: https://vercel.com
 2. Click "Sign Up" or "Log In"
@@ -94,6 +101,7 @@ Success messages like:
 ```
 
 **Configuration (auto-detected but verify):**
+
 ```
 Framework Preset:          Next.js
 Root Directory:            ./
@@ -103,6 +111,7 @@ Install Command:           npm ci
 ```
 
 **Environment Variables - IMPORTANT!**
+
 ```
 Click: "Add New"
 
@@ -124,6 +133,7 @@ Add these (from Step 1):
 ```
 
 **Deploy:**
+
 ```
 Click: "Deploy" (button at bottom)
 
@@ -149,6 +159,7 @@ NEXT_PUBLIC_APP_VERSION=1.0.0
 ```
 
 **Where to get values:**
+
 - `NEXT_PUBLIC_SUPABASE_URL` → From Step 1
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` → From Step 1
 - `NEXT_PUBLIC_APP_VERSION` → Use: 1.0.0
@@ -170,6 +181,7 @@ chmod +x deploy.sh
 ```
 
 **What it does:**
+
 ```
 ✅ Checks Node.js, npm, git
 ✅ Installs dependencies
@@ -182,6 +194,7 @@ chmod +x deploy.sh
 ```
 
 **Expected output:**
+
 ```
 ✅ Node.js found
 ✅ npm found
@@ -203,6 +216,7 @@ chmod +x deploy.sh
 ### ✅ STEP 6: GitHub Actions (Automatic - 5 minutes)
 
 **What happens automatically:**
+
 ```
 1. Tests run (should pass ✅)
 2. Build verified
@@ -213,6 +227,7 @@ chmod +x deploy.sh
 **Monitor progress:**
 
 **Option A: GitHub Actions**
+
 ```
 1. Go to: https://github.com/yourusername/nexxohub-plataforma
 2. Click: Actions tab
@@ -221,6 +236,7 @@ chmod +x deploy.sh
 ```
 
 **Option B: Vercel**
+
 ```
 1. Go to: https://vercel.com/dashboard
 2. Select: nexxohub-plataforma project
@@ -238,6 +254,7 @@ chmod +x deploy.sh
 After deployment, verify everything works:
 
 ### Test 1: Website Loads
+
 ```bash
 # In terminal or browser
 curl https://app.nexxohub.com
@@ -246,6 +263,7 @@ curl https://app.nexxohub.com
 ```
 
 ### Test 2: Health Check
+
 ```bash
 curl https://app.nexxohub.com/api/health
 
@@ -260,6 +278,7 @@ curl https://app.nexxohub.com/api/health
 ```
 
 ### Test 3: Login Page
+
 ```
 1. Open: https://app.nexxohub.com
 2. Click: "Entrar" (or login link)
@@ -268,6 +287,7 @@ curl https://app.nexxohub.com/api/health
 ```
 
 ### Test 4: Protected Routes
+
 ```
 1. Try to access: https://app.nexxohub.com/dashboard
 2. Should redirect to: /auth/login
@@ -275,6 +295,7 @@ curl https://app.nexxohub.com/api/health
 ```
 
 ### Test 5: Database Connection
+
 ```
 1. In Supabase Dashboard
 2. Check: Database status (green)
@@ -305,6 +326,7 @@ curl https://app.nexxohub.com/api/health
 ## 🆘 Troubleshooting
 
 ### "Build failed"
+
 ```
 Vercel Dashboard → Deployments → Click failed build → View logs
 Most common:
@@ -314,6 +336,7 @@ Most common:
 ```
 
 ### "Health check returns error"
+
 ```
 Check:
 1. NEXT_PUBLIC_SUPABASE_URL is correct
@@ -323,6 +346,7 @@ Check:
 ```
 
 ### "Login doesn't work"
+
 ```
 Check:
 1. User exists in Supabase users table
@@ -331,6 +355,7 @@ Check:
 ```
 
 ### "404 Not Found"
+
 ```
 Wait 2-3 minutes for:
 - DNS propagation
@@ -345,23 +370,26 @@ Wait 2-3 minutes for:
 **If something goes wrong:**
 
 1. **Check logs:**
+
    - Vercel: Project → Deployments → View logs
    - GitHub: Actions → Workflow → View details
 
 2. **Read docs:**
+
    - DEPLOYMENT.md - Detailed guide
    - GETTING_STARTED.md - Quick start
    - MONITORING.md - Monitoring setup
 
 3. **Common commands:**
+
    ```bash
    # Test locally
    npm run dev
    npm run test -- --run
-   
+
    # Rebuild
    npm run build
-   
+
    # Check types
    npm run typecheck
    ```
@@ -371,6 +399,7 @@ Wait 2-3 minutes for:
 ## 🎉 Success!
 
 When you see:
+
 ```
 ✅ Website loads
 ✅ Health check responds
@@ -387,6 +416,6 @@ Next: Setup monitoring in MONITORING.md
 **Status**: Ready to Deploy  
 **Time Estimate**: 30 minutes total  
 **Difficulty**: Easy (copy-paste mostly)  
-**Prerequisite**: GitHub account, Email account  
+**Prerequisite**: GitHub account, Email account
 
 **Let's go! 🚀**

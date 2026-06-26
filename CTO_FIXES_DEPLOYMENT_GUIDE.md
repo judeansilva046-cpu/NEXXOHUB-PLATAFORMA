@@ -11,6 +11,7 @@
 Foram identificadas e **corrigidas 2 vulnerabilidades críticas de autenticação** que impediam o login:
 
 1. **`lib/supabase/auth.ts`** ❌→✅
+
    - Problema: Cliente Supabase não persistia cookies
    - Solução: Mudar `createClient` → `createBrowserClient` (gerencia cookies automaticamente)
    - Impacto: Login agora funciona corretamente
@@ -23,12 +24,12 @@ Foram identificadas e **corrigidas 2 vulnerabilidades críticas de autenticaçã
 
 ## 🎯 ARQUIVOS MODIFICADOS
 
-| Arquivo | Tipo | Status | O que mudou |
-|---------|------|--------|-----------|
-| `lib/supabase/auth.ts` | TypeScript | ✅ CORRIGIDO | Linha 3: `createBrowserClient` em vez de `createClient` |
-| `app/auth/verify-email/page.tsx` | TypeScript | ✅ OK | Já contém `resendEmailConfirmationLink()` |
-| `app/api/auth/callback/route.ts` | TypeScript | ✅ OK | Já contém `exchangeCodeForSession()` |
-| `.env.local` | Config | ⏳ SEU AMBIENTE | Precisa: `NEXT_PUBLIC_APP_URL` |
+| Arquivo                          | Tipo       | Status          | O que mudou                                             |
+| -------------------------------- | ---------- | --------------- | ------------------------------------------------------- |
+| `lib/supabase/auth.ts`           | TypeScript | ✅ CORRIGIDO    | Linha 3: `createBrowserClient` em vez de `createClient` |
+| `app/auth/verify-email/page.tsx` | TypeScript | ✅ OK           | Já contém `resendEmailConfirmationLink()`               |
+| `app/api/auth/callback/route.ts` | TypeScript | ✅ OK           | Já contém `exchangeCodeForSession()`                    |
+| `.env.local`                     | Config     | ⏳ SEU AMBIENTE | Precisa: `NEXT_PUBLIC_APP_URL`                          |
 
 ---
 
@@ -67,7 +68,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key_aqui
 ```
 
-**⚠️ IMPORTANTE:** 
+**⚠️ IMPORTANTE:**
+
 - `NEXT_PUBLIC_APP_URL` deve ser a URL de seu ambiente (local, staging, prod)
 - Em Netlify, configure em: `Settings → Build & Deploy → Environment`
 
@@ -94,6 +96,7 @@ npm run build
 ```
 
 **Se der erro:**
+
 ```bash
 # Limpar cache
 npm run build -- --no-cache
@@ -134,11 +137,13 @@ npm run dev
 ### ✅ PASSO 1: Criar em Supabase Auth
 
 1. **Vá para Supabase Dashboard:**
+
    - https://supabase.com/dashboard/project/xuhlhjpyukpqqpyixfct/auth/users
 
 2. **Clique "Create a new user"** (botão verde no topo)
 
 3. **Preencha:**
+
    - Email: `admin@nexxohub.test`
    - Password: `TempPassword@123!`
    - Confirme password
@@ -150,6 +155,7 @@ npm run dev
 ### ✅ PASSO 2: Sincronizar em public.users
 
 1. **Vá para Supabase SQL Editor:**
+
    - https://supabase.com/dashboard/project/xuhlhjpyukpqqpyixfct/sql/new
 
 2. **Abra o arquivo:** `SQL_CREATE_ADMIN_USER.sql` (está no seu projeto)
@@ -214,20 +220,24 @@ npm run dev
 ## 🔍 DIAGNÓSTICO DE PROBLEMAS
 
 ### ❌ "Invalid login credentials"
+
 - Verifique email/senha corretos
 - Confirme que usuário foi criado em Supabase Auth
 
 ### ❌ "Erro ao fazer login" (genérico)
+
 1. Abra DevTools (F12)
 2. Console → procure por erros Supabase
 3. Veja se há erro 400 ou 401 de `/auth/v1/token`
 
 ### ❌ "Redireciona para login mesmo após login"
+
 - Cookies não estão sendo salvos
 - Verifique se `NEXT_PUBLIC_APP_URL` está correto
 - Limpe cookies do navegador e tente novamente
 
 ### ❌ Build falha em npm run build
+
 ```bash
 # Tente:
 npm run build -- --no-cache
@@ -258,12 +268,15 @@ npm run build
 Se algo não funcionar:
 
 1. **Check logs de build Netlify:**
+
    - https://app.netlify.com → Deploy logs
 
 2. **Check logs do Supabase:**
+
    - https://supabase.com/dashboard → Logs
 
 3. **DevTools Console:**
+
    - F12 → Console → procure por mensagens de erro
 
 4. **Email:**
@@ -275,12 +288,12 @@ Se algo não funcionar:
 
 Após confirmar que login funciona, implemente estas **correções críticas** identificadas na auditoria:
 
-| Prioridade | Item | Esforço | Impacto |
-|-----------|------|---------|--------|
-| 🔴 CRÍTICO | Rate Limiting em APIs | 3h | Proteção contra DDoS |
-| 🔴 CRÍTICO | Paginação em /api/employees | 2h | Evita OOM com dados grandes |
-| 🔴 CRÍTICO | CSP + CORS Headers | 3h | Segurança web moderna |
-| 🟠 ALTO | Soft Deletes + Audit Trail | 6h | Compliance LGPD/GDPR |
+| Prioridade | Item                        | Esforço | Impacto                     |
+| ---------- | --------------------------- | ------- | --------------------------- |
+| 🔴 CRÍTICO | Rate Limiting em APIs       | 3h      | Proteção contra DDoS        |
+| 🔴 CRÍTICO | Paginação em /api/employees | 2h      | Evita OOM com dados grandes |
+| 🔴 CRÍTICO | CSP + CORS Headers          | 3h      | Segurança web moderna       |
+| 🟠 ALTO    | Soft Deletes + Audit Trail  | 6h      | Compliance LGPD/GDPR        |
 
 ---
 

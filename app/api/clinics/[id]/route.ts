@@ -1,185 +1,110 @@
-import { createClient } from '../../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
-import { createOrganizationSchema } from '../../../../lib/validations/organization';
+import { createClient } from '../../../../lib/supabase/server';
+import { updateClinicSchema } from '../../../../lib/validations/clinic';
+import { mapClinic } from '../../../../lib/domain-mappers';
+import {
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  getErrorResponse,
+} from '../../../../lib/errors';
 
-type UserProfile = {
-  organization_id?: string;
-  role?: string;
-};
+type Profile = { organization_id: string; role: string };
+type Context = { params: { id: string } };
 
-type ClinicData = {
-  organization_id?: string;
-};
+async function context() {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) throw new AuthenticationError();
+  const { data } = await supabase
+    .from('users')
+    .select('organization_id, role')
+    .eq('id', auth.user.id)
+    .single();
+  if (!data) throw new AuthenticationError();
+  return { supabase, user: auth.user, profile: data as Profile };
+}
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: NextRequest, { params }: Context) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: clinic, error: clinicError } = await supabase
-      .from('clinics')
-      .select('*')
-      .eq('id', params.id)
-      .single();
-
-    if (clinicError || !clinic) {
-      throw new NotFoundError('Clínica');
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-    const clinicData = clinic as unknown as ClinicData;
-
-    if (!profile || profile.organization_id !== clinicData.organization_id) {
-      throw new AuthorizationError();
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: clinic,
-    });
+    const { supabase } = await context();
+    const { data, error } = await supabase.from('clinics').select('*').eq('id', params.id).single();
+    if (error || !data) throw new NotFoundError('Clínica');
+    return NextResponse.json({ success: true, data: mapClinic(data) });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const result = getErrorResponse(error);
+    return NextResponse.json(result, { status: result.statusCode });
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: Context) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile || profile.role !== 'admin') {
-      throw new AuthorizationError();
-    }
-
-    const { data: clinic } = await supabase
+    const { supabase, user, profile } = await context();
+    if (!['admin', 'manager'].includes(profile.role)) throw new AuthorizationError();
+    const input = updateClinicSchema.parse(await request.json());
+    const update = {
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.cnpj !== undefined && { cnpj: input.cnpj }),
+      ...(input.responsibleName !== undefined && { responsible_name: input.responsibleName }),
+      ...(input.email !== undefined && { email: input.email }),
+      ...(input.phone !== undefined && { phone: input.phone }),
+      ...(input.address !== undefined && { address: input.address }),
+      ...(input.specialties !== undefined && {
+        specialties: input.specialties
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean),
+      }),
+      ...(input.status !== undefined && { status: input.status }),
+    };
+    const { data, error } = await supabase
       .from('clinics')
-      .select('organization_id')
+      .update(update)
       .eq('id', params.id)
-      .single();
-
-    const clinicData = clinic as unknown as ClinicData;
-
-    if (!clinicData || clinicData.organization_id !== profile.organization_id) {
-      throw new NotFoundError('Clínica');
-    }
-
-    const body = await req.json();
-    const validatedData = createOrganizationSchema.partial().parse(body);
-
-    const { data: updatedClinic, error: updateError } = await supabase
-      .from('clinics')
-      .update(validatedData)
-      .eq('id', params.id)
+      .eq('organization_id', profile.organization_id)
       .select()
       .single();
-
-    if (updateError) {
-      throw new Error('Failed to update clinic');
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: updatedClinic,
+    if (error || !data) throw new NotFoundError('Clínica');
+    await supabase.from('activity_events').insert({
+      organization_id: profile.organization_id,
+      actor_id: user.id,
+      event_type: 'clinic.updated',
+      entity_type: 'clinic',
+      entity_id: data.id,
+      title: 'Clínica atualizada',
+      description: data.name,
     });
+    return NextResponse.json({ success: true, data: mapClinic(data) });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const result = getErrorResponse(error);
+    return NextResponse.json(result, { status: result.statusCode });
   }
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: NextRequest, { params }: Context) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile || profile.role !== 'admin') {
-      throw new AuthorizationError();
-    }
-
-    const { data: clinic } = await supabase
-      .from('clinics')
-      .select('organization_id')
-      .eq('id', params.id)
-      .single();
-
-    const clinicData = clinic as unknown as ClinicData;
-
-    if (!clinicData || clinicData.organization_id !== profile.organization_id) {
-      throw new NotFoundError('Clínica');
-    }
-
-    const { error: deleteError } = await supabase
+    const { supabase, user, profile } = await context();
+    if (profile.role !== 'admin') throw new AuthorizationError();
+    const { data, error } = await supabase
       .from('clinics')
       .delete()
-      .eq('id', params.id);
-
-    if (deleteError) {
-      throw new Error('Failed to delete clinic');
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Clínica deletada com sucesso',
+      .eq('id', params.id)
+      .eq('organization_id', profile.organization_id)
+      .select('id, name')
+      .single();
+    if (error || !data) throw new NotFoundError('Clínica');
+    await supabase.from('activity_events').insert({
+      organization_id: profile.organization_id,
+      actor_id: user.id,
+      event_type: 'clinic.deleted',
+      entity_type: 'clinic',
+      entity_id: data.id,
+      title: 'Clínica excluída',
+      description: data.name,
     });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    const errorResponse = getErrorResponse(error);
-    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+    const result = getErrorResponse(error);
+    return NextResponse.json(result, { status: result.statusCode });
   }
 }

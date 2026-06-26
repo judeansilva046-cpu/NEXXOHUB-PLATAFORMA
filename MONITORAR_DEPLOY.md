@@ -3,6 +3,7 @@
 ## 📍 Localização do Status
 
 ### **Abra isso agora no navegador:**
+
 ```
 https://app.netlify.com → Clique em seu site → "Deploys" tab
 ```
@@ -12,6 +13,7 @@ https://app.netlify.com → Clique em seu site → "Deploys" tab
 ## 🟢 Etapas do Deploy (Em ordem)
 
 ### **Etapa 1: Cloning Repository**
+
 ```
 ⏱️ Tempo: ~30 segundos
 🟢 Status: Verde = funcionando
@@ -21,6 +23,7 @@ https://app.netlify.com → Clique em seu site → "Deploys" tab
 ```
 
 ### **Etapa 2: Installing Dependencies**
+
 ```
 ⏱️ Tempo: 2-3 minutos (pode variar)
 🟢 Status: Verde = funcionando
@@ -31,6 +34,7 @@ https://app.netlify.com → Clique em seu site → "Deploys" tab
 ```
 
 ### **Etapa 3: Building Next.js**
+
 ```
 ⏱️ Tempo: 2-5 minutos (parte mais importante)
 🟢 Status: Verde = funcionando
@@ -42,6 +46,7 @@ https://app.netlify.com → Clique em seu site → "Deploys" tab
 ```
 
 ### **Etapa 4: Deploying**
+
 ```
 ⏱️ Tempo: ~30 segundos
 🟢 Status: Verde = funcionando
@@ -51,6 +56,7 @@ https://app.netlify.com → Clique em seu site → "Deploys" tab
 ```
 
 ### **Etapa 5: Published**
+
 ```
 ✅ Status: SUCESSO!
 🎉 Você verá: "Published"
@@ -64,6 +70,7 @@ https://app.netlify.com → Clique em seu site → "Deploys" tab
 ### **Na tela de logs do Netlify, procure por:**
 
 #### ✅ Linhas BOM (sucesso):
+
 ```
 ✓ Dependencies installed
 ✓ Next.js build completed
@@ -73,6 +80,7 @@ https://app.netlify.com → Clique em seu site → "Deploys" tab
 ```
 
 #### ❌ Linhas RUINS (erro):
+
 ```
 ERROR: Cannot find module
 ERROR: Build failed
@@ -87,6 +95,7 @@ ERROR: EACCES permission denied
 ### **Errors comuns e soluções:**
 
 #### **❌ "Cannot find module X"**
+
 ```
 Causa: Falta dependência no package.json
 Solução:
@@ -97,6 +106,7 @@ Solução:
 ```
 
 #### **❌ "npm ERR! code ERESOLVE"**
+
 ```
 Causa: Conflito de dependências
 Solução:
@@ -106,6 +116,7 @@ Solução:
 ```
 
 #### **❌ "Build timeout (>15 min)"**
+
 ```
 Causa: Build muito lento
 Solução:
@@ -115,6 +126,7 @@ Solução:
 ```
 
 #### **❌ "SUPABASE_URL is undefined"**
+
 ```
 Causa: Variáveis de ambiente não setadas
 Solução:
@@ -128,15 +140,17 @@ Solução:
 ## 🎯 Indicadores de Progresso
 
 ### **Barra de progresso:**
+
 ```
 🟡 25% = Cloning
-🟡 50% = Installing dependencies  
+🟡 50% = Installing dependencies
 🟡 75% = Building
 🟡 90% = Deploying
 🟢 100% = Published!
 ```
 
 ### **Tempo total esperado:**
+
 ```
 Rápido: 5 minutos
 Normal: 7-10 minutos
@@ -151,7 +165,7 @@ Lento: 12-15 minutos
 ✅ Leia os guias:
    - SENTRY_SETUP.md (veja preparação)
    - ANALYTICS_SETUP.md (veja preparação)
-   
+
 ✅ Prepare credenciais:
    - Anote seu email Supabase
    - Abra Google Analytics em outra aba
@@ -167,6 +181,7 @@ Lento: 12-15 minutos
 ## 🎉 SUCESSO - O que você vai ver
 
 ### **Na tela:**
+
 ```
 Status: Published ✓
 Deploy ID: xxxxxxxxxxxxx
@@ -178,6 +193,7 @@ Site URL:
 ```
 
 ### **O que fazer em seguida:**
+
 ```
 1. CLIQUE NA URL
 2. Seu site abre!
@@ -256,11 +272,13 @@ Total                   : ~7-8 min
 **Quando o deploy terminar (Status = Published):**
 
 1. **Teste rápido (30 seg):**
+
    - Clique na URL
    - Veja se carrega
    - Teste login
 
 2. **Se funcionar:**
+
    - Faça setup Sentry (5 min)
    - Faça setup Analytics (5 min)
    - Seu app está completo! 🎉
@@ -275,6 +293,7 @@ Total                   : ~7-8 min
 **Qual é o status atual no Netlify?** ⏳
 
 Diga-me:
+
 - Qual etapa está? (Cloning/Dependencies/Building/Deploying/Published)
 - Tem erro na tela?
 - Quanto tempo levou até agora?

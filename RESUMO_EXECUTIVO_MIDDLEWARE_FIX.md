@@ -50,13 +50,13 @@ Middleware vê cookies ✅
 
 ## ANTES vs DEPOIS
 
-| | ANTES | DEPOIS |
-|---|---|---|
-| **Fluxo Login** | Client-side signIn() | Server-side /api/auth/signin |
-| **Cookie Save** | Async, race condition | Sync, antes da response |
-| **Middleware** | Não vê cookies | Vê cookies ✅ |
-| **UX** | Loop infinito ❌ | Funciona ✅ |
-| **Segurança** | Fraca (client auth) | Forte (server auth) |
+|                 | ANTES                 | DEPOIS                       |
+| --------------- | --------------------- | ---------------------------- |
+| **Fluxo Login** | Client-side signIn()  | Server-side /api/auth/signin |
+| **Cookie Save** | Async, race condition | Sync, antes da response      |
+| **Middleware**  | Não vê cookies        | Vê cookies ✅                |
+| **UX**          | Loop infinito ❌      | Funciona ✅                  |
+| **Segurança**   | Fraca (client auth)   | Forte (server auth)          |
 
 ---
 
@@ -65,11 +65,13 @@ Middleware vê cookies ✅
 ### 3 Arquivos Novos
 
 1. **`app/api/auth/signin/route.ts`** (NEW)
+
    - Endpoint server-side para login
    - Salva cookies sincronamente
    - Envia Set-Cookie headers
 
 2. **`app/api/auth/callback/route.ts`** (NEW)
+
    - Endpoint para email verification
    - Processa código de confirmação
    - Redireciona para dashboard
@@ -144,7 +146,7 @@ export const signIn = async (email: string, password: string) => {
 // app/auth/login/page.tsx
 const { data, error: authError } = await authClient.signIn(email, password);
 if (data?.session) {
-  router.push('/dashboard');  // ❌ TOO FAST!
+  router.push('/dashboard'); // ❌ TOO FAST!
 }
 ```
 
@@ -165,7 +167,7 @@ export async function POST(req: Request) {
 // app/auth/login/page.tsx
 const response = await fetch('/api/auth/signin', { POST, body });
 if (response.ok) {
-  router.push('/dashboard');  // ✅ SAFE NOW!
+  router.push('/dashboard'); // ✅ SAFE NOW!
 }
 ```
 
@@ -173,13 +175,13 @@ if (response.ok) {
 
 ## STACK TÉCNICO USADO
 
-| Componente | Tecnologia | Versão | Uso |
-|---|---|---|---|
-| Framework | Next.js | 15.5.19 | App Router |
-| Auth | Supabase | 2.46.0 | Autenticação |
-| Server Client | @supabase/ssr | 0.5.0 | Cookies no servidor |
-| Middleware | @supabase/auth-helpers-nextjs | 0.8.7 | Session validation |
-| Runtime | Node.js | 20 | Server runtime |
+| Componente    | Tecnologia                    | Versão  | Uso                 |
+| ------------- | ----------------------------- | ------- | ------------------- |
+| Framework     | Next.js                       | 15.5.19 | App Router          |
+| Auth          | Supabase                      | 2.46.0  | Autenticação        |
+| Server Client | @supabase/ssr                 | 0.5.0   | Cookies no servidor |
+| Middleware    | @supabase/auth-helpers-nextjs | 0.8.7   | Session validation  |
+| Runtime       | Node.js                       | 20      | Server runtime      |
 
 ---
 
@@ -245,11 +247,11 @@ Dia 1:
   - 20 min: Modificar login page
   - 10 min: Melhorar middleware
   - 45 min: Testes locais
-  
+
 Dia 2 (se necessário):
   - 30 min: Debug e correções
   - Deploy para staging
-  
+
 Dia 3 (se necessário):
   - Deploy para production
   - Monitorar por 24h
@@ -260,11 +262,13 @@ Dia 3 (se necessário):
 ## PRÓXIMA AÇÃO
 
 **Imediato:**
+
 1. Ler `AUDITORIA_MIDDLEWARE_COOKIES.md` para entender problema
 2. Ler `PROBLEMA_TECNICO_DIAGRAMA.md` para ver diagramas
 3. Seguir `IMPLEMENTACAO_CHECKLIST.md` passo a passo
 
 **Após implementação:**
+
 1. Implementar rate limiting em `/api/auth/signin`
 2. Adicionar logging estruturado
 3. Implementar refresh token rotation
@@ -275,18 +279,22 @@ Dia 3 (se necessário):
 ## CONTATOS E REFERÊNCIAS
 
 **Problema reportado:**
+
 - Middleware não vê session após login
 - Usuários redirecionados de volta para login
 
 **Causa Raiz:**
+
 - Client-side auth com async cookie save
 - Race condition entre router.push() e cookie save
 
 **Solução:**
+
 - Server-side auth endpoints
 - Sincronous cookie handling
 
 **Documentação:**
+
 - Supabase Auth: https://supabase.com/docs/guides/auth
 - Next.js Middleware: https://nextjs.org/docs/advanced-features/middleware
 
@@ -295,4 +303,3 @@ Dia 3 (se necessário):
 **Documento preparado:** 23 de Junho de 2026  
 **Autor:** Auditoria Automática  
 **Status:** Pronto para implementação
-

@@ -1,305 +1,314 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Organization } from '../../types';
+import {
+  Activity,
+  AlertTriangle,
+  Building2,
+  CheckCircle2,
+  HeartPulse,
+  Hospital,
+  Lightbulb,
+  Sparkles,
+  Users,
+} from 'lucide-react';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
-interface UserData {
-  id?: string;
-  email?: string;
-  full_name?: string;
-  fullName?: string;
-  role?: string;
-  organization_id?: string;
-  created_at?: string;
+type DashboardData = {
+  user: { name: string; role: string; email?: string };
+  metrics: {
+    activeCompanies: number;
+    activeClinics: number;
+    monitoredEmployees: number;
+    psychosocialIndex: number | null;
+  };
+  indexSeries: Array<{ score: number; period_end: string; sample_size: number }>;
+  alerts: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    severity: string;
+    detected_at: string;
+  }>;
+  insight: null | {
+    id: string;
+    title: string;
+    summary: string;
+    recommendation?: string;
+  };
+  activities: Array<{
+    id: string;
+    event_type: string;
+    title: string;
+    description?: string;
+    occurred_at: string;
+  }>;
+};
+
+const periods = [
+  { label: '7 dias', days: 7 },
+  { label: '30 dias', days: 30 },
+  { label: '90 dias', days: 90 },
+  { label: '12 meses', days: 365 },
+];
+
+function MetricCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+}: {
+  label: string;
+  value: string;
+  icon: typeof Building2;
+  color: string;
+}) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center gap-4">
+        <span className={`flex h-14 w-14 items-center justify-center rounded-2xl ${color}`}>
+          <Icon className="h-7 w-7" />
+        </span>
+        <div>
+          <p className="text-sm font-medium text-slate-600">{label}</p>
+          <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{value}</p>
+        </div>
+      </div>
+      <p className="mt-4 text-xs text-slate-500">Dados do período selecionado</p>
+    </section>
+  );
 }
 
-// Mock data for charts
-const collaboratorData = [
-  { name: 'Seg', value: 45 },
-  { name: 'Ter', value: 52 },
-  { name: 'Qua', value: 48 },
-  { name: 'Qui', value: 61 },
-  { name: 'Sex', value: 55 },
-  { name: 'Sab', value: 42 },
-];
-
-const wellbeingData = [
-  { name: 'Excelente', value: 28, color: '#10b981' },
-  { name: 'Bom', value: 45, color: '#3b82f6' },
-  { name: 'Regular', value: 20, color: '#f59e0b' },
-  { name: 'Crítico', value: 7, color: '#ef4444' },
-];
-
-const programsData = [
-  { name: 'Saúde Mental', participantes: 128 },
-  { name: 'Liderança', participantes: 87 },
-  { name: 'Compliance', participantes: 95 },
-  { name: 'Saúde', participantes: 112 },
-];
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex min-h-36 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 text-center">
+      <Sparkles className="mb-3 h-6 w-6 text-slate-300" />
+      <p className="text-sm text-slate-500">{message}</p>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
-  const [organization, setOrganization] = useState<Organization | null>(null);
-  const [user, setUser] = useState<UserData | null>(null);
+  const [days, setDays] = useState(30);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        console.log('[DASHBOARD] Fetching user data from /api/auth/me...');
+    setLoading(true);
+    fetch(`/api/dashboard/summary?days=${days}`, { cache: 'no-store' })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.error || 'Erro ao carregar');
+        return result.data as DashboardData;
+      })
+      .then(setData)
+      .catch((requestError) =>
+        setError(
+          requestError instanceof Error ? requestError.message : 'Erro ao carregar dashboard'
+        )
+      )
+      .finally(() => setLoading(false));
+  }, [days]);
 
-        // Fetch current user
-        const userRes = await fetch('/api/auth/me');
-
-        if (!userRes.ok) {
-          console.error('[DASHBOARD] API returned status:', userRes.status);
-          const errorData = await userRes.json().catch(() => ({}));
-          console.error('[DASHBOARD] Error response:', errorData);
-          throw new Error(`Falha ao carregar usuário (status ${userRes.status})`);
-        }
-
-        const userData = await userRes.json();
-        console.log('[DASHBOARD] API Response:', userData);
-
-        if (!userData.success || !userData.data) {
-          throw new Error('Resposta inválida da API');
-        }
-
-        console.log('[DASHBOARD] User data loaded successfully:', userData.data);
-        setUser(userData.data);
-
-        // Fetch organization (non-critical)
-        try {
-          const orgRes = await fetch('/api/organizations');
-          if (orgRes.ok) {
-            const orgData = await orgRes.json();
-            if (orgData.success && orgData.data) {
-              console.log('[DASHBOARD] Organization data loaded:', orgData.data);
-              setOrganization(orgData.data);
-            }
-          }
-        } catch (orgErr) {
-          console.warn('[DASHBOARD] Organization fetch failed (non-critical):', orgErr);
-          // Organization is optional, don't throw
-        }
-      } catch (err) {
-        console.error('[DASHBOARD] Error:', err);
-        setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  if (loading) {
+  if (loading && !data) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-gray-600">Carregando dados...</div>
+      <div className="py-20 text-center text-sm text-slate-500">
+        Carregando indicadores reais...
       </div>
     );
   }
 
-  if (error && !user) {
+  if (error && !data) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <p className="text-red-600 font-medium mb-2">Erro ao carregar dados</p>
-          <p className="text-red-500 text-sm">{error}</p>
-          <p className="text-red-400 text-xs mt-4">
-            Verifique o console (F12) para mais detalhes
-          </p>
-        </div>
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
+        Não foi possível carregar o dashboard. {error}
       </div>
     );
   }
 
-  // Get displayable user data (handle both snake_case and camelCase)
-  const userName = user?.full_name || user?.fullName || 'Usuário';
-  const userEmail = user?.email || 'Não informado';
-  const userRole = user?.role || 'Sem função';
+  if (!data) return null;
+
+  const firstName = data.user.name?.split(' ')[0] || 'Usuário';
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-[1500px] space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-2">Bem-vindo ao NexxoHub</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+          Olá, {firstName}! <span aria-hidden="true">👋</span>
+        </h1>
+        <p className="mt-2 text-lg text-slate-600">Bem-vindo ao NexxoHub</p>
+        <p className="mt-1 text-sm text-slate-500">
+          Monitoramento psicossocial corporativo em tempo real.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Organização</CardTitle>
-            <CardDescription>Sua organização atual</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              {organization?.name || '-'}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              CNPJ: {organization?.cnpj || '-'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Usuário</CardTitle>
-            <CardDescription>Seu perfil</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              {userName}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Função: {userRole}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Email</CardTitle>
-            <CardDescription>Seu contato</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold text-gray-900 truncate">
-              {userEmail}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Acesso: {new Date().toLocaleDateString('pt-BR')}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          label="Empresas Ativas"
+          value={String(data.metrics.activeCompanies)}
+          icon={Building2}
+          color="bg-blue-50 text-blue-600"
+        />
+        <MetricCard
+          label="Clínicas Ativas"
+          value={String(data.metrics.activeClinics)}
+          icon={Hospital}
+          color="bg-cyan-50 text-cyan-600"
+        />
+        <MetricCard
+          label="Colaboradores Monitorados"
+          value={data.metrics.monitoredEmployees.toLocaleString('pt-BR')}
+          icon={Users}
+          color="bg-violet-50 text-violet-600"
+        />
+        <MetricCard
+          label="Índice de Saúde Psicossocial"
+          value={
+            data.metrics.psychosocialIndex === null
+              ? '—'
+              : `${data.metrics.psychosocialIndex.toLocaleString('pt-BR')}/100`
+          }
+          icon={HeartPulse}
+          color="bg-emerald-50 text-emerald-600"
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Colaboradores</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">284</div>
-            <p className="text-xs text-green-600 mt-2">↑ 12 esta semana</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Bem-estar Médio</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">74%</div>
-            <p className="text-xs text-green-600 mt-2">↑ 13% este mês</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Departamentos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-gray-500 mt-2">Sob monitoramento</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Programas Ativos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">23</div>
-            <p className="text-xs text-orange-600 mt-2">→ Requer atenção</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Colaboradores por Semana</CardTitle>
-            <CardDescription>Tendência de participação</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={collaboratorData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Estado de Bem-estar</CardTitle>
-            <CardDescription>Distribuição geral</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={wellbeingData} cx="50%" cy="50%" labelLine={false} label={({ name, value }: { name?: string; value?: number }) => `${name ?? ''}: ${value ?? 0}%`} outerRadius={100} fill="#8884d8" dataKey="value">
-                  {wellbeingData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Programas por Participação</CardTitle>
-          <CardDescription>Colaboradores envolvidos por programa</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={programsData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="participantes" fill="#10b981" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Funcionalidades Principais</CardTitle>
-          <CardDescription>Navegue pelos módulos da plataforma</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="border rounded-lg p-4 hover:bg-blue-50 transition cursor-pointer">
-              <h3 className="font-semibold text-gray-900">Indicadores</h3>
-              <p className="text-sm text-gray-600 mt-1">Monitorar riscos</p>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.8fr)_minmax(330px,0.8fr)]">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-950">
+                Evolução do Índice de Saúde Psicossocial
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Série calculada a partir de avaliações concluídas.
+              </p>
             </div>
-            <div className="border rounded-lg p-4 hover:bg-green-50 transition cursor-pointer">
-              <h3 className="font-semibold text-gray-900">Programas</h3>
-              <p className="text-sm text-gray-600 mt-1">Gerenciar programas</p>
-            </div>
-            <div className="border rounded-lg p-4 hover:bg-purple-50 transition cursor-pointer">
-              <h3 className="font-semibold text-gray-900">Trilhas</h3>
-              <p className="text-sm text-gray-600 mt-1">Biblioteca de trilhas</p>
-            </div>
-            <div className="border rounded-lg p-4 hover:bg-orange-50 transition cursor-pointer">
-              <h3 className="font-semibold text-gray-900">Suporte</h3>
-              <p className="text-sm text-gray-600 mt-1">Preciso de ajuda</p>
+            <div className="flex flex-wrap gap-2">
+              {periods.map((period) => (
+                <button
+                  key={period.days}
+                  onClick={() => setDays(period.days)}
+                  className={`rounded-lg px-3 py-2 text-xs font-medium transition ${
+                    days === period.days
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {period.label}
+                </button>
+              ))}
             </div>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="mt-5 h-[330px]">
+            {data.indexSeries.length === 0 ? (
+              <EmptyState message="Nenhum índice calculado para o período. Conclua avaliações para gerar a série histórica." />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.indexSeries}>
+                  <defs>
+                    <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2563eb" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="#2563eb" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="period_end"
+                    tickFormatter={(value) =>
+                      new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'short',
+                      })
+                    }
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                  />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <Tooltip />
+                  <Area
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#2563eb"
+                    strokeWidth={3}
+                    fill="url(#scoreGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </section>
+
+        <div className="space-y-6">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-semibold text-slate-950">Alertas Inteligentes</h2>
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+            </div>
+            {data.alerts.length === 0 ? (
+              <EmptyState message="Nenhum alerta ativo no momento." />
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {data.alerts.map((alert) => (
+                  <article key={alert.id} className="py-3">
+                    <p className="text-sm font-semibold text-slate-900">{alert.title}</p>
+                    <p className="mt-1 text-xs text-slate-500">{alert.description}</p>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-violet-600" />
+              <h2 className="font-semibold text-slate-950">Insights da IA</h2>
+            </div>
+            {!data.insight ? (
+              <EmptyState message="Nenhum insight disponível no momento." />
+            ) : (
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{data.insight.title}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{data.insight.summary}</p>
+                {data.insight.recommendation && (
+                  <p className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
+                    {data.insight.recommendation}
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-4 flex items-center gap-2">
+          <Activity className="h-5 w-5 text-blue-600" />
+          <h2 className="font-semibold text-slate-950">Atividades Recentes</h2>
+        </div>
+        {data.activities.length === 0 ? (
+          <EmptyState message="Nenhuma atividade registrada ainda." />
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {data.activities.map((activity) => (
+              <article key={activity.id} className="rounded-xl border border-slate-100 p-4">
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                <p className="mt-3 text-sm font-semibold text-slate-900">{activity.title}</p>
+                <p className="mt-1 text-xs text-slate-500">{activity.description}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

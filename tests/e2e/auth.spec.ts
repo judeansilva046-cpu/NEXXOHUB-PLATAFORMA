@@ -70,7 +70,9 @@ test.describe('🔐 Autenticação - Suite Completa', () => {
     console.log('[TEST_2] ✅ PASSOU - Autenticação mantida após F5');
   });
 
-  test('3️⃣ Usuário autenticado acessa /auth/login é redirecionado para /dashboard', async ({ page }) => {
+  test('3️⃣ Usuário autenticado acessa /auth/login é redirecionado para /dashboard', async ({
+    page,
+  }) => {
     console.log('[TEST_3] Testando redirecionamento de usuário autenticado...');
     await page.goto(`${BASE_URL}/auth/login`);
 
@@ -94,7 +96,9 @@ test.describe('🔐 Autenticação - Suite Completa', () => {
     console.log('[TEST_3] ✅ PASSOU - Redirecionamento sem loop');
   });
 
-  test('4️⃣ Usuário não autenticado é redirecionado de /dashboard para /auth/login', async ({ browser }) => {
+  test('4️⃣ Usuário não autenticado é redirecionado de /dashboard para /auth/login', async ({
+    browser,
+  }) => {
     console.log('[TEST_4] Testando redirecionamento de usuário não autenticado...');
 
     const context = await browser.newContext();
@@ -102,8 +106,11 @@ test.describe('🔐 Autenticação - Suite Completa', () => {
 
     await page.goto(`${BASE_URL}/dashboard`);
 
-    await page.waitForURL(`${BASE_URL}/auth/login`, { timeout: 5000 });
-    await expect(page).toHaveURL(`${BASE_URL}/auth/login`);
+    await page.waitForURL(
+      (url) => url.pathname === '/auth/login' && url.searchParams.get('portal') === 'nexxohub',
+      { timeout: 5000 }
+    );
+    await expect(page).toHaveURL(/\/auth\/login\?portal=nexxohub$/);
 
     console.log('[TEST_4] ✅ PASSOU - Redirecionamento correto');
     await context.close();

@@ -9,9 +9,9 @@
 
 ### **Arquivos Modificados:**
 
-| Arquivo | O que mudou |
-|---------|-----------|
-| `lib/supabase/auth.ts` | ➕ Adicionados 5 novos métodos de autenticação |
+| Arquivo                   | O que mudou                                     |
+| ------------------------- | ----------------------------------------------- |
+| `lib/supabase/auth.ts`    | ➕ Adicionados 5 novos métodos de autenticação  |
 | `app/auth/login/page.tsx` | 🔄 Redesenhada com abas + múltiplos formulários |
 
 ### **Métodos de Autenticação Implementados:**
@@ -90,6 +90,7 @@ A página de login agora tem:
 ```
 
 **Recursos:**
+
 - ✅ Abas dinâmicas (Email / Celular / Link)
 - ✅ Botões OAuth (Google / GitHub)
 - ✅ Loading spinners
@@ -154,13 +155,13 @@ git push origin main
 
 ## 📊 COMPARAÇÃO: ANTES vs DEPOIS
 
-| Aspecto | Antes | Depois |
-|---------|-------|--------|
+| Aspecto              | Antes           | Depois                                       |
+| -------------------- | --------------- | -------------------------------------------- |
 | **Métodos de Login** | 1 (email+senha) | 5 (email, phone, magic-link, google, github) |
-| **UX** | Simples | Tabs + opções de OAuth |
-| **Segurança** | Básica | Avançada (OTP, OAuth 2.0) |
-| **Flexibilidade** | Baixa | Alta (usuário escolhe método) |
-| **Conversão** | ~70% | ~85% (menos fricção) |
+| **UX**               | Simples         | Tabs + opções de OAuth                       |
+| **Segurança**        | Básica          | Avançada (OTP, OAuth 2.0)                    |
+| **Flexibilidade**    | Baixa           | Alta (usuário escolhe método)                |
+| **Conversão**        | ~70%            | ~85% (menos fricção)                         |
 
 ---
 
@@ -228,14 +229,14 @@ const handleGitHubLogin = async () { ... }         // Novo
 
 ## 🎯 TEMPO TOTAL
 
-| Etapa | Tempo |
-|-------|-------|
-| Build & Deploy | 5 min |
-| Google OAuth | 10 min |
-| GitHub OAuth | 10 min |
-| Phone OTP | 15 min |
-| Testes | 10 min |
-| **TOTAL** | **50 min** |
+| Etapa          | Tempo      |
+| -------------- | ---------- |
+| Build & Deploy | 5 min      |
+| Google OAuth   | 10 min     |
+| GitHub OAuth   | 10 min     |
+| Phone OTP      | 15 min     |
+| Testes         | 10 min     |
+| **TOTAL**      | **50 min** |
 
 ---
 

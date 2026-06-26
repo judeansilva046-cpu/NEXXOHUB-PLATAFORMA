@@ -1,4 +1,5 @@
 export type UserRole = 'admin' | 'manager' | 'user';
+export type RecordStatus = 'active' | 'inactive' | 'archived';
 
 export interface User {
   id: string;
@@ -13,10 +14,13 @@ export interface User {
 export interface Organization {
   id: string;
   name: string;
-  description?: string;
+  legalName?: string;
+  responsibleName?: string;
+  email?: string;
   cnpj: string;
-  website?: string;
   phone?: string;
+  address?: string;
+  status?: RecordStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,10 +29,13 @@ export interface Clinic {
   id: string;
   organizationId: string;
   name: string;
-  description?: string;
   cnpj: string;
-  address?: string;
-  phone?: string;
+  responsibleName: string;
+  email: string;
+  phone: string;
+  address: string;
+  specialties: string[];
+  status: RecordStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -36,22 +43,35 @@ export interface Clinic {
 export interface Company {
   id: string;
   organizationId: string;
+  clinicId: string;
+  clinicName?: string;
+  legalName: string;
   name: string;
-  description?: string;
   cnpj: string;
-  address?: string;
-  phone?: string;
+  hrResponsible: string;
+  email: string;
+  phone: string;
+  address: string;
+  employeeCount: number;
+  status: RecordStatus;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Employee {
   id: string;
+  organizationId: string;
   companyId: string;
-  email: string;
+  companyName?: string;
   fullName: string;
+  cpf: string;
+  registration: string;
   position: string;
-  department?: string;
+  department: string;
+  email: string;
+  phone: string;
+  admissionDate: string;
+  status: RecordStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -59,9 +79,5 @@ export interface Employee {
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
-  error?: {
-    code: string;
-    message: string;
-    field?: string;
-  };
+  error?: { code: string; message: string; field?: string };
 }

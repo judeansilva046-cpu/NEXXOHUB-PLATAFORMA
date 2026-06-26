@@ -1,19 +1,33 @@
 'use client';
 
 import { createBrowserClient } from '@supabase/ssr';
+import { getPublicEnvironment } from '../env';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const { supabaseUrl, supabaseAnonKey, appUrl } = getPublicEnvironment();
 
 // ✅ CORRIGIDO: Usar createBrowserClient que gerencia cookies automaticamente
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
-export const signUp = async (email: string, password: string) => {
+export const signUp = async (input: {
+  email: string;
+  password: string;
+  fullName: string;
+  organizationName: string;
+  organizationCnpj: string;
+}) => {
+  if (typeof window !== 'undefined') {
+    window.sessionStorage.setItem('nexxohub.pendingEmail', input.email);
+  }
   const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
+    email: input.email,
+    password: input.password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      emailRedirectTo: `${appUrl}/auth/callback`,
+      data: {
+        full_name: input.fullName,
+        organization_name: input.organizationName,
+        organization_cnpj: input.organizationCnpj,
+      },
     },
   });
   return { data, error };
@@ -34,7 +48,7 @@ export const signOut = async () => {
 
 export const resetPassword = async (email: string) => {
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+    redirectTo: `${appUrl}/auth/reset-password`,
   });
   return { data, error };
 };
@@ -65,7 +79,7 @@ export const signInWithGoogle = async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      redirectTo: `${appUrl}/auth/callback`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -79,7 +93,7 @@ export const signInWithGitHub = async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      redirectTo: `${appUrl}/auth/callback`,
     },
   });
   return { data, error };
@@ -116,7 +130,7 @@ export const signInWithMagicLink = async (email: string) => {
   const { data, error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      emailRedirectTo: `${appUrl}/auth/callback`,
     },
   });
   return { data, error };

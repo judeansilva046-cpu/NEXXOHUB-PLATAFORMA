@@ -63,7 +63,8 @@ export default function ForgotPasswordPage() {
       console.log('Password reset email sent successfully');
       setSuccess(true);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao enviar email de recuperação';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Erro ao enviar email de recuperação';
       console.error('Unexpected error during password reset:', {
         message: errorMessage,
         error: err,
@@ -86,14 +87,22 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg shadow-xl p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-8 h-8 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Email enviado
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Email enviado</h1>
 
             <p className="text-gray-600 mb-8">
               Verifique seu email para instruções de recuperação de senha.
@@ -115,9 +124,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-xl p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Recuperar Senha
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Recuperar Senha</h1>
           <p className="text-gray-600 mb-8">
             Informe seu email para receber instruções de recuperação
           </p>

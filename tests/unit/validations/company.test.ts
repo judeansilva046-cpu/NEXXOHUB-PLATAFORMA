@@ -1,79 +1,48 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createCompanySchema } from '../../../lib/validations/company';
 
-describe('Company Validation Schema', () => {
-  it('validates correct company data', () => {
-    const validData = {
-      name: 'Tech Company LTDA',
-      cnpj: '12.345.678/0001-99',
-      phone: '(11) 3333-3333',
-      email: 'contact@company.com',
-      address: 'Avenida Principal, 500',
-    };
+const validCompany = {
+  clinicId: '11111111-1111-4111-8111-111111111111',
+  legalName: 'Tech Company Serviços LTDA',
+  name: 'Tech Company',
+  cnpj: '12.345.678/0001-99',
+  hrResponsible: 'Carlos Lima',
+  email: 'rh@company.com',
+  phone: '(11) 3333-3333',
+  address: 'Avenida Principal, 500',
+  employeeCount: 120,
+  status: 'active' as const,
+};
 
-    const result = createCompanySchema.safeParse(validData);
-    expect(result.success).toBe(true);
+describe('Company Validation Schema', () => {
+  it('validates complete company data', () => {
+    expect(createCompanySchema.safeParse(validCompany).success).toBe(true);
   });
 
-  it('rejects missing required fields', () => {
-    const invalidData = {
-      name: 'Tech Company LTDA',
-      // missing cnpj, phone, email, address
-    };
-
-    const result = createCompanySchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+  it('rejects missing legal name', () => {
+    const invalid = { ...validCompany } as Partial<typeof validCompany>;
+    delete invalid.legalName;
+    expect(createCompanySchema.safeParse(invalid).success).toBe(false);
   });
 
   it('rejects invalid email', () => {
-    const invalidData = {
-      name: 'Tech Company LTDA',
-      cnpj: '12.345.678/0001-99',
-      phone: '(11) 3333-3333',
-      email: 'invalid-email',
-      address: 'Avenida Principal, 500',
-    };
-
-    const result = createCompanySchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+    expect(createCompanySchema.safeParse({ ...validCompany, email: 'invalid' }).success).toBe(
+      false
+    );
   });
 
   it('rejects invalid CNPJ format', () => {
-    const invalidData = {
-      name: 'Tech Company LTDA',
-      cnpj: 'not-a-cnpj',
-      phone: '(11) 3333-3333',
-      email: 'contact@company.com',
-      address: 'Avenida Principal, 500',
-    };
-
-    const result = createCompanySchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+    expect(createCompanySchema.safeParse({ ...validCompany, cnpj: 'invalid' }).success).toBe(false);
   });
 
-  it('rejects name shorter than 3 characters', () => {
-    const invalidData = {
-      name: 'AB',
-      cnpj: '12.345.678/0001-99',
-      phone: '(11) 3333-3333',
-      email: 'contact@company.com',
-      address: 'Avenida Principal, 500',
-    };
-
-    const result = createCompanySchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+  it('rejects negative employee count', () => {
+    expect(createCompanySchema.safeParse({ ...validCompany, employeeCount: -1 }).success).toBe(
+      false
+    );
   });
 
-  it('accepts company data without email (optional)', () => {
-    const dataWithoutEmail = {
-      name: 'Tech Company LTDA',
-      cnpj: '12.345.678/0001-99',
-      phone: '(11) 3333-3333',
-      address: 'Avenida Principal, 500',
-    };
-
-    const result = createCompanySchema.safeParse(dataWithoutEmail);
-    // Depends on schema, but testing that it handles optional fields
-    expect(result).toBeDefined();
+  it('coerces employee count received from form input', () => {
+    const result = createCompanySchema.parse({ ...validCompany, employeeCount: '25' });
+    expect(result.employeeCount).toBe(25);
   });
 });

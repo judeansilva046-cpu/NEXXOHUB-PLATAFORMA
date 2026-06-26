@@ -14,7 +14,11 @@ describe('Button Component', () => {
     let clicked = false;
 
     render(
-      <Button onClick={() => { clicked = true; }}>
+      <Button
+        onClick={() => {
+          clicked = true;
+        }}
+      >
         Click me
       </Button>
     );

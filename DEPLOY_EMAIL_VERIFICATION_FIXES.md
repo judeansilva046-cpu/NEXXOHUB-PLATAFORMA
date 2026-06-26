@@ -121,6 +121,7 @@ export async function GET(request: NextRequest) {
 **Arquivo:** `app/auth/verify-email/page.tsx`
 
 **Mudança 1 - Importações (linha 1-6):**
+
 ```typescript
 'use client';
 
@@ -131,6 +132,7 @@ import { supabase } from '../../../lib/supabase/auth';
 ```
 
 **Mudança 2 - Function VerifyEmailContent (linha 7-40):**
+
 ```typescript
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -220,7 +222,8 @@ function VerifyEmailContent() {
 }
 ```
 
-**O que mudou:** 
+**O que mudou:**
+
 - Adicionado estado `isResending` e `resendMessage`
 - Implementado handler `handleResendEmail()` que chama `supabase.auth.resendEmailConfirmationLink()`
 - Botão agora funcional com feedback visual
@@ -241,6 +244,7 @@ git push origin main
 ```
 
 ### Via GitHub Web:
+
 1. Acesse https://github.com/judeansilva046/nexxohub-plataforma
 2. Faça upload dos 2 arquivos modificados
 3. Crie um Pull Request
@@ -254,17 +258,20 @@ git push origin main
 Após fazer push e Netlify finalizar o rebuild:
 
 1. **Teste 1: Cadastro**
+
    - Acesse https://illustrious-cascaron-bd22da2.netlify.app/auth/register
    - Preencha com: `teste2@nexxohub.com` / `Senha@123456` / `Empresa Teste`
    - Clique "Criar Conta"
    - Você deve ser redirecionado para `/auth/verify-email?email=teste2@nexxohub.com`
 
 2. **Teste 2: Email Recebido**
+
    - Verifique seu email em `teste2@nexxohub.com`
    - Deve haver link de confirmação
    - Clique no link
 
 3. **Teste 3: Callback Funciona**
+
    - Link deve redirecionar para `/auth/callback?code=...`
    - Depois para `/dashboard`
    - Você deve estar autenticado
@@ -292,13 +299,13 @@ A: Verifique que SMTP está configurado em Supabase (Admin → Auth → Email Te
 
 ## 📊 STATUS
 
-| Item | Status |
-|------|--------|
-| Código Implementado | ✅ Completo |
-| Testes Locais | ⏳ Pendente (restrições de rede) |
-| Git Push | ⏳ **VOCÊ PRECISA FAZER** |
-| Netlify Deploy | ⏳ Automático após push |
-| Validação em Produção | ⏳ Após deploy |
+| Item                  | Status                           |
+| --------------------- | -------------------------------- |
+| Código Implementado   | ✅ Completo                      |
+| Testes Locais         | ⏳ Pendente (restrições de rede) |
+| Git Push              | ⏳ **VOCÊ PRECISA FAZER**        |
+| Netlify Deploy        | ⏳ Automático após push          |
+| Validação em Produção | ⏳ Após deploy                   |
 
 ---
 

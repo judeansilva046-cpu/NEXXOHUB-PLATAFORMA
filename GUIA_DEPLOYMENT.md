@@ -9,6 +9,7 @@
 ## 📋 PRÉ-REQUISITOS
 
 ### ✅ Técnicos
+
 - [x] Build passes: `npm run build` ✅
 - [x] Lint passes: `npm run lint` ✅
 - [x] TypeScript passes: `npm run typecheck` ✅
@@ -17,6 +18,7 @@
 - [x] Database schema aplicado
 
 ### ✅ Conta/Credenciais
+
 - [x] Vercel/Netlify account criada
 - [x] Supabase project criado
 - [x] Domain registrado (opcional)
@@ -24,6 +26,7 @@
 - [x] GitHub repository configurado
 
 ### ✅ Variáveis de Ambiente
+
 - [x] `NEXT_PUBLIC_SUPABASE_URL` - Configurada
 - [x] `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Configurada
 - [x] `SUPABASE_SERVICE_ROLE_KEY` - Configurada
@@ -35,6 +38,7 @@
 ## 🎯 Opção 1: Deploy em Vercel (Recomendado)
 
 ### Passo 1: Conectar GitHub
+
 ```
 1. Ir para https://vercel.com
 2. Click "New Project"
@@ -43,6 +47,7 @@
 ```
 
 ### Passo 2: Configurar Variáveis de Ambiente
+
 ```
 Na dashboard do Vercel:
 
@@ -57,6 +62,7 @@ Adicionar:
 ```
 
 ### Passo 3: Deploy
+
 ```
 1. Click "Deploy"
 2. Aguardar build (3-5 minutos)
@@ -64,6 +70,7 @@ Adicionar:
 ```
 
 ### Passo 4: Validar
+
 ```bash
 # Testar em produção
 curl https://nexxohub-xxxxx.vercel.app/api/auth/me
@@ -77,6 +84,7 @@ curl https://nexxohub-xxxxx.vercel.app/api/auth/me
 ## 🎯 Opção 2: Deploy em Netlify
 
 ### Passo 1: Conectar GitHub
+
 ```
 1. Ir para https://netlify.com
 2. Click "New site from Git"
@@ -85,12 +93,14 @@ curl https://nexxohub-xxxxx.vercel.app/api/auth/me
 ```
 
 ### Passo 2: Configurar Build
+
 ```
 Build Command:     npm run build
 Publish Directory: .next
 ```
 
 ### Passo 3: Variáveis de Ambiente
+
 ```
 Site settings → Build & deploy → Environment
 
@@ -98,6 +108,7 @@ Adicionar todas as variáveis de .env.local
 ```
 
 ### Passo 4: Deploy
+
 ```
 1. Conectar repository
 2. Netlify faz deploy automático
@@ -109,12 +120,14 @@ Adicionar todas as variáveis de .env.local
 ## 🔐 Configuração de Segurança Pós-Deploy
 
 ### 1. Ativar HTTPS
+
 ```
 Automático em Vercel/Netlify ✅
 Certificado SSL/TLS ✅
 ```
 
 ### 2. Configurar Headers de Segurança
+
 ```
 Arquivo: next.config.js
 
@@ -148,6 +161,7 @@ module.exports = {
 ```
 
 ### 3. Configurar CORS em Supabase
+
 ```
 Supabase Dashboard → Settings → API
 
@@ -158,6 +172,7 @@ Allowed origins:
 ```
 
 ### 4. Configurar RLS Policies
+
 ```
 Supabase Dashboard → SQL Editor
 
@@ -173,6 +188,7 @@ Executar:
 ## 📊 Teste Pós-Deploy
 
 ### Teste 1: Health Check
+
 ```bash
 curl -I https://seu-app.vercel.app
 
@@ -182,6 +198,7 @@ curl -I https://seu-app.vercel.app
 ```
 
 ### Teste 2: Login
+
 ```
 1. Ir para https://seu-app.vercel.app/auth/login
 2. Fazer login com judeansilva046@gmail.com / Judean16@
@@ -190,6 +207,7 @@ curl -I https://seu-app.vercel.app
 ```
 
 ### Teste 3: API
+
 ```bash
 # Após fazer login, obter cookie
 curl -b "cookies.txt" https://seu-app.vercel.app/api/auth/me
@@ -199,6 +217,7 @@ curl -b "cookies.txt" https://seu-app.vercel.app/api/auth/me
 ```
 
 ### Teste 4: Performance
+
 ```
 Lighthouse:
 ├── Performance: > 80
@@ -212,6 +231,7 @@ Lighthouse:
 ## 🔄 Configurar Auto-Deploy
 
 ### Em Vercel
+
 ```
 1. Dashboard → Settings → Git
 2. Automatic deployments já ativado
@@ -219,6 +239,7 @@ Lighthouse:
 ```
 
 ### Em Netlify
+
 ```
 1. Site settings → Deploy
 2. Ativar: Continuous deployment
@@ -231,6 +252,7 @@ Lighthouse:
 ## 📱 Configurar Domínio Customizado
 
 ### Opção A: Vercel
+
 ```
 1. Settings → Domains
 2. Adicionar seu domínio (ex: nexxohub.com)
@@ -239,6 +261,7 @@ Lighthouse:
 ```
 
 ### Opção B: Netlify
+
 ```
 1. Site settings → Domain management
 2. Add domain
@@ -251,6 +274,7 @@ Lighthouse:
 ## 🛠️ Monitoramento Pós-Deploy
 
 ### 1. Ativar Sentry (Error Tracking)
+
 ```
 1. Ir para https://sentry.io
 2. Criar projeto
@@ -260,6 +284,7 @@ Lighthouse:
 ```
 
 ### 2. Ativar Analytics
+
 ```
 next/analytics já integrado em providers.tsx
 
@@ -270,6 +295,7 @@ Verificar:
 ```
 
 ### 3. Configurar Alertas
+
 ```
 Sentry:
 ├── Notificar quando > 5 erros
@@ -282,6 +308,7 @@ Sentry:
 ## 📊 Métricas de Produção
 
 ### Performance (Target)
+
 ```
 ✅ First Contentful Paint: < 1.5s
 ✅ Largest Contentful Paint: < 2.5s
@@ -290,6 +317,7 @@ Sentry:
 ```
 
 ### Uptime (Target)
+
 ```
 ✅ 99.9% uptime mensal
 ✅ < 5 minutos downtime
@@ -297,6 +325,7 @@ Sentry:
 ```
 
 ### Segurança (Validar)
+
 ```
 ✅ HTTPS forçado
 ✅ Security headers presentes
@@ -309,6 +338,7 @@ Sentry:
 ## 🔄 Rollback (Se Necessário)
 
 ### Vercel
+
 ```
 1. Deployments → Selecionar versão anterior
 2. Click "Rollback"
@@ -316,6 +346,7 @@ Sentry:
 ```
 
 ### Netlify
+
 ```
 1. Deploys → Selecionar deploy anterior
 2. Click "Publish"
@@ -349,12 +380,14 @@ Sentry:
 ## 🚀 Comando de Deploy Final
 
 ### Vercel
+
 ```bash
 npm run build
 vercel deploy --prod
 ```
 
 ### Netlify
+
 ```bash
 npm run build
 netlify deploy --prod
@@ -365,6 +398,7 @@ netlify deploy --prod
 ## ✅ Pós-Deploy (Primeiras 24h)
 
 ### Monitorar:
+
 ```
 ✅ Sentry: Verificar se há erros
 ✅ Logs: Procurar por [ERROR] ou [WARN]
@@ -374,6 +408,7 @@ netlify deploy --prod
 ```
 
 ### Validar:
+
 ```
 ✅ Login funciona
 ✅ Dashboard carrega
@@ -383,6 +418,7 @@ netlify deploy --prod
 ```
 
 ### Divulgar:
+
 ```
 ✅ Email para stakeholders
 ✅ Slack notification
@@ -395,6 +431,7 @@ netlify deploy --prod
 ## 📞 Troubleshooting Pós-Deploy
 
 ### Problema: "503 Service Unavailable"
+
 ```
 Solução:
 1. Verificar Supabase está online
@@ -403,6 +440,7 @@ Solução:
 ```
 
 ### Problema: "CORS error"
+
 ```
 Solução:
 1. Verificar CORS em Supabase
@@ -411,6 +449,7 @@ Solução:
 ```
 
 ### Problema: "Database connection failed"
+
 ```
 Solução:
 1. Verificar Supabase está online
@@ -419,6 +458,7 @@ Solução:
 ```
 
 ### Problema: "Auth redirect loop"
+
 ```
 Solução:
 1. Verificar middleware.ts
@@ -433,10 +473,12 @@ Solução:
 Após deploy, compartilhar com time:
 
 1. **Para Developers:**
+
    - `RELATORIO_FINAL_AUTENTICACAO.md` (arquitetura)
    - `README_HOMOLOGACAO.md` (scripts úteis)
 
 2. **Para DevOps:**
+
    - `GUIA_DEPLOYMENT.md` (este arquivo)
    - Guia de backup/recovery
 
@@ -451,6 +493,7 @@ Após deploy, compartilhar com time:
 Você deployou **NexxoHub v1.0** em produção! 🚀
 
 ### Próximos Passos:
+
 1. ✅ Monitorar por 7 dias
 2. ✅ Coletar feedback de usuários
 3. ✅ Corrigir bugs encontrados

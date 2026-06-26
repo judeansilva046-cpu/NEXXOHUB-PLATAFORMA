@@ -1,4 +1,5 @@
 # AUDITORIA: Middleware + Cookies + Session Management
+
 **Data:** 23 de Junho de 2026  
 **Status:** CRÍTICO - Fluxo de autenticação quebrado  
 **Severidade:** 🔴 CRÍTICO  
@@ -58,6 +59,7 @@ O middleware **NÃO está vendo a session** após o `signIn()` no lado do client
 ### 2. Ordem de Execução Problemática
 
 **Timeline:**
+
 ```
 t=0ms    signIn() chamado
 t=10ms   Supabase retorna session
@@ -75,8 +77,8 @@ t=100ms  Browser salva cookies no localStorage
 ```typescript
 // lib/supabase/server.ts (Correto para Server Components)
 export async function createClient() {
-  const cookieStore = await cookies();  // ✅ Acessa cookies do servidor
-  
+  const cookieStore = await cookies(); // ✅ Acessa cookies do servidor
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -86,7 +88,7 @@ export async function createClient() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set(name, value, options);  // ✅ Salva ANTES de Response
+          cookieStore.set(name, value, options); // ✅ Salva ANTES de Response
         },
       },
     }
@@ -132,10 +134,7 @@ export async function POST(req: Request) {
 
     // Validação básica
     if (!email || !password) {
-      return Response.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
+      return Response.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
     // ✅ Usar createClient() do servidor (com cookie handling correto)
@@ -148,25 +147,16 @@ export async function POST(req: Request) {
     });
 
     if (error) {
-      return Response.json(
-        { error: error.message },
-        { status: 401 }
-      );
+      return Response.json({ error: error.message }, { status: 401 });
     }
 
     if (!data.session) {
-      return Response.json(
-        { error: 'No session returned' },
-        { status: 401 }
-      );
+      return Response.json({ error: 'No session returned' }, { status: 401 });
     }
 
     // ✅ Cookies foram salvos automaticamente pelo createClient()
     // ✅ Response.json() retorna com Set-Cookie headers
-    return Response.json(
-      { success: true, session: data.session },
-      { status: 200 }
-    );
+    return Response.json({ success: true, session: data.session }, { status: 200 });
   } catch (error) {
     console.error('SignIn error:', error);
     return getErrorResponse(error);
@@ -324,7 +314,7 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    
+
     // ✅ Exchange code para session
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
@@ -372,7 +362,7 @@ export async function middleware(req: NextRequest) {
   response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+
   // 🆕 Add CSP header (como recomendado na auditoria)
   response.headers.set(
     'Content-Security-Policy',
@@ -383,9 +373,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
 ```
 
@@ -454,6 +442,7 @@ F12 ou Cmd+Option+I
 ### 2. Ir para "Application" > "Cookies"
 
 Procurar por cookies com nome similar a:
+
 - `sb-<project-id>-auth-token`
 - `sb-<project-id>-auth-token.0`
 - `sb-<project-id>-auth-token.1`
@@ -463,16 +452,18 @@ Ou qualquer cookie começando com `sb-`
 ### 3. Verificar após login
 
 **ANTES (Quebrado):**
+
 ```
 Cookies vazios ❌
 Nenhum cookie com 'sb-' encontrado
 ```
 
 **DEPOIS (Correto):**
+
 ```
 ✅ sb-xxxxx-auth-token
    Value: {"access_token":"...", "refresh_token":"..."}
-   
+
 ✅ sb-xxxxx-auth-token.0 (particionado se > 4KB)
    Value: (parte 0 do token)
 ```
@@ -480,6 +471,7 @@ Nenhum cookie com 'sb-' encontrado
 ### 4. Ver Network tab durante login
 
 **Com novo endpoint:**
+
 ```
 POST /api/auth/signin
 ├─ Response Headers:
@@ -492,7 +484,7 @@ POST /api/auth/signin
 
 ```javascript
 // Cole no console após login:
-document.cookie
+document.cookie;
 // Resultado esperado:
 // "sb-xxxxx-auth-token=...; sb-xxxxx-auth-token.0=..."
 ```
@@ -508,7 +500,7 @@ document.cookie
 - [ ] Testar login no navegador
 - [ ] Verificar cookies em DevTools > Application
 - [ ] Testar redirect para /dashboard
-- [ ] Testar que usuário autenticado não pode acessar /auth/*
+- [ ] Testar que usuário autenticado não pode acessar /auth/\*
 - [ ] Testar que usuário não autenticado não pode acessar /dashboard
 
 ---
@@ -516,14 +508,17 @@ document.cookie
 ## PROBLEMAS RELACIONADOS ENCONTRADOS
 
 ### ✅ Resolvido em `lib/supabase/server.ts`
+
 - Cookies handler está correto para Server Components/API Routes
 
 ### ❌ Ainda Falta
+
 - `/api/auth/callback` não existe
 - `/api/auth/signin` não existe
 - Login usa client-side `signIn()` sem aguardar cookie save
 
 ### ⚠️ Melhorias Adicionais Recomendadas
+
 - Adicionar retry logic em `/api/auth/signin` para falhas de rede
 - Implementar rate limiting em `/api/auth/signin` (prevent brute force)
 - Adicionar logging detalhado de autenticação
@@ -533,14 +528,14 @@ document.cookie
 
 ## TIMELINE DE IMPLEMENTAÇÃO
 
-| Etapa | Tarefa | Tempo | Status |
-|-------|--------|-------|--------|
-| 1 | Criar `/api/auth/signin` | 30 min | TODO |
-| 2 | Criar `/api/auth/callback` | 15 min | TODO |
-| 3 | Atualizar `login/page.tsx` | 20 min | TODO |
-| 4 | Melhorar `middleware.ts` | 10 min | TODO |
-| 5 | Testes manuais + debugging | 30 min | TODO |
-| **TOTAL** | | **1h45min** | |
+| Etapa     | Tarefa                     | Tempo       | Status |
+| --------- | -------------------------- | ----------- | ------ |
+| 1         | Criar `/api/auth/signin`   | 30 min      | TODO   |
+| 2         | Criar `/api/auth/callback` | 15 min      | TODO   |
+| 3         | Atualizar `login/page.tsx` | 20 min      | TODO   |
+| 4         | Melhorar `middleware.ts`   | 10 min      | TODO   |
+| 5         | Testes manuais + debugging | 30 min      | TODO   |
+| **TOTAL** |                            | **1h45min** |        |
 
 ---
 
@@ -549,4 +544,3 @@ document.cookie
 - Supabase Auth Helpers: https://supabase.com/docs/guides/auth/auth-helpers
 - Next.js Middleware: https://nextjs.org/docs/advanced-features/middleware
 - Cookie Handling in Next.js: https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations
-
