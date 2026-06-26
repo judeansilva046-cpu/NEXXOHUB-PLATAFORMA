@@ -240,7 +240,6 @@ npm run test:e2e
 
 Se passar ✅ → **PRONTO PARA HOMOLOGAÇÃO!**
 
-
 ---
 
 ## 📋 Checklist Final

@@ -5,9 +5,7 @@ test.describe('Clinics CRUD Flow', () => {
   test.beforeEach(async ({ page }) => {
     await loginForE2E(page);
     await page.goto('/dashboard/clinics');
-    await expect(
-      page.getByRole('heading', { name: 'Clínicas', exact: true })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Clínicas', exact: true })).toBeVisible();
   });
 
   test('should display clinics page', async ({ page }) => {

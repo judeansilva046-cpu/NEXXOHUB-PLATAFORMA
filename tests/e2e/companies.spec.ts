@@ -5,9 +5,7 @@ test.describe('Companies CRUD Flow', () => {
   test.beforeEach(async ({ page }) => {
     await loginForE2E(page);
     await page.goto('/dashboard/companies');
-    await expect(
-      page.getByRole('heading', { name: 'Empresas', exact: true })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Empresas', exact: true })).toBeVisible();
   });
 
   test('should display companies page', async ({ page }) => {

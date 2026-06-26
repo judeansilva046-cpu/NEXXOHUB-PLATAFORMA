@@ -5,9 +5,7 @@ test.describe('Complete CRUD Flow - Clinics', () => {
   test.beforeEach(async ({ page }) => {
     await loginForE2E(page);
     await page.goto('/dashboard/clinics');
-    await expect(
-      page.getByRole('heading', { name: 'Clínicas', exact: true })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Clínicas', exact: true })).toBeVisible();
   });
 
   test('should complete create → read → update → delete flow', async ({ page }) => {
@@ -21,9 +19,7 @@ test.describe('Complete CRUD Flow - Clinics', () => {
     await dialog.getByRole('textbox', { name: 'Nome' }).fill(originalName);
     await dialog
       .getByRole('textbox', { name: 'CNPJ' })
-      .fill(
-        `98.${suffix.slice(0, 3)}.${suffix.slice(3, 6)}/0001-${suffix.slice(6, 8)}`
-      );
+      .fill(`98.${suffix.slice(0, 3)}.${suffix.slice(3, 6)}/0001-${suffix.slice(6, 8)}`);
     await dialog.getByRole('textbox', { name: 'Responsável' }).fill('Responsável E2E');
     await dialog.getByRole('textbox', { name: 'E-mail' }).fill(`e2e-${suffix}@example.test`);
     await dialog.getByRole('textbox', { name: 'Telefone' }).fill('(11) 99999-9999');
