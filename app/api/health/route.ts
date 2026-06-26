@@ -1,16 +1,21 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../lib/supabase/server';
+import { getPublicEnvironment } from '../../../lib/env';
 
 export async function GET() {
   const startedAt = Date.now();
 
   try {
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from('organizations')
-      .select('id', { count: 'exact', head: true });
+    const { supabaseUrl, supabaseAnonKey } = getPublicEnvironment();
+    const healthResponse = await fetch(`${supabaseUrl}/auth/v1/health`, {
+      headers: {
+        apikey: supabaseAnonKey,
+      },
+      cache: 'no-store',
+    });
 
-    if (error) throw error;
+    if (!healthResponse.ok) {
+      throw new Error(`Supabase health check failed: ${healthResponse.status}`);
+    }
 
     return NextResponse.json(
       {
