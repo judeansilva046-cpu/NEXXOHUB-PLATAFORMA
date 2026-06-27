@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   ShieldCheck,
+  UploadCloud,
   UserRound,
   Users,
   X,
@@ -27,6 +28,7 @@ const portalMenus = {
   clinic: [
     { label: 'Dashboard', href: '/clinic', icon: Home },
     { label: 'Empresas', href: '/clinic/companies', icon: Building2 },
+    { label: 'Implantação Rápida', href: '/clinic/quick-onboarding', icon: UploadCloud },
     { label: 'Programas', href: '/clinic/programs', icon: GraduationCap },
     { label: 'Evidências', href: '/clinic/evidences', icon: ClipboardCheck },
     { label: 'Dossiês NR-1', href: '/clinic/nr1-dossiers', icon: ShieldCheck },

@@ -98,6 +98,16 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/clinica/implantacao-rapida/:path*',
+        destination: '/clinic/quick-onboarding/:path*',
+        permanent: false,
+      },
+      {
+        source: '/clinic/implantacao-rapida/:path*',
+        destination: '/clinic/quick-onboarding/:path*',
+        permanent: false,
+      },
+      {
         source: '/clinica/:path*',
         destination: '/clinic/:path*',
         permanent: false,
