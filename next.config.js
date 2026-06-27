@@ -96,7 +96,23 @@ const nextConfig = {
 
   // Redirect HTTP to HTTPS in production
   async redirects() {
-    return [];
+    return [
+      {
+        source: '/clinica/:path*',
+        destination: '/clinic/:path*',
+        permanent: false,
+      },
+      {
+        source: '/empresa/:path*',
+        destination: '/company/:path*',
+        permanent: false,
+      },
+      {
+        source: '/colaborador/:path*',
+        destination: '/employee/:path*',
+        permanent: false,
+      },
+    ];
   },
 
   // Webpack optimization - simplified for compatibility
