@@ -20,7 +20,7 @@ import { getAuthErrorMessage } from '../../../lib/auth-errors';
 import { authClient } from '../../../lib/supabase/auth';
 import { loginSchema } from '../../../lib/validations/auth';
 import { portalConfig, type PortalType } from '../../../lib/portal';
-import { roleBelongsToPortal } from '../../../lib/rbac';
+import { normalizeRole, roleBelongsToPortal } from '../../../lib/rbac';
 
 type FieldErrors = Record<string, string>;
 
@@ -268,10 +268,13 @@ export default function LoginPage() {
         memberships.find((membership: { portal: PortalType; role: string }) =>
           roleBelongsToPortal(membership.role, membership.portal)
         );
+      const preferredRole = normalizeRole(preferredMembership?.role || '');
       router.replace(
-        portalConfig[preferredMembership?.portal as PortalType]?.home ||
-          portalConfig[requestedPortal]?.home ||
-          '/nexxohub'
+        preferredRole === 'nexxohub_finance'
+          ? '/finance'
+          : portalConfig[preferredMembership?.portal as PortalType]?.home ||
+              portalConfig[requestedPortal]?.home ||
+              '/nexxohub'
       );
       router.refresh();
     } catch (loginError) {

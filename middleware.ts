@@ -8,7 +8,7 @@ import {
   type PortalType,
 } from './lib/portal';
 import { getPublicEnvironment } from './lib/env';
-import { roleBelongsToPortal } from './lib/rbac';
+import { normalizeRole, roleBelongsToPortal } from './lib/rbac';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -82,6 +82,14 @@ export async function middleware(request: NextRequest) {
         memberships.find((item) => item.portal === requestedPortal)?.portal ||
         memberships[0]?.portal ||
         'nexxohub';
+      const preferredRole = normalizeRole(
+        memberships.find((item) => item.portal === preferredPortal)?.role ||
+          memberships[0]?.role ||
+          ''
+      );
+      if (preferredRole === 'nexxohub_finance') {
+        return redirectWithCookies(new URL('/finance', request.url));
+      }
       return redirectWithCookies(new URL(portalConfig[preferredPortal].home, request.url));
     }
 

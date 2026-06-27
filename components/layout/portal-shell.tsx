@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   ShieldCheck,
+  Sparkles,
   UploadCloud,
   UserRound,
   Users,
@@ -35,6 +36,7 @@ const portalMenus = {
   ],
   company: [
     { label: 'Dashboard', href: '/company', icon: Home },
+    { label: 'Gestão Organizacional', href: '/company/organization', icon: Sparkles },
     { label: 'Colaboradores', href: '/company/employees', icon: Users },
     { label: 'Filiais', href: '/company/branches', icon: GitBranch },
     { label: 'Departamentos', href: '/company/departments', icon: Layers },

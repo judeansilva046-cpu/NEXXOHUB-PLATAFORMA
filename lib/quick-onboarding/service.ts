@@ -121,6 +121,9 @@ export async function createImportPreview({
   if (config.requiresCompany && !companyId) {
     throw new ValidationError('Selecione uma empresa cliente.', 'companyId');
   }
+  if (membership.portal === 'company' && companyId !== membership.company_id) {
+    throw new AuthorizationError('Empresa fora do escopo do usuário.');
+  }
 
   await assertCompanyScope(supabase, membership, companyId);
 
@@ -220,6 +223,9 @@ export async function confirmImport({
 
   const importRecord = data as ImportRecord;
   if (importRecord.organization_id !== membership.organization_id) throw new AuthorizationError();
+  if (membership.portal === 'company' && importRecord.company_id !== membership.company_id) {
+    throw new AuthorizationError('Importação fora do escopo da empresa.');
+  }
 
   await supabase
     .from('quick_onboarding_imports')

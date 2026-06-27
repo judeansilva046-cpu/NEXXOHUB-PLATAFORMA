@@ -1,7 +1,7 @@
 import type { PortalType } from './portal';
 
 export const portalRoles = {
-  nexxohub: ['nexxohub_admin', 'nexxohub_operator'],
+  nexxohub: ['nexxohub_admin', 'nexxohub_finance', 'nexxohub_operator'],
   clinic: ['clinic_admin', 'clinic_staff'],
   company: [
     'company_admin',
@@ -19,7 +19,8 @@ export type NexxoHubRole = (typeof portalRoles)[keyof typeof portalRoles][number
 export const legacyRoleAliases: Record<string, NexxoHubRole> = {
   super_admin: 'nexxohub_admin',
   admin: 'nexxohub_admin',
-  financeiro: 'nexxohub_operator',
+  financeiro: 'nexxohub_finance',
+  finance: 'nexxohub_finance',
   comercial: 'nexxohub_operator',
   suporte: 'nexxohub_operator',
   tecnologia: 'nexxohub_operator',

@@ -98,6 +98,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/financeiro/:path*',
+        destination: '/finance/:path*',
+        permanent: false,
+      },
+      {
         source: '/clinica/implantacao-rapida/:path*',
         destination: '/clinic/quick-onboarding/:path*',
         permanent: false,

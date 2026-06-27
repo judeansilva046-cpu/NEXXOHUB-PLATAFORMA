@@ -26,7 +26,7 @@ const navigation = [
   { label: 'Relatórios', href: '/dashboard/reports', icon: FileText },
   { label: 'NR-1', href: '/dashboard/nr1', icon: BarChart3 },
   { label: 'Contratos', href: '/dashboard/contracts', icon: FileText },
-  { label: 'Financeiro', href: '/dashboard/finance', icon: BadgeDollarSign },
+  { label: 'Financeiro', href: '/finance', icon: BadgeDollarSign },
   { label: 'Documentos', href: '/dashboard/documents', icon: FileText },
 ];
 

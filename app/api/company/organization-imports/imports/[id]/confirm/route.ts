@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { AuthorizationError, getErrorResponse, NotFoundError } from '@/lib/errors';
+import { getErrorResponse } from '@/lib/errors';
 import { requirePortalContext } from '@/lib/portal-context';
 import { confirmImport } from '@/lib/quick-onboarding/service';
 
@@ -9,17 +9,7 @@ type Context = { params: { id: string } };
 
 export async function POST(_request: Request, { params }: Context) {
   try {
-    const { supabase, user, membership } = await requirePortalContext('clinic');
-    const { data: importRecord } = await supabase
-      .from('quick_onboarding_imports')
-      .select('id, import_type')
-      .eq('id', params.id)
-      .eq('clinic_id', membership.clinic_id)
-      .maybeSingle();
-    if (!importRecord) throw new NotFoundError('Importação');
-    if (importRecord.import_type !== 'companies') {
-      throw new AuthorizationError('No Portal Clínica, a importação rápida é restrita a empresas.');
-    }
+    const { supabase, user, membership } = await requirePortalContext('company');
     const data = await confirmImport({ supabase, user, membership, importId: params.id });
     return NextResponse.json({ success: true, data });
   } catch (error) {

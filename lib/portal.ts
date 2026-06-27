@@ -20,6 +20,7 @@ export function portalFromRequest(hostname: string, pathname: string): PortalTyp
   if (pathname === '/clinic' || pathname.startsWith('/clinic/')) return 'clinic';
   if (pathname === '/company' || pathname.startsWith('/company/')) return 'company';
   if (pathname === '/employee' || pathname.startsWith('/employee/')) return 'employee';
+  if (pathname === '/finance' || pathname.startsWith('/finance/')) return 'nexxohub';
   if (pathname === '/nexxohub' || pathname.startsWith('/nexxohub/')) return 'nexxohub';
   return 'nexxohub';
 }
@@ -30,6 +31,8 @@ export function isProtectedPortalPath(pathname: string) {
     pathname.startsWith('/dashboard/') ||
     pathname === '/nexxohub' ||
     pathname.startsWith('/nexxohub/') ||
+    pathname === '/finance' ||
+    pathname.startsWith('/finance/') ||
     pathname === '/clinic' ||
     pathname.startsWith('/clinic/') ||
     pathname === '/company' ||

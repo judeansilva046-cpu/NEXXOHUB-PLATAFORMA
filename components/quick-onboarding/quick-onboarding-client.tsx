@@ -70,12 +70,18 @@ export function QuickOnboardingClient({
   companies,
   imports,
   integrations,
+  scope = 'clinic',
+  allowedTypes = quickImportTypes,
+  endpointBase = '/api/clinic/quick-onboarding',
 }: {
   companies: CompanyOption[];
   imports: ImportHistoryRow[];
   integrations: { connectionsCount: number; syncLogsCount: number };
+  scope?: 'clinic' | 'company';
+  allowedTypes?: readonly QuickImportType[];
+  endpointBase?: string;
 }) {
-  const [type, setType] = useState<QuickImportType>('employees');
+  const [type, setType] = useState<QuickImportType>(allowedTypes[0] || 'employees');
   const [companyId, setCompanyId] = useState(companies[0]?.id || '');
   const [file, setFile] = useState<File | null>(null);
   const [createMissingStructure, setCreateMissingStructure] = useState(true);
@@ -111,7 +117,7 @@ export function QuickOnboardingClient({
 
     setLoading(true);
     try {
-      const response = await fetch('/api/clinic/quick-onboarding/imports/preview', {
+      const response = await fetch(`${endpointBase}/imports/preview`, {
         method: 'POST',
         body: formData,
       });
@@ -139,10 +145,9 @@ export function QuickOnboardingClient({
     setMessage(null);
 
     try {
-      const response = await fetch(
-        `/api/clinic/quick-onboarding/imports/${preview.importId}/confirm`,
-        { method: 'POST' }
-      );
+      const response = await fetch(`${endpointBase}/imports/${preview.importId}/confirm`, {
+        method: 'POST',
+      });
       const result = await response.json();
       if (!response.ok || !result.success) {
         throw new Error(result.message || 'Não foi possível confirmar a importação.');
@@ -167,11 +172,14 @@ export function QuickOnboardingClient({
               <UploadCloud className="h-4 w-4" /> Implantação Rápida
             </p>
             <h1 className="mt-2 text-3xl font-bold text-slate-950">
-              Importação em massa pela clínica
+              {scope === 'company'
+                ? 'Gestão Organizacional em lote'
+                : 'Importação em massa pela clínica'}
             </h1>
             <p className="mt-2 max-w-3xl text-slate-600">
-              Cadastre empresas, filiais, departamentos, cargos e colaboradores com validação real,
-              preview antes de salvar, Storage, RLS e histórico auditável.
+              {scope === 'company'
+                ? 'Importe filiais, departamentos, cargos e colaboradores da própria empresa com validação real, preview, Storage, RLS e histórico auditável.'
+                : 'Cadastre empresas clientes com validação real, preview antes de salvar, Storage, RLS e histórico auditável.'}
             </p>
           </div>
           <div className="rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-900">
@@ -198,7 +206,7 @@ export function QuickOnboardingClient({
                 }}
                 className="w-full rounded-xl border border-slate-200 px-3 py-2"
               >
-                {quickImportTypes.map((item) => (
+                {allowedTypes.map((item) => (
                   <option key={item} value={item}>
                     {quickImportTypeLabels[item]}
                   </option>
@@ -206,7 +214,7 @@ export function QuickOnboardingClient({
               </select>
             </label>
 
-            {config.requiresCompany && (
+            {config.requiresCompany && scope === 'clinic' && (
               <label className="space-y-2 text-sm font-medium text-slate-700">
                 Empresa cliente
                 <select
@@ -271,10 +279,10 @@ export function QuickOnboardingClient({
             <h2 className="text-xl font-semibold text-slate-950">Templates</h2>
           </div>
           <div className="space-y-3">
-            {quickImportTypes.map((item) => (
+            {allowedTypes.map((item) => (
               <Link
                 key={item}
-                href={`/api/clinic/quick-onboarding/templates/${item}`}
+                href={`${endpointBase}/templates/${item}`}
                 className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm hover:border-blue-300 hover:bg-blue-50"
               >
                 <span>{quickImportTypeLabels[item]}</span>
