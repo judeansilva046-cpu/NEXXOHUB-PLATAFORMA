@@ -20,6 +20,7 @@ import { getAuthErrorMessage } from '../../../lib/auth-errors';
 import { authClient } from '../../../lib/supabase/auth';
 import { loginSchema } from '../../../lib/validations/auth';
 import { portalConfig, type PortalType } from '../../../lib/portal';
+import { roleBelongsToPortal } from '../../../lib/rbac';
 
 type FieldErrors = Record<string, string>;
 
@@ -255,7 +256,23 @@ export default function LoginPage() {
 
       const requestedPortal = (new URLSearchParams(window.location.search).get('portal') ||
         'nexxohub') as PortalType;
-      router.replace(portalConfig[requestedPortal]?.home || '/dashboard');
+      const profileResponse = await fetch('/api/auth/me', { cache: 'no-store' });
+      const profileResult = profileResponse.ok ? await profileResponse.json() : null;
+      const memberships = profileResult?.data?.memberships || [];
+      const preferredMembership =
+        memberships.find(
+          (membership: { portal: PortalType; role: string }) =>
+            membership.portal === requestedPortal &&
+            roleBelongsToPortal(membership.role, requestedPortal)
+        ) ||
+        memberships.find((membership: { portal: PortalType; role: string }) =>
+          roleBelongsToPortal(membership.role, membership.portal)
+        );
+      router.replace(
+        portalConfig[preferredMembership?.portal as PortalType]?.home ||
+          portalConfig[requestedPortal]?.home ||
+          '/nexxohub'
+      );
       router.refresh();
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'Erro ao fazer login.');

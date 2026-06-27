@@ -3,25 +3,21 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Activity,
   BarChart3,
+  BadgeDollarSign,
   Building2,
   ClipboardCheck,
-  BadgeDollarSign,
   FileText,
   Home,
   Hospital,
-  Lightbulb,
-  Megaphone,
   MessageCircleQuestion,
-  Settings,
   ShieldCheck,
   Users,
   X,
 } from 'lucide-react';
 
 const navigation = [
-  { label: 'Dashboard', href: '/dashboard', icon: Home },
+  { label: 'Dashboard', href: '/nexxohub', icon: Home },
   { label: 'Organizações', href: '/dashboard/organizations', icon: Building2 },
   { label: 'Clínicas', href: '/dashboard/clinics', icon: Hospital },
   { label: 'Empresas', href: '/dashboard/companies', icon: ShieldCheck },
@@ -32,15 +28,11 @@ const navigation = [
   { label: 'Contratos', href: '/dashboard/contracts', icon: FileText },
   { label: 'Financeiro', href: '/dashboard/finance', icon: BadgeDollarSign },
   { label: 'Documentos', href: '/dashboard/documents', icon: FileText },
-  { label: 'Insights IA', href: '/dashboard/insights', icon: Lightbulb, pending: true },
-  { label: 'Planos de Ação', href: '/dashboard/action-plans', icon: Activity, pending: true },
-  { label: 'Comunicações', href: '/dashboard/communications', icon: Megaphone, pending: true },
-  { label: 'Configurações', href: '/dashboard/settings', icon: Settings, pending: true },
 ];
 
 function Logo() {
   return (
-    <Link href="/dashboard" className="flex items-center gap-3" aria-label="NexxoHub">
+    <Link href="/nexxohub" className="flex items-center gap-3" aria-label="NexxoHub">
       <svg className="h-10 w-10" viewBox="0 0 48 48" fill="none" aria-hidden="true">
         <path d="M7 37V11l17 14 17-14v26L24 23 7 37Z" stroke="#18c7ef" strokeWidth="3" />
         <circle cx="7" cy="11" r="4" fill="#22d3ee" />
@@ -84,24 +76,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-4 pb-4">
-          {navigation.map(({ label, href, icon: Icon, pending }) => {
+          {navigation.map(({ label, href, icon: Icon }) => {
             const active =
-              pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`));
-            if (pending) {
-              return (
-                <div
-                  key={href}
-                  className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-slate-500"
-                  title="Módulo em implantação"
-                >
-                  <Icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
-                  <span className="flex-1">{label}</span>
-                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-[9px] uppercase">
-                    Em breve
-                  </span>
-                </div>
-              );
-            }
+              pathname === href || (href !== '/nexxohub' && pathname.startsWith(`${href}/`));
+
             return (
               <Link
                 key={href}

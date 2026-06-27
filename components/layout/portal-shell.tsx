@@ -2,42 +2,57 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Home, LogOut, Menu, ShieldCheck, X } from 'lucide-react';
+import {
+  Award,
+  BookOpen,
+  Building2,
+  ClipboardCheck,
+  FileWarning,
+  GitBranch,
+  GraduationCap,
+  HelpCircle,
+  Home,
+  Layers,
+  LogOut,
+  Menu,
+  ShieldCheck,
+  UserRound,
+  Users,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { portalConfig, type PortalType } from '../../lib/portal';
 
-const portalMenus: Record<Exclude<PortalType, 'nexxohub'>, string[]> = {
+const portalMenus = {
   clinic: [
-    'Empresas',
-    'Contratos',
-    'Diagnósticos',
-    'Relatórios',
-    'Planos de Ação',
-    'Programas',
-    'Financeiro',
-    'IA Clínica',
+    { label: 'Dashboard', href: '/clinic', icon: Home },
+    { label: 'Empresas', href: '/clinic/companies', icon: Building2 },
+    { label: 'Programas', href: '/clinic/programs', icon: GraduationCap },
+    { label: 'Evidências', href: '/clinic/evidences', icon: ClipboardCheck },
+    { label: 'Dossiês NR-1', href: '/clinic/nr1-dossiers', icon: ShieldCheck },
   ],
   company: [
-    'Colaboradores',
-    'Filiais',
-    'Departamentos',
-    'Cargos',
-    'Avaliações',
-    'Indicadores',
-    'Evidências',
-    'Denúncias',
-    'Pedidos de Ajuda',
+    { label: 'Dashboard', href: '/company', icon: Home },
+    { label: 'Colaboradores', href: '/company/employees', icon: Users },
+    { label: 'Filiais', href: '/company/branches', icon: GitBranch },
+    { label: 'Departamentos', href: '/company/departments', icon: Layers },
+    { label: 'Cargos', href: '/company/positions', icon: UserRound },
+    { label: 'Pedidos de Ajuda', href: '/company/help-requests', icon: HelpCircle },
+    { label: 'Denúncias', href: '/company/complaints', icon: FileWarning },
+    { label: 'Certificados', href: '/company/certificates', icon: Award },
   ],
   employee: [
-    'Minha Jornada',
-    'Avaliações',
-    'Check-in Semanal',
-    'Canal de Denúncia',
-    'Pedido de Ajuda',
-    'Assistente IA',
-    'Perfil',
+    { label: 'Dashboard', href: '/employee', icon: Home },
+    { label: 'Programas', href: '/employee/programs', icon: BookOpen },
+    { label: 'Check-in Semanal', href: '/employee/checkins', icon: ClipboardCheck },
+    { label: 'Pedido de Ajuda', href: '/employee/help-requests', icon: HelpCircle },
+    { label: 'Denúncia', href: '/employee/complaints', icon: FileWarning },
+    { label: 'Certificados', href: '/employee/certificates', icon: Award },
   ],
-};
+} satisfies Record<
+  Exclude<PortalType, 'nexxohub'>,
+  Array<{ label: string; href: string; icon: typeof Home }>
+>;
 
 export function PortalShell({
   portal,
@@ -63,6 +78,7 @@ export function PortalShell({
         <button
           className="fixed inset-0 z-30 bg-slate-950/50 lg:hidden"
           onClick={() => setOpen(false)}
+          aria-label="Fechar menu"
         />
       )}
       <aside
@@ -78,23 +94,21 @@ export function PortalShell({
           </button>
         </div>
         <nav className="space-y-1 p-4">
-          <Link
-            href={config.home}
-            className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm ${pathname === config.home ? 'bg-blue-600' : 'hover:bg-white/5'}`}
-          >
-            <Home className="h-5 w-5" /> Dashboard
-          </Link>
-          {portalMenus[portal].map((item) => (
-            <div
-              key={item}
-              className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-500"
-              title="Módulo em implantação"
-            >
-              <BarChart3 className="h-5 w-5" />
-              <span className="flex-1">{item}</span>
-              <span className="text-[9px] uppercase">Em breve</span>
-            </div>
-          ))}
+          {portalMenus[portal].map(({ label, href, icon: Icon }) => {
+            const active =
+              pathname === href || (href !== config.home && pathname.startsWith(`${href}/`));
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm ${
+                  active ? 'bg-blue-600' : 'hover:bg-white/5'
+                }`}
+              >
+                <Icon className="h-5 w-5" /> {label}
+              </Link>
+            );
+          })}
         </nav>
       </aside>
       <div className="min-w-0 flex-1">

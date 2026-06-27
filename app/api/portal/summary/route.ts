@@ -112,7 +112,12 @@ export async function GET(request: NextRequest) {
   }
 
   if (portal === 'employee' && membership.employee_id) {
-    const [{ count: pending }, { count: completed }, { count: helpRequests }] = await Promise.all([
+    const [
+      { count: pending },
+      { count: completed },
+      { count: helpRequests },
+      { count: certificates },
+    ] = await Promise.all([
       supabase
         .from('assessments')
         .select('id', { count: 'exact', head: true })
@@ -123,7 +128,15 @@ export async function GET(request: NextRequest) {
         .select('id', { count: 'exact', head: true })
         .eq('employee_id', membership.employee_id)
         .eq('status', 'completed'),
-      Promise.resolve({ count: 0 }),
+      supabase
+        .from('help_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('employee_id', membership.employee_id)
+        .neq('status', 'closed'),
+      supabase
+        .from('certificates')
+        .select('id', { count: 'exact', head: true })
+        .eq('employee_id', membership.employee_id),
     ]);
     return NextResponse.json({
       success: true,
@@ -133,7 +146,7 @@ export async function GET(request: NextRequest) {
           { label: 'Avaliações pendentes', value: pending || 0 },
           { label: 'Avaliações concluídas', value: completed || 0 },
           { label: 'Pedidos de ajuda ativos', value: helpRequests || 0 },
-          { label: 'Certificados', value: 0 },
+          { label: 'Certificados', value: certificates || 0 },
         ],
       },
     });

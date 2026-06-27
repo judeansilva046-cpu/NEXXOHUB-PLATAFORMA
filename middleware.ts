@@ -8,6 +8,7 @@ import {
   type PortalType,
 } from './lib/portal';
 import { getPublicEnvironment } from './lib/env';
+import { roleBelongsToPortal } from './lib/rbac';
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -53,19 +54,21 @@ export async function middleware(request: NextRequest) {
       return redirectWithCookies(loginUrl);
     }
 
-    let memberships: Array<{ portal: PortalType }> = [];
+    let memberships: Array<{ portal: PortalType; role: string }> = [];
     if (user) {
       const { data } = await supabase
         .from('portal_memberships')
-        .select('portal')
+        .select('portal, role')
         .eq('user_id', user.id)
         .eq('is_active', true);
-      memberships = (data || []) as Array<{ portal: PortalType }>;
+      memberships = (data || []) as Array<{ portal: PortalType; role: string }>;
     }
 
     if (user && isProtected) {
       const hasPortalAccess = memberships.some(
-        (membership) => membership.portal === requestedPortal
+        (membership) =>
+          membership.portal === requestedPortal &&
+          roleBelongsToPortal(membership.role, requestedPortal)
       );
       if (!hasPortalAccess) {
         const deniedUrl = new URL('/access-denied', request.url);

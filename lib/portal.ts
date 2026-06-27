@@ -2,7 +2,7 @@ export type PortalType = 'nexxohub' | 'clinic' | 'company' | 'employee';
 
 export const portalConfig: Record<PortalType, { label: string; home: string; subdomain: string }> =
   {
-    nexxohub: { label: 'Portal NexxoHub', home: '/dashboard', subdomain: 'admin' },
+    nexxohub: { label: 'Portal NexxoHub', home: '/nexxohub', subdomain: 'admin' },
     clinic: { label: 'Portal Clínica', home: '/clinic', subdomain: 'clinica' },
     company: { label: 'Portal Empresa', home: '/company', subdomain: 'empresa' },
     employee: { label: 'Portal Colaborador', home: '/employee', subdomain: 'funcionario' },
@@ -20,6 +20,7 @@ export function portalFromRequest(hostname: string, pathname: string): PortalTyp
   if (pathname === '/clinic' || pathname.startsWith('/clinic/')) return 'clinic';
   if (pathname === '/company' || pathname.startsWith('/company/')) return 'company';
   if (pathname === '/employee' || pathname.startsWith('/employee/')) return 'employee';
+  if (pathname === '/nexxohub' || pathname.startsWith('/nexxohub/')) return 'nexxohub';
   return 'nexxohub';
 }
 
@@ -27,6 +28,8 @@ export function isProtectedPortalPath(pathname: string) {
   return (
     pathname === '/dashboard' ||
     pathname.startsWith('/dashboard/') ||
+    pathname === '/nexxohub' ||
+    pathname.startsWith('/nexxohub/') ||
     pathname === '/clinic' ||
     pathname.startsWith('/clinic/') ||
     pathname === '/company' ||

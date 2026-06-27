@@ -14,6 +14,7 @@ import {
 } from '../../../../../../lib/psychosocial/collection';
 import { createAdminClient } from '../../../../../../lib/supabase/admin';
 import { createClient } from '../../../../../../lib/supabase/server';
+import { normalizeRole } from '../../../../../../lib/rbac';
 
 type RouteContext = { params: Promise<{ id: string }> };
 type CampaignScope = {
@@ -60,21 +61,22 @@ export async function POST(request: NextRequest, context: RouteContext) {
       .eq('is_active', true);
 
     const authorized = (memberships || []).some((membership) => {
+      const role = normalizeRole(membership.role);
       if (membership.organization_id !== cycle.tenant_id) return false;
-      if (membership.portal === 'nexxohub' && ['super_admin', 'admin'].includes(membership.role)) {
+      if (membership.portal === 'nexxohub' && role === 'nexxohub_admin') {
         return true;
       }
       if (
         membership.portal === 'clinic' &&
         membership.clinic_id === cycle.clinic_id &&
-        ['clinic_admin', 'clinic_professional', 'psychologist', 'analyst'].includes(membership.role)
+        ['clinic_admin', 'clinic_staff'].includes(role)
       ) {
         return true;
       }
       return (
         membership.portal === 'company' &&
         membership.company_id === cycle.company_id &&
-        ['company_admin', 'hr', 'compliance'].includes(membership.role)
+        ['company_admin', 'company_hr', 'company_compliance'].includes(role)
       );
     });
     if (!authorized) throw new AuthorizationError();
