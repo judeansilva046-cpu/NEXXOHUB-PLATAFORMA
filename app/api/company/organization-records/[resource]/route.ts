@@ -286,6 +286,8 @@ async function createRecord(
         address: nullable(input.address),
         status: input.status,
         created_by: context.user.id,
+        updated_by: context.user.id,
+        deleted_at: input.status === 'archived' ? new Date().toISOString() : null,
       })
       .select('id')
       .single();
@@ -314,6 +316,8 @@ async function createRecord(
         name: input.name,
         status: input.status,
         created_by: context.user.id,
+        updated_by: context.user.id,
+        deleted_at: input.status === 'archived' ? new Date().toISOString() : null,
       })
       .select('id')
       .single();
@@ -343,6 +347,8 @@ async function createRecord(
         cbo_code: nullable(input.cboCode),
         status: input.status,
         created_by: context.user.id,
+        updated_by: context.user.id,
+        deleted_at: input.status === 'archived' ? new Date().toISOString() : null,
       })
       .select('id')
       .single();
@@ -371,6 +377,7 @@ async function createRecord(
     .insert({
       organization_id: context.company.organization_id,
       company_id: context.company.id,
+      created_by: context.user.id,
       full_name: input.fullName,
       cpf: input.cpf,
       registration: input.registration,
@@ -383,6 +390,8 @@ async function createRecord(
       department: resolvedDepartment,
       position: resolvedPosition,
       status: input.status,
+      updated_by: context.user.id,
+      deleted_at: input.status === 'archived' ? new Date().toISOString() : null,
     })
     .select('id')
     .single();
@@ -418,6 +427,8 @@ async function updateRecord(
         state: nullable(input.state)?.toUpperCase() || null,
         address: nullable(input.address),
         status: input.status,
+        updated_by: context.user.id,
+        deleted_at: input.status === 'archived' ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -444,6 +455,8 @@ async function updateRecord(
         name: input.name,
         branch_id: input.branchId || null,
         status: input.status,
+        updated_by: context.user.id,
+        deleted_at: input.status === 'archived' ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -471,6 +484,8 @@ async function updateRecord(
         department_id: input.departmentId || null,
         cbo_code: nullable(input.cboCode),
         status: input.status,
+        updated_by: context.user.id,
+        deleted_at: input.status === 'archived' ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -510,6 +525,8 @@ async function updateRecord(
       department: resolvedDepartment,
       position: resolvedPosition,
       status: input.status,
+      updated_by: context.user.id,
+      deleted_at: input.status === 'archived' ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
@@ -540,6 +557,8 @@ async function updateStatus(
     .from(resource)
     .update({
       status: input.status,
+      updated_by: context.user.id,
+      deleted_at: input.status === 'archived' ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)

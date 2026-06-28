@@ -590,7 +590,11 @@ where cnpj in (
 commit;
 
 -- Enterprise homologation seed requested by the master prompt.
--- Temporary password for all users below: NexxoHub@2026!
+-- Temporary passwords requested for homologation:
+-- NexxoHub: Admin@123 / Financeiro@123
+-- Clinics: Clinica@123
+-- Companies: Empresa@123
+-- Employees: Colaborador@123
 
 do $enterprise_seed$
 begin
@@ -692,6 +696,17 @@ values
     'clinic',
     'clinic_staff',
     '00000000-0000-4000-8000-000000000901',
+    null,
+    null
+  ),
+  (
+    '00000000-0000-4000-8000-000000001103',
+    'admin@clinicasaude.com.br',
+    'Admin Clínica Saúde',
+    'manager',
+    'clinic',
+    'clinic_admin',
+    '00000000-0000-4000-8000-000000000902',
     null,
     null
   ),
@@ -813,7 +828,17 @@ select
   'authenticated',
   'authenticated',
   email,
-  crypt('NexxoHub@2026!', gen_salt('bf')),
+  crypt(
+    case
+      when portal = 'nexxohub' and portal_role = 'nexxohub_admin' then 'Admin@123'
+      when portal = 'nexxohub' and portal_role = 'nexxohub_finance' then 'Financeiro@123'
+      when portal = 'clinic' then 'Clinica@123'
+      when portal = 'company' then 'Empresa@123'
+      when portal = 'employee' then 'Colaborador@123'
+      else 'NexxoHub@2026!'
+    end,
+    gen_salt('bf')
+  ),
   now(),
   '',
   '',
@@ -1064,6 +1089,250 @@ set
   status = excluded.status,
   updated_at = now();
 
+insert into public.billing_plans (
+  id,
+  code,
+  name,
+  description,
+  monthly_price,
+  setup_fee,
+  max_companies,
+  max_employees,
+  features,
+  is_active,
+  created_by,
+  updated_by,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-4000-8000-000000000921',
+    'starter',
+    'Starter NR-1',
+    'Plano inicial para clínicas em homologação.',
+    799.00,
+    0,
+    10,
+    500,
+    jsonb_build_object('imports', true, 'dashboards', true, 'ai', false),
+    true,
+    '00000000-0000-4000-8000-000000001002',
+    '00000000-0000-4000-8000-000000001002',
+    now(),
+    now()
+  ),
+  (
+    '00000000-0000-4000-8000-000000000922',
+    'enterprise',
+    'Enterprise Psicossocial',
+    'Plano completo com IA, integrações e governança.',
+    2499.00,
+    1500.00,
+    100,
+    10000,
+    jsonb_build_object('imports', true, 'dashboards', true, 'ai', true, 'integrations', true),
+    true,
+    '00000000-0000-4000-8000-000000001002',
+    '00000000-0000-4000-8000-000000001002',
+    now(),
+    now()
+  )
+on conflict (code) do update
+set
+  name = excluded.name,
+  description = excluded.description,
+  monthly_price = excluded.monthly_price,
+  setup_fee = excluded.setup_fee,
+  max_companies = excluded.max_companies,
+  max_employees = excluded.max_employees,
+  features = excluded.features,
+  is_active = excluded.is_active,
+  updated_by = excluded.updated_by,
+  updated_at = now();
+
+insert into public.subscriptions (
+  id,
+  organization_id,
+  clinic_id,
+  company_id,
+  billing_plan_id,
+  status,
+  starts_on,
+  ends_on,
+  external_customer_id,
+  external_subscription_id,
+  blocked_at,
+  blocked_reason,
+  created_by,
+  updated_by,
+  created_at,
+  updated_at
+)
+select
+  ('00000000-0000-4000-8000-' || lpad((710000 + company_index)::text, 12, '0'))::uuid,
+  '00000000-0000-4000-8000-000000000900',
+  clinic_id,
+  id,
+  case
+    when company_index in (1, 2, 3) then '00000000-0000-4000-8000-000000000922'::uuid
+    else '00000000-0000-4000-8000-000000000921'::uuid
+  end,
+  case when company_index = 5 then 'past_due' else 'active' end,
+  current_date - 60,
+  null,
+  'asaas-customer-seed-' || company_index,
+  'asaas-subscription-seed-' || company_index,
+  case when company_index = 5 then now() - interval '5 days' else null end,
+  case when company_index = 5 then 'Inadimplência simulada no seed de homologação' else null end,
+  '00000000-0000-4000-8000-000000001002',
+  '00000000-0000-4000-8000-000000001002',
+  now(),
+  now()
+from public._seed_enterprise_companies
+on conflict (id) do update
+set
+  billing_plan_id = excluded.billing_plan_id,
+  status = excluded.status,
+  blocked_at = excluded.blocked_at,
+  blocked_reason = excluded.blocked_reason,
+  updated_by = excluded.updated_by,
+  updated_at = now();
+
+insert into public.contracts (
+  id,
+  tenant_id,
+  clinic_id,
+  company_id,
+  contract_number,
+  starts_on,
+  ends_on,
+  monthly_value,
+  platform_percentage,
+  covered_employees,
+  employee_registration_unit_fee,
+  status,
+  notes,
+  created_by,
+  created_at,
+  updated_at
+)
+select
+  ('00000000-0000-4000-8000-' || lpad((720000 + company_index)::text, 12, '0'))::uuid,
+  '00000000-0000-4000-8000-000000000900',
+  clinic_id,
+  id,
+  'NH-ENT-' || lpad(company_index::text, 4, '0'),
+  current_date - 60,
+  null,
+  case when company_index in (1, 2, 3) then 2499.00 else 799.00 end,
+  0.15,
+  20,
+  7.00,
+  case when company_index = 5 then 'suspended' else 'active' end,
+  'Contrato financeiro gerado pelo seed enterprise.',
+  '00000000-0000-4000-8000-000000001002',
+  now(),
+  now()
+from public._seed_enterprise_companies
+on conflict (tenant_id, contract_number) do update
+set
+  monthly_value = excluded.monthly_value,
+  covered_employees = excluded.covered_employees,
+  status = excluded.status,
+  notes = excluded.notes,
+  updated_at = now();
+
+insert into public.invoices (
+  id,
+  tenant_id,
+  contract_id,
+  reference_month,
+  due_date,
+  amount,
+  status,
+  external_provider,
+  external_id,
+  paid_at,
+  created_by,
+  created_at,
+  updated_at
+)
+select
+  ('00000000-0000-4000-8000-' || lpad((730000 + company_index)::text, 12, '0'))::uuid,
+  '00000000-0000-4000-8000-000000000900',
+  ('00000000-0000-4000-8000-' || lpad((720000 + company_index)::text, 12, '0'))::uuid,
+  date_trunc('month', current_date)::date,
+  date_trunc('month', current_date)::date + 9,
+  case when company_index in (1, 2, 3) then 2499.00 else 799.00 end,
+  case when company_index = 5 then 'overdue' else 'paid' end,
+  'asaas',
+  'asaas-invoice-seed-' || company_index,
+  case when company_index = 5 then null else now() - interval '3 days' end,
+  '00000000-0000-4000-8000-000000001002',
+  now(),
+  now()
+from public._seed_enterprise_companies
+on conflict (contract_id, reference_month) do update
+set
+  amount = excluded.amount,
+  status = excluded.status,
+  external_provider = excluded.external_provider,
+  external_id = excluded.external_id,
+  paid_at = excluded.paid_at,
+  updated_at = now();
+
+insert into public.payments (
+  id,
+  organization_id,
+  clinic_id,
+  company_id,
+  invoice_id,
+  subscription_id,
+  amount,
+  payment_method,
+  status,
+  external_provider,
+  external_id,
+  paid_at,
+  metadata,
+  created_by,
+  updated_by,
+  created_at,
+  updated_at
+)
+select
+  ('00000000-0000-4000-8000-' || lpad((740000 + company_index)::text, 12, '0'))::uuid,
+  '00000000-0000-4000-8000-000000000900',
+  clinic_id,
+  id,
+  ('00000000-0000-4000-8000-' || lpad((730000 + company_index)::text, 12, '0'))::uuid,
+  ('00000000-0000-4000-8000-' || lpad((710000 + company_index)::text, 12, '0'))::uuid,
+  case when company_index in (1, 2, 3) then 2499.00 else 799.00 end,
+  case when company_index = 1 then 'pix' when company_index = 2 then 'boleto' else 'cartao' end,
+  'confirmed',
+  'asaas',
+  'asaas-payment-seed-' || company_index,
+  now() - interval '3 days',
+  jsonb_build_object('seed', true, 'gateway', 'asaas-ready'),
+  '00000000-0000-4000-8000-000000001002',
+  '00000000-0000-4000-8000-000000001002',
+  now(),
+  now()
+from public._seed_enterprise_companies
+where company_index <> 5
+on conflict (id) do update
+set
+  amount = excluded.amount,
+  payment_method = excluded.payment_method,
+  status = excluded.status,
+  external_provider = excluded.external_provider,
+  external_id = excluded.external_id,
+  paid_at = excluded.paid_at,
+  metadata = excluded.metadata,
+  updated_by = excluded.updated_by,
+  updated_at = now();
+
 insert into public.branches (
   id,
   organization_id,
@@ -1075,6 +1344,7 @@ insert into public.branches (
   address,
   status,
   created_by,
+  updated_by,
   created_at,
   updated_at
 )
@@ -1088,6 +1358,7 @@ select
   state,
   case when branch_no = 1 then 'Centro corporativo' else 'Unidade operacional regional' end,
   'active',
+  '00000000-0000-4000-8000-000000001201',
   '00000000-0000-4000-8000-000000001201',
   now(),
   now()
@@ -1109,6 +1380,7 @@ insert into public.departments (
   name,
   status,
   created_by,
+  updated_by,
   created_at,
   updated_at
 )
@@ -1124,6 +1396,7 @@ select
     else 'Administrativo'
   end,
   'active',
+  '00000000-0000-4000-8000-000000001201',
   '00000000-0000-4000-8000-000000001201',
   now(),
   now()
@@ -1144,6 +1417,7 @@ insert into public.positions (
   cbo_code,
   status,
   created_by,
+  updated_by,
   created_at,
   updated_at
 )
@@ -1162,6 +1436,7 @@ select
   '0000-' || position_no,
   'active',
   '00000000-0000-4000-8000-000000001201',
+  '00000000-0000-4000-8000-000000001201',
   now(),
   now()
 from public._seed_enterprise_companies
@@ -1178,6 +1453,8 @@ insert into public.employees (
   organization_id,
   company_id,
   auth_user_id,
+  created_by,
+  updated_by,
   email,
   full_name,
   position,
@@ -1201,6 +1478,8 @@ select
       then ('00000000-0000-4000-8000-' || lpad((1300 + employee_no)::text, 12, '0'))::uuid
     else null
   end,
+  '00000000-0000-4000-8000-000000001201',
+  '00000000-0000-4000-8000-000000001201',
   case
     when company_index = 1 and employee_no <= 10
       then 'colaborador' || lpad(employee_no::text, 2, '0') || '@empresa01.com.br'
@@ -1236,6 +1515,8 @@ set
   organization_id = excluded.organization_id,
   company_id = excluded.company_id,
   auth_user_id = excluded.auth_user_id,
+  created_by = excluded.created_by,
+  updated_by = excluded.updated_by,
   email = excluded.email,
   full_name = excluded.full_name,
   position = excluded.position,
