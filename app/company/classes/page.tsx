@@ -1,5 +1,14 @@
 import Link from 'next/link';
-import { Award, BookOpen, CirclePlay, Clock3, Plus, Users } from 'lucide-react';
+import {
+  Award,
+  BookOpen,
+  CirclePlay,
+  Clock3,
+  FileChartColumn,
+  HelpCircle,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { DonutChart, type DonutItem } from '../../../components/workspace/charts';
 import { MetricCard } from '../../../components/workspace/metric-card';
 import { PageHeader } from '../../../components/workspace/page-header';
@@ -46,13 +55,23 @@ export default async function CompanyClassesPage() {
         'id, module_id, title, description, video_provider, duration_seconds, status, created_at'
       )
       .eq('company_id', membership.company_id)
+      .eq('status', 'active')
       .order('created_at', { ascending: false }),
     supabase
       .from('modules')
       .select('id, track_id, title, status')
-      .eq('company_id', membership.company_id),
-    supabase.from('tracks').select('id, program_id, title').eq('company_id', membership.company_id),
-    supabase.from('programs').select('id, title').eq('company_id', membership.company_id),
+      .eq('company_id', membership.company_id)
+      .eq('status', 'active'),
+    supabase
+      .from('tracks')
+      .select('id, program_id, title')
+      .eq('company_id', membership.company_id)
+      .eq('status', 'active'),
+    supabase
+      .from('programs')
+      .select('id, title')
+      .eq('company_id', membership.company_id)
+      .eq('status', 'active'),
     supabase
       .from('certificates')
       .select('id', { count: 'exact', head: true })
@@ -68,7 +87,6 @@ export default async function CompanyClassesPage() {
   const moduleRows = (modules || []) as ModuleRow[];
   const trackRows = (tracks || []) as TrackRow[];
   const programRows = (programs || []) as ProgramRow[];
-  const published = lessonRows.filter((lesson) => lesson.status === 'active').length;
   const averageDuration = lessonRows.length
     ? Math.round(
         lessonRows.reduce((sum, lesson) => sum + minutes(lesson.duration_seconds), 0) /
@@ -82,7 +100,7 @@ export default async function CompanyClassesPage() {
       color: '#2f76d2',
     },
     {
-      label: 'Conteúdos',
+      label: 'Materiais',
       value: lessonRows.filter((lesson) => !lesson.video_provider).length,
       color: '#8a5bd2',
     },
@@ -98,70 +116,73 @@ export default async function CompanyClassesPage() {
   const trackMap = new Map(trackRows.map((track) => [track.id, track]));
   const programMap = new Map(programRows.map((program) => [program.id, program]));
 
+  const quickActions: Array<[string, string, LucideIcon]> = [
+    ['Ver programas', '/company/programs', BookOpen],
+    ['Certificados', '/company/certificates', Award],
+    ['Relatórios', '/company/reports', FileChartColumn],
+    ['Pedidos de ajuda', '/company/help-requests', HelpCircle],
+  ];
+
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Aulas / Módulos"
-        subtitle="Gerencie todas as aulas e módulos disponíveis na plataforma."
+        title="Aulas e Módulos Disponíveis"
+        subtitle="Consulte aulas, módulos e materiais publicados pela clínica para sua empresa."
         userName="Empresa"
-        notifications={published}
+        notifications={lessonRows.length}
       />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <MetricCard
-          label="Aulas Publicadas"
-          value={published}
+          label="Aulas Disponíveis"
+          value={lessonRows.length}
           icon={CirclePlay}
           tone="teal"
-          trend="12%"
+          hint="publicadas pela clínica"
         />
         <MetricCard
           label="Módulos"
           value={moduleRows.length}
           icon={BookOpen}
           tone="purple"
-          trend="8%"
+          hint="conteúdo técnico"
         />
         <MetricCard
           label="Tempo Médio por Aula"
           value={`${averageDuration} min`}
           icon={Clock3}
           tone="orange"
-          trend="5%"
+          hint="estimado"
         />
         <MetricCard
           label="Colaboradores Ativos"
           value={(employees || 0).toLocaleString('pt-BR')}
           icon={Users}
           tone="blue"
-          trend="15%"
+          hint="público elegível"
         />
         <MetricCard
           label="Certificados Emitidos"
           value={certificates || 0}
           icon={Award}
           tone="red"
-          trend="15%"
+          hint="conclusões registradas"
         />
       </section>
 
       <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_315px]">
-        <WorkspacePanel title="Todas as Aulas">
+        <WorkspacePanel title="Biblioteca Publicada">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div className="flex gap-4 text-xs">
               <span className="border-b-2 border-teal-500 pb-3 font-semibold text-teal-700">
-                Todas as Aulas
+                Todas as aulas
               </span>
-              <span className="text-slate-500">Por Módulo</span>
-              <span className="text-slate-500">Por Programa</span>
-              <span className="text-slate-500">Rascunhos</span>
+              <span className="text-slate-500">Por módulo</span>
+              <span className="text-slate-500">Por programa</span>
             </div>
-            <Link
-              href="/company/classes?new=1"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2.5 text-xs font-semibold text-white"
-            >
-              <Plus className="h-4 w-4" /> Nova Aula
-            </Link>
+            <span className="rounded-xl border border-cyan-100 bg-cyan-50 px-4 py-2.5 text-xs font-semibold text-cyan-800">
+              Publicação técnica da Clínica
+            </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px] text-left text-xs">
@@ -172,7 +193,7 @@ export default async function CompanyClassesPage() {
                   <th className="px-3 py-3">Programa</th>
                   <th className="px-3 py-3">Duração</th>
                   <th className="px-3 py-3">Status</th>
-                  <th className="px-3 py-3">Criada em</th>
+                  <th className="px-3 py-3">Publicada em</th>
                   <th className="px-3 py-3 text-right">Ações</th>
                 </tr>
               </thead>
@@ -193,7 +214,7 @@ export default async function CompanyClassesPage() {
                           <div>
                             <p className="font-semibold text-[#071737]">{lesson.title}</p>
                             <p className="mt-1 max-w-64 truncate text-[10px] text-slate-500">
-                              {lesson.description || 'Sem descrição'}
+                              {lesson.description || 'Conteúdo publicado pela clínica'}
                             </p>
                           </div>
                         </div>
@@ -202,22 +223,7 @@ export default async function CompanyClassesPage() {
                       <td className="px-3 py-3">{program?.title || '—'}</td>
                       <td className="px-3 py-3">{minutes(lesson.duration_seconds)} min</td>
                       <td className="px-3 py-3">
-                        <StatusPill
-                          label={
-                            lesson.status === 'active'
-                              ? 'Publicada'
-                              : lesson.status === 'draft'
-                                ? 'Rascunho'
-                                : 'Arquivada'
-                          }
-                          tone={
-                            lesson.status === 'active'
-                              ? 'green'
-                              : lesson.status === 'draft'
-                                ? 'orange'
-                                : 'slate'
-                          }
-                        />
+                        <StatusPill label="Disponível" tone="green" />
                       </td>
                       <td className="px-3 py-3">
                         {new Date(lesson.created_at).toLocaleDateString('pt-BR')}
@@ -231,7 +237,7 @@ export default async function CompanyClassesPage() {
               </tbody>
             </table>
             {!lessonRows.length && (
-              <EmptyWorkspaceState message="Nenhuma aula cadastrada para esta empresa." />
+              <EmptyWorkspaceState message="Nenhuma aula publicada pela clínica para esta empresa." />
             )}
           </div>
         </WorkspacePanel>
@@ -239,8 +245,8 @@ export default async function CompanyClassesPage() {
         <div className="space-y-3">
           <WorkspacePanel
             title="Módulos Mais Acessados"
-            footerLabel="Ver todos"
-            footerHref="/company/tracks"
+            footerLabel="Ver programas"
+            footerHref="/company/programs"
           >
             <div className="space-y-4">
               {moduleRanking.map(({ moduleRow, lessons: count }, index) => (
@@ -264,6 +270,9 @@ export default async function CompanyClassesPage() {
                   </div>
                 </div>
               ))}
+              {!moduleRanking.length && (
+                <EmptyWorkspaceState message="Nenhum módulo publicado ainda." />
+              )}
             </div>
           </WorkspacePanel>
           <WorkspacePanel title="Tipos de Conteúdo">
@@ -275,22 +284,20 @@ export default async function CompanyClassesPage() {
                 height={170}
               />
             ) : (
-              <EmptyWorkspaceState message="Sem conteúdos cadastrados." />
+              <EmptyWorkspaceState message="Sem conteúdos publicados." />
             )}
           </WorkspacePanel>
-          <WorkspacePanel title="Ações Rápidas">
+          <WorkspacePanel title="Ações da Empresa">
             <div className="space-y-2">
-              {[
-                ['Nova Aula', '/company/classes?new=1'],
-                ['Novo Módulo', '/company/tracks'],
-                ['Biblioteca de Conteúdos', '/company/classes'],
-              ].map(([label, href]) => (
+              {quickActions.map(([label, href, Icon]) => (
                 <Link
                   key={label}
                   href={href}
                   className="flex items-center justify-between rounded-lg px-2 py-2 text-xs text-blue-800 hover:bg-blue-50"
                 >
-                  <span>{label}</span>
+                  <span className="flex items-center gap-2">
+                    <Icon className="h-4 w-4" /> {label}
+                  </span>
                   <span>›</span>
                 </Link>
               ))}
