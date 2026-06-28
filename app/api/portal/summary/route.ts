@@ -59,10 +59,16 @@ export async function GET(request: NextRequest) {
     const [
       employeesResult,
       programsResult,
+      tracksResult,
       modulesResult,
+      lessonsResult,
       reportsResult,
       plansResult,
       certificatesResult,
+      helpRequestsResult,
+      complaintsResult,
+      dossiersResult,
+      alertsResult,
       snapshotsResult,
       activitiesResult,
     ] = await Promise.all([
@@ -74,7 +80,9 @@ export async function GET(request: NextRequest) {
         .select('id, title, status, company_id, created_at')
         .eq('clinic_id', membership.clinic_id)
         .order('created_at', { ascending: false }),
+      supabase.from('tracks').select('id, status').eq('clinic_id', membership.clinic_id),
       supabase.from('modules').select('id, status').eq('clinic_id', membership.clinic_id),
+      supabase.from('lessons').select('id, status').eq('clinic_id', membership.clinic_id),
       supabase.from('reports').select('id', { count: 'exact', head: true }),
       companyIds.length
         ? supabase.from('action_plans').select('id, status').in('company_id', companyIds)
@@ -83,6 +91,12 @@ export async function GET(request: NextRequest) {
         .from('certificates')
         .select('id', { count: 'exact', head: true })
         .eq('clinic_id', membership.clinic_id),
+      supabase.from('help_requests').select('id, status').eq('clinic_id', membership.clinic_id),
+      supabase.from('complaints').select('id, status').eq('clinic_id', membership.clinic_id),
+      supabase.from('nr1_dossiers').select('id, status').eq('clinic_id', membership.clinic_id),
+      companyIds.length
+        ? supabase.from('smart_alerts').select('id, status, severity').in('company_id', companyIds)
+        : Promise.resolve({ data: [] }),
       companyIds.length
         ? supabase
             .from('psychosocial_index_snapshots')
@@ -101,9 +115,25 @@ export async function GET(request: NextRequest) {
 
     const employees = employeesResult.data || [];
     const programs = programsResult.data || [];
+    const tracks = tracksResult.data || [];
     const modules = modulesResult.data || [];
+    const lessons = lessonsResult.data || [];
     const plans = plansResult.data || [];
+    const helpRequests = helpRequestsResult.data || [];
+    const complaints = complaintsResult.data || [];
+    const dossiers = dossiersResult.data || [];
+    const alerts = alertsResult.data || [];
     const snapshots = snapshotsResult.data || [];
+    let completedDiagnostics = 0;
+    const employeeIds = employees.map((employee) => employee.id);
+    if (employeeIds.length) {
+      const { count } = await supabase
+        .from('assessments')
+        .select('id', { count: 'exact', head: true })
+        .in('employee_id', employeeIds)
+        .eq('status', 'completed');
+      completedDiagnostics = count || 0;
+    }
     const latestScore = snapshots.length
       ? numberValue(snapshots[snapshots.length - 1].score)
       : null;
@@ -125,6 +155,44 @@ export async function GET(request: NextRequest) {
           { label: 'Certificados Emitidos', value: certificatesResult.count || 0 },
           { label: 'Planos em Execução', value: activePlans },
         ],
+        technicalMetrics: [
+          {
+            label: 'Trilhas Publicadas',
+            value: tracks.filter((item) => item.status === 'active').length,
+          },
+          {
+            label: 'Aulas Publicadas',
+            value: lessons.filter((item) => item.status === 'active').length,
+          },
+          { label: 'Diagnósticos Realizados', value: completedDiagnostics },
+          {
+            label: 'Pedidos de Ajuda Pendentes',
+            value: helpRequests.filter((item) => item.status !== 'closed').length,
+          },
+          {
+            label: 'Denúncias Recebidas',
+            value: complaints.filter((item) => item.status !== 'closed').length,
+          },
+          {
+            label: 'Dossiês NR-1 Publicados',
+            value: dossiers.filter((item) => item.status === 'generated').length,
+          },
+          {
+            label: 'Alertas de Risco Abertos',
+            value: alerts.filter((item) => item.status !== 'resolved').length,
+          },
+          {
+            label: 'Conformidade NR-1',
+            value: activeCompanies.length
+              ? Math.round(
+                  (dossiers.filter((item) => item.status === 'generated').length /
+                    activeCompanies.length) *
+                    100
+                )
+              : 0,
+            suffix: '%',
+          },
+        ],
         dashboard: {
           reports: reportsResult.count || 0,
           riskScore: latestScore,
@@ -141,6 +209,12 @@ export async function GET(request: NextRequest) {
             active: activePlans,
             completed: plans.filter((plan) => plan.status === 'completed').length,
             delayed: plans.filter((plan) => plan.status === 'delayed').length,
+          },
+          technicalStatus: {
+            helpRequests: helpRequests.filter((item) => item.status !== 'closed').length,
+            complaints: complaints.filter((item) => item.status !== 'closed').length,
+            dossiers: dossiers.filter((item) => item.status === 'generated').length,
+            alerts: alerts.filter((item) => item.status !== 'resolved').length,
           },
         },
         series: snapshots.map((snapshot) => ({

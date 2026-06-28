@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { Award, BookOpen, CheckCircle2, Clock3, GraduationCap, Layers, Plus } from 'lucide-react';
+import { Award, BookOpen, CheckCircle2, Clock3, GraduationCap, Layers } from 'lucide-react';
 import { DonutChart, TrendChart, type DonutItem } from '../../../components/workspace/charts';
+import { LearningEditor } from '../../../components/clinic/learning-editor';
 import { MetricCard } from '../../../components/workspace/metric-card';
 import { PageHeader } from '../../../components/workspace/page-header';
 import {
@@ -21,7 +22,14 @@ type ProgramRow = {
   created_at: string;
   companies: SupabaseRelation<{ name: string }>;
 };
-type TrackRow = { id: string; program_id: string; status: string };
+type TrackRow = {
+  id: string;
+  program_id: string;
+  title: string;
+  description: string | null;
+  position: number;
+  status: string;
+};
 type ModuleRow = { id: string; track_id: string; status: string };
 type LessonRow = { id: string; module_id: string; status: string };
 type CertificateRow = { id: string; program_id: string | null };
@@ -65,7 +73,11 @@ export default async function ClinicProgramsPage() {
       .select('id, company_id, title, description, status, created_at, companies(name)')
       .eq('clinic_id', membership.clinic_id)
       .order('created_at', { ascending: false }),
-    supabase.from('tracks').select('id, program_id, status').eq('clinic_id', membership.clinic_id),
+    supabase
+      .from('tracks')
+      .select('id, program_id, title, description, position, status')
+      .eq('clinic_id', membership.clinic_id)
+      .order('position'),
     supabase.from('modules').select('id, track_id, status').eq('clinic_id', membership.clinic_id),
     supabase.from('lessons').select('id, module_id, status').eq('clinic_id', membership.clinic_id),
     supabase.from('certificates').select('id, program_id').eq('clinic_id', membership.clinic_id),
@@ -110,6 +122,9 @@ export default async function ClinicProgramsPage() {
       value: programRows.filter((item) => new Date(item.created_at) <= monthEnd).length,
     };
   });
+  const companyOptions = companies.map((company) => ({ id: company.id, label: company.name }));
+  const programOptions = programRows.map((program) => ({ id: program.id, label: program.title }));
+  const programMap = new Map(programRows.map((program) => [program.id, program]));
 
   return (
     <div className="space-y-4">
@@ -197,18 +212,8 @@ export default async function ClinicProgramsPage() {
       <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_290px]">
         <WorkspacePanel title="Lista de Programas Técnicos">
           <div className="mb-4 flex flex-wrap justify-end gap-2">
-            <Link
-              href="/clinic/programs?new=1"
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white"
-            >
-              <Plus className="h-4 w-4" /> Novo Programa
-            </Link>
-            <Link
-              href="/clinic/classes?new=1"
-              className="flex items-center gap-2 rounded-xl border border-blue-100 px-4 py-2.5 text-xs font-semibold text-blue-700"
-            >
-              <Plus className="h-4 w-4" /> Nova Aula
-            </Link>
+            <LearningEditor resource="programs" companies={companyOptions} />
+            <LearningEditor resource="tracks" parentOptions={programOptions} variant="secondary" />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px] text-left text-xs">
@@ -222,6 +227,7 @@ export default async function ClinicProgramsPage() {
                   <th className="px-3 py-3">Status</th>
                   <th className="px-3 py-3">Certificados</th>
                   <th className="px-3 py-3">Criado em</th>
+                  <th className="px-3 py-3 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -263,6 +269,21 @@ export default async function ClinicProgramsPage() {
                       <td className="px-3 py-3">
                         {new Date(program.created_at).toLocaleDateString('pt-BR')}
                       </td>
+                      <td className="px-3 py-3 text-right">
+                        <LearningEditor
+                          resource="programs"
+                          variant="text"
+                          triggerLabel="Editar"
+                          companies={companyOptions}
+                          initialValues={{
+                            id: program.id,
+                            title: program.title,
+                            description: program.description,
+                            status: program.status as 'draft' | 'active' | 'archived',
+                            companyId: program.company_id,
+                          }}
+                        />
+                      </td>
                     </tr>
                   );
                 })}
@@ -278,9 +299,7 @@ export default async function ClinicProgramsPage() {
           <WorkspacePanel title="Ações Técnicas">
             <div className="space-y-2">
               {[
-                ['Novo Programa', '/clinic/programs?new=1'],
-                ['Nova Trilha', '/clinic/tracks?new=1'],
-                ['Nova Aula', '/clinic/classes?new=1'],
+                ['Aulas e módulos', '/clinic/classes'],
                 ['Planos de Ação', '/clinic/action-plans'],
                 ['Dossiê NR-1', '/clinic/nr1-dossiers'],
               ].map(([label, href]) => (
@@ -311,6 +330,57 @@ export default async function ClinicProgramsPage() {
           </WorkspacePanel>
         </div>
       </section>
+
+      <WorkspacePanel title="Trilhas Técnicas">
+        <div className="mb-4 flex justify-end">
+          <LearningEditor resource="tracks" parentOptions={programOptions} />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left text-xs">
+            <thead className="border-y border-slate-100 bg-slate-50 text-[10px] text-slate-500">
+              <tr>
+                <th className="px-3 py-3">Trilha</th>
+                <th className="px-3 py-3">Programa</th>
+                <th className="px-3 py-3">Ordem</th>
+                <th className="px-3 py-3">Status</th>
+                <th className="px-3 py-3 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {trackRows.map((track) => (
+                <tr key={track.id}>
+                  <td className="px-3 py-3">
+                    <p className="font-semibold text-[#071737]">{track.title}</p>
+                    <p className="mt-1 max-w-96 truncate text-[10px] text-slate-500">
+                      {track.description || 'Sem descrição'}
+                    </p>
+                  </td>
+                  <td className="px-3 py-3">{programMap.get(track.program_id)?.title || '—'}</td>
+                  <td className="px-3 py-3">{track.position}</td>
+                  <td className="px-3 py-3">
+                    <StatusPill label={statusLabel(track.status)} tone={statusTone(track.status)} />
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    <LearningEditor
+                      resource="tracks"
+                      variant="text"
+                      triggerLabel="Editar"
+                      initialValues={{
+                        id: track.id,
+                        title: track.title,
+                        description: track.description,
+                        status: track.status as 'draft' | 'active' | 'archived',
+                        position: track.position,
+                      }}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!trackRows.length && <EmptyWorkspaceState message="Nenhuma trilha criada ainda." />}
+        </div>
+      </WorkspacePanel>
     </div>
   );
 }

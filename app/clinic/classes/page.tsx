@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Award, BookOpen, CirclePlay, Clock3, FileText, Plus } from 'lucide-react';
+import { Award, BookOpen, CirclePlay, Clock3, FileText } from 'lucide-react';
+import { LearningEditor } from '../../../components/clinic/learning-editor';
 import { DonutChart, type DonutItem } from '../../../components/workspace/charts';
 import { MetricCard } from '../../../components/workspace/metric-card';
 import { PageHeader } from '../../../components/workspace/page-header';
@@ -18,12 +19,21 @@ type LessonRow = {
   title: string;
   description: string | null;
   video_provider: string | null;
+  video_external_id: string | null;
   duration_seconds: number | null;
+  position: number;
   status: string;
   created_at: string;
   companies: SupabaseRelation<{ name: string }>;
 };
-type ModuleRow = { id: string; track_id: string; title: string; status: string };
+type ModuleRow = {
+  id: string;
+  track_id: string;
+  title: string;
+  description: string | null;
+  position: number;
+  status: string;
+};
 type TrackRow = { id: string; program_id: string; title: string; status: string };
 type ProgramRow = { id: string; title: string; status: string };
 
@@ -65,14 +75,15 @@ export default async function ClinicClassesPage() {
     supabase
       .from('lessons')
       .select(
-        'id, company_id, module_id, title, description, video_provider, duration_seconds, status, created_at, companies(name)'
+        'id, company_id, module_id, title, description, video_provider, video_external_id, duration_seconds, position, status, created_at, companies(name)'
       )
       .eq('clinic_id', membership.clinic_id)
       .order('created_at', { ascending: false }),
     supabase
       .from('modules')
-      .select('id, track_id, title, status')
-      .eq('clinic_id', membership.clinic_id),
+      .select('id, track_id, title, description, position, status')
+      .eq('clinic_id', membership.clinic_id)
+      .order('position'),
     supabase
       .from('tracks')
       .select('id, program_id, title, status')
@@ -134,6 +145,11 @@ export default async function ClinicClassesPage() {
   const moduleMap = new Map(moduleRows.map((moduleRow) => [moduleRow.id, moduleRow]));
   const trackMap = new Map(trackRows.map((track) => [track.id, track]));
   const programMap = new Map(programRows.map((program) => [program.id, program]));
+  const trackOptions = trackRows.map((track) => ({ id: track.id, label: track.title }));
+  const moduleOptions = moduleRows.map((moduleRow) => ({
+    id: moduleRow.id,
+    label: moduleRow.title,
+  }));
 
   return (
     <div className="space-y-4">
@@ -224,18 +240,8 @@ export default async function ClinicClassesPage() {
       <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_290px]">
         <WorkspacePanel title="Biblioteca Técnica">
           <div className="mb-4 flex flex-wrap justify-end gap-2">
-            <Link
-              href="/clinic/classes?new=1"
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white"
-            >
-              <Plus className="h-4 w-4" /> Nova Aula
-            </Link>
-            <Link
-              href="/clinic/tracks?new=1"
-              className="flex items-center gap-2 rounded-xl border border-blue-100 px-4 py-2.5 text-xs font-semibold text-blue-700"
-            >
-              <Plus className="h-4 w-4" /> Novo Módulo
-            </Link>
+            <LearningEditor resource="lessons" parentOptions={moduleOptions} />
+            <LearningEditor resource="modules" parentOptions={trackOptions} variant="secondary" />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[920px] text-left text-xs">
@@ -248,6 +254,7 @@ export default async function ClinicClassesPage() {
                   <th className="px-3 py-3">Duração</th>
                   <th className="px-3 py-3">Status</th>
                   <th className="px-3 py-3">Criada em</th>
+                  <th className="px-3 py-3 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -287,6 +294,23 @@ export default async function ClinicClassesPage() {
                       <td className="px-3 py-3">
                         {new Date(lesson.created_at).toLocaleDateString('pt-BR')}
                       </td>
+                      <td className="px-3 py-3 text-right">
+                        <LearningEditor
+                          resource="lessons"
+                          variant="text"
+                          triggerLabel="Editar"
+                          initialValues={{
+                            id: lesson.id,
+                            title: lesson.title,
+                            description: lesson.description,
+                            status: lesson.status as 'draft' | 'active' | 'archived',
+                            position: lesson.position,
+                            durationMinutes: minutes(lesson.duration_seconds),
+                            videoProvider: lesson.video_provider === 'vimeo' ? 'vimeo' : null,
+                            videoExternalId: lesson.video_external_id,
+                          }}
+                        />
+                      </td>
                     </tr>
                   );
                 })}
@@ -302,9 +326,7 @@ export default async function ClinicClassesPage() {
           <WorkspacePanel title="Ações Técnicas">
             <div className="space-y-2">
               {[
-                ['Nova Aula', '/clinic/classes?new=1'],
-                ['Novo Módulo', '/clinic/tracks?new=1'],
-                ['Novo Programa', '/clinic/programs?new=1'],
+                ['Programas e trilhas', '/clinic/programs'],
                 ['Biblioteca de Recursos', '/clinic/resources'],
                 ['Certificados', '/clinic/certificates'],
               ].map(([label, href]) => (
@@ -328,6 +350,66 @@ export default async function ClinicClassesPage() {
           </WorkspacePanel>
         </div>
       </section>
+
+      <WorkspacePanel title="Módulos Técnicos">
+        <div className="mb-4 flex justify-end">
+          <LearningEditor resource="modules" parentOptions={trackOptions} />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-xs">
+            <thead className="border-y border-slate-100 bg-slate-50 text-[10px] text-slate-500">
+              <tr>
+                <th className="px-3 py-3">Módulo</th>
+                <th className="px-3 py-3">Trilha</th>
+                <th className="px-3 py-3">Aulas</th>
+                <th className="px-3 py-3">Ordem</th>
+                <th className="px-3 py-3">Status</th>
+                <th className="px-3 py-3 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {moduleRows.map((moduleRow) => (
+                <tr key={moduleRow.id}>
+                  <td className="px-3 py-3">
+                    <p className="font-semibold text-[#071737]">{moduleRow.title}</p>
+                    <p className="mt-1 max-w-96 truncate text-[10px] text-slate-500">
+                      {moduleRow.description || 'Sem descrição'}
+                    </p>
+                  </td>
+                  <td className="px-3 py-3">{trackMap.get(moduleRow.track_id)?.title || '—'}</td>
+                  <td className="px-3 py-3">
+                    {lessonRows.filter((lesson) => lesson.module_id === moduleRow.id).length}
+                  </td>
+                  <td className="px-3 py-3">{moduleRow.position}</td>
+                  <td className="px-3 py-3">
+                    <StatusPill
+                      label={statusLabel(moduleRow.status)
+                        .replace('Publicada', 'Publicado')
+                        .replace('Arquivada', 'Arquivado')}
+                      tone={statusTone(moduleRow.status)}
+                    />
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    <LearningEditor
+                      resource="modules"
+                      variant="text"
+                      triggerLabel="Editar"
+                      initialValues={{
+                        id: moduleRow.id,
+                        title: moduleRow.title,
+                        description: moduleRow.description,
+                        status: moduleRow.status as 'draft' | 'active' | 'archived',
+                        position: moduleRow.position,
+                      }}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!moduleRows.length && <EmptyWorkspaceState message="Nenhum módulo criado ainda." />}
+        </div>
+      </WorkspacePanel>
     </div>
   );
 }

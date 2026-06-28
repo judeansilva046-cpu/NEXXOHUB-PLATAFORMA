@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import {
+  AlertTriangle,
   Award,
   BookOpen,
   BriefcaseBusiness,
@@ -9,7 +10,10 @@ import {
   CheckCircle2,
   ClipboardCheck,
   FileChartColumn,
+  FileCheck2,
+  FileWarning,
   GraduationCap,
+  HandHeart,
   HeartPulse,
   Layers,
   ListChecks,
@@ -26,7 +30,7 @@ import { MetricCard, type MetricTone } from './workspace/metric-card';
 import { PageHeader } from './workspace/page-header';
 import { EmptyWorkspaceState, StatusPill, WorkspacePanel } from './workspace/panel';
 
-type DashboardMetric = { label: string; value: number };
+type DashboardMetric = { label: string; value: number; suffix?: string };
 type Activity = {
   id: string;
   title: string;
@@ -49,6 +53,7 @@ type CompanySummary = { id: string; name: string; employee_count: number; status
 type DashboardPayload = {
   role: string;
   metrics: DashboardMetric[];
+  technicalMetrics?: DashboardMetric[];
   dashboard?: {
     reports?: number;
     riskScore?: number | null;
@@ -58,6 +63,7 @@ type DashboardPayload = {
     employeeStatus?: Record<string, number>;
     programStatus?: Record<string, number>;
     planStatus?: Record<string, number>;
+    technicalStatus?: Record<string, number>;
     departments?: Record<string, number>;
   };
   series?: TrendPoint[];
@@ -72,6 +78,17 @@ const metricVisuals: Array<{ icon: LucideIcon; tone: MetricTone; trend: string }
   { icon: BriefcaseBusiness, tone: 'orange', trend: '5%' },
   { icon: Award, tone: 'teal', trend: '15%' },
   { icon: ShieldCheck, tone: 'red', trend: '6%' },
+];
+
+const technicalMetricVisuals: Array<{ icon: LucideIcon; tone: MetricTone }> = [
+  { icon: GraduationCap, tone: 'purple' },
+  { icon: BookOpen, tone: 'blue' },
+  { icon: ClipboardCheck, tone: 'teal' },
+  { icon: HandHeart, tone: 'orange' },
+  { icon: FileWarning, tone: 'red' },
+  { icon: FileCheck2, tone: 'cyan' },
+  { icon: AlertTriangle, tone: 'red' },
+  { icon: ShieldCheck, tone: 'teal' },
 ];
 
 const colors = ['#12a36d', '#2476d8', '#f5a308', '#8a5bd2', '#ef4444', '#06b6d4'];
@@ -228,6 +245,34 @@ export function PortalDashboard({
               );
             })}
           </section>
+
+          {isClinic && (data.technicalMetrics || []).length > 0 && (
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_4px_18px_rgba(15,23,42,0.035)] sm:p-5">
+              <div className="mb-4">
+                <h2 className="text-sm font-semibold text-[#071737]">
+                  Operação Técnica da Clínica
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Indicadores calculados a partir dos registros reais do portal.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {(data.technicalMetrics || []).map((metric, index) => {
+                  const visual = technicalMetricVisuals[index % technicalMetricVisuals.length];
+                  return (
+                    <MetricCard
+                      key={metric.label}
+                      label={metric.label}
+                      value={`${metric.value.toLocaleString('pt-BR')}${metric.suffix || ''}`}
+                      icon={visual.icon}
+                      tone={visual.tone}
+                      hint="dados reais"
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           <section className="grid gap-3 xl:grid-cols-3">
             <WorkspacePanel
