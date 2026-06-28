@@ -283,6 +283,7 @@ export function OrganizationRecordsClient({
   references,
   history,
   canManage,
+  hideOverview = false,
 }: {
   resource: CompanyOrganizationResource;
   title: string;
@@ -291,6 +292,7 @@ export function OrganizationRecordsClient({
   references: OrganizationReferences;
   history: OrganizationHistoryEvent[];
   canManage: boolean;
+  hideOverview?: boolean;
 }) {
   const [records, setRecords] = useState(initialRecords);
   const [query, setQuery] = useState('');
@@ -457,18 +459,55 @@ export function OrganizationRecordsClient({
     : references.departments;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">{title}</h1>
-          <p className="mt-2 text-slate-600">{subtitle}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <div className={hideOverview ? 'space-y-4' : 'mx-auto max-w-7xl space-y-6'}>
+      {!hideOverview && (
+        <>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-950">{title}</h1>
+              <p className="mt-2 text-slate-600">{subtitle}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/company/organization"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                Importação em lote
+              </Link>
+              {canManage && (
+                <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
+                  {labels[resource].create}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <section className="grid gap-4 md:grid-cols-4">
+            {[
+              ['Total', records.length],
+              ['Ativos', activeCount],
+              ['Inativos', inactiveCount],
+              ['Arquivados', archivedCount],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <p className="text-sm font-medium text-slate-500">{label}</p>
+                <p className="mt-2 text-3xl font-bold text-slate-950">{value}</p>
+              </div>
+            ))}
+          </section>
+        </>
+      )}
+
+      {hideOverview && (
+        <div className="flex flex-wrap justify-end gap-2">
           <Link
             href="/company/organization"
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
-            Importação em lote
+            Importar
           </Link>
           {canManage && (
             <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
@@ -476,21 +515,7 @@ export function OrganizationRecordsClient({
             </Button>
           )}
         </div>
-      </div>
-
-      <section className="grid gap-4 md:grid-cols-4">
-        {[
-          ['Total', records.length],
-          ['Ativos', activeCount],
-          ['Inativos', inactiveCount],
-          ['Arquivados', archivedCount],
-        ].map(([label, value]) => (
-          <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">{label}</p>
-            <p className="mt-2 text-3xl font-bold text-slate-950">{value}</p>
-          </div>
-        ))}
-      </section>
+      )}
 
       {!canManage && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">

@@ -1,40 +1,62 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { AnimatedParticles } from '@/components/nexxo-hud/animated-particles';
+import { BottomActions } from '@/components/nexxo-hud/bottom-actions';
+import { Header } from '@/components/nexxo-hud/header';
+import { MainHud } from '@/components/nexxo-hud/main-hud';
+import { SidebarLeft } from '@/components/nexxo-hud/sidebar-left';
+import { SidebarRight } from '@/components/nexxo-hud/sidebar-right';
+import { VoiceAssistant } from '@/components/nexxo-hud/voice-assistant';
 
 export default function HomePage() {
-  const router = useRouter();
+  const [desktopScale, setDesktopScale] = useState(1);
 
   useEffect(() => {
-    // Redirecionar para dashboard se autenticado, caso contrário para login
-    const checkAuth = async () => {
-      try {
-        const res = await fetch('/api/auth/me');
-        if (res.ok) {
-          // Usuário autenticado - ir para dashboard
-          router.replace('/dashboard');
-        } else {
-          // Não autenticado - ir para login
-          router.replace('/auth/login');
-        }
-      } catch (err) {
-        // Erro ao verificar - ir para login
-        router.replace('/auth/login');
+    const fitDashboard = () => {
+      if (window.innerWidth < 1280) {
+        setDesktopScale(1);
+        return;
       }
+      // O cockpit completo foi desenhado para uma área útil de aproximadamente
+      // 1040px. Em notebooks, reduzimos tudo proporcionalmente para caber sem rolagem.
+      setDesktopScale(Math.min(1, window.innerHeight / 1040));
     };
-
-    checkAuth();
-  }, [router]);
+    fitDashboard();
+    window.addEventListener('resize', fitDashboard);
+    return () => window.removeEventListener('resize', fitDashboard);
+  }, []);
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">NexxoHub</h1>
-        <p className="text-gray-600 mb-8">Plataforma SaaS Multi-Tenant em Desenvolvimento</p>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="text-gray-500 mt-4">Carregando...</p>
+    <main className="hud-shell min-h-screen overflow-x-hidden text-slate-100 xl:h-screen xl:overflow-hidden">
+      <AnimatedParticles />
+      <div className="scanline" />
+      <div
+        className="relative z-10 origin-top-left"
+        style={{
+          transform: `scale(${desktopScale})`,
+          width: desktopScale < 1 ? `${100 / desktopScale}%` : '100%',
+        }}
+      >
+        <div className="mx-auto flex min-h-screen max-w-[1920px] flex-col p-3 sm:p-4 lg:p-5">
+          <Header />
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mt-4 grid flex-1 grid-cols-1 gap-4 xl:grid-cols-[310px_minmax(500px,1fr)_330px]"
+          >
+            <SidebarLeft />
+            <section className="order-first flex min-w-0 flex-col gap-4 xl:order-none">
+              <MainHud />
+              <VoiceAssistant />
+              <BottomActions />
+            </section>
+            <SidebarRight />
+          </motion.div>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

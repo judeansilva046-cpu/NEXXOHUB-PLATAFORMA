@@ -32,9 +32,10 @@ export async function GET(request: NextRequest) {
       activities,
       notifications,
       contracts,
+      subscriptions,
     ] = await Promise.all([
-      supabase.from('companies').select('id', { count: 'exact', head: true }),
-      supabase.from('clinics').select('id', { count: 'exact', head: true }),
+      supabase.from('companies').select('id, status, created_at'),
+      supabase.from('clinics').select('id, status, created_at'),
       supabase.from('employees').select('id', { count: 'exact', head: true }),
       supabase
         .from('psychosocial_index_snapshots')
@@ -63,11 +64,39 @@ export async function GET(request: NextRequest) {
         .select('id', { count: 'exact', head: true })
         .is('read_at', null),
       supabase.from('contracts').select('status, expected_platform_revenue'),
+      supabase
+        .from('subscriptions')
+        .select('status, billing_plans(name)')
+        .in('status', ['trialing', 'active']),
     ]);
 
     const indexSeries = snapshots.error ? [] : snapshots.data || [];
     const currentIndex =
       indexSeries.length > 0 ? Number(indexSeries[indexSeries.length - 1].score) : null;
+    const clinicRows = clinics.error ? [] : clinics.data || [];
+    const companyRows = companies.error ? [] : companies.data || [];
+    const activeClinicRows = clinicRows.filter((clinic) => clinic.status === 'active');
+    const activeCompanyRows = companyRows.filter((company) => company.status === 'active');
+    const clinicSeries = Array.from({ length: 6 }, (_, index) => {
+      const month = new Date();
+      month.setUTCDate(1);
+      month.setUTCHours(0, 0, 0, 0);
+      month.setUTCMonth(month.getUTCMonth() - (5 - index));
+      const monthEnd = new Date(
+        Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 0, 23, 59, 59)
+      );
+      return {
+        label: month.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+        value: activeClinicRows.filter((clinic) => new Date(clinic.created_at) <= monthEnd).length,
+      };
+    });
+    const planMap = new Map<string, number>();
+    for (const subscription of subscriptions.data || []) {
+      const relation = subscription.billing_plans as { name?: string } | { name?: string }[] | null;
+      const plan = Array.isArray(relation) ? relation[0] : relation;
+      const name = plan?.name || 'Sem plano';
+      planMap.set(name, (planMap.get(name) || 0) + 1);
+    }
 
     return NextResponse.json(
       {
@@ -80,11 +109,16 @@ export async function GET(request: NextRequest) {
           },
           period: { days, start: periodStart.toISOString() },
           metrics: {
-            activeCompanies: companies.count || 0,
-            activeClinics: clinics.count || 0,
+            activeCompanies: activeCompanyRows.length,
+            activeClinics: activeClinicRows.length,
             monitoredEmployees: employees.count || 0,
             psychosocialIndex: currentIndex,
           },
+          clinicSeries,
+          planDistribution: Array.from(planMap.entries()).map(([label, value]) => ({
+            label,
+            value,
+          })),
           indexSeries,
           alerts: alerts.error ? [] : alerts.data || [],
           insight: insights.error ? null : insights.data?.[0] || null,

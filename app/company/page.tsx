@@ -4,8 +4,8 @@ export default function CompanyPortalPage() {
   return (
     <PortalDashboard
       portal="company"
-      title="Dashboard da Empresa"
-      subtitle="Colaboradores, avaliações, indicadores e evidências da NR-1."
+      title="Dashboard Empresa"
+      subtitle="Visão geral da gestão da sua empresa."
     />
   );
 }

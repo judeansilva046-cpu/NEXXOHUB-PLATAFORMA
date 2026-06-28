@@ -4,8 +4,8 @@ export default function ClinicPortalPage() {
   return (
     <PortalDashboard
       portal="clinic"
-      title="Dashboard da Clínica"
-      subtitle="Gestão técnica, contratos, avaliações e empresas clientes."
+      title="Dashboard Clínica"
+      subtitle="Visão geral da operação da clínica e das empresas atendidas."
     />
   );
 }

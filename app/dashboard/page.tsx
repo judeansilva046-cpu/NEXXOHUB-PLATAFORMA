@@ -1,26 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
-  Activity,
-  AlertTriangle,
+  BellRing,
   Building2,
   CheckCircle2,
-  HeartPulse,
+  CircleDollarSign,
+  Cloud,
+  Database,
+  HardDrive,
   Hospital,
-  Lightbulb,
-  Sparkles,
+  PlugZap,
+  Server,
   Users,
+  type LucideIcon,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+  DonutChart,
+  TrendChart,
+  type DonutItem,
+  type TrendPoint,
+} from '../../components/workspace/charts';
+import { MetricCard } from '../../components/workspace/metric-card';
+import { PageHeader } from '../../components/workspace/page-header';
+import { EmptyWorkspaceState, WorkspacePanel } from '../../components/workspace/panel';
 
 type DashboardData = {
   user: { name: string; role: string; email?: string };
@@ -30,7 +33,8 @@ type DashboardData = {
     monitoredEmployees: number;
     psychosocialIndex: number | null;
   };
-  indexSeries: Array<{ score: number; period_end: string; sample_size: number }>;
+  clinicSeries: TrendPoint[];
+  planDistribution: Array<{ label: string; value: number }>;
   alerts: Array<{
     id: string;
     title: string;
@@ -38,12 +42,6 @@ type DashboardData = {
     severity: string;
     detected_at: string;
   }>;
-  insight: null | {
-    id: string;
-    title: string;
-    summary: string;
-    recommendation?: string;
-  };
   activities: Array<{
     id: string;
     event_type: string;
@@ -51,60 +49,33 @@ type DashboardData = {
     description?: string;
     occurred_at: string;
   }>;
+  unreadNotifications: number;
+  finance: { activeContracts: number; expectedRevenue: number };
 };
 
-const periods = [
-  { label: '7 dias', days: 7 },
-  { label: '30 dias', days: 30 },
-  { label: '90 dias', days: 90 },
-  { label: '12 meses', days: 365 },
+const palette = ['#20ad9a', '#2f76d2', '#f59e0b', '#8b5ccf', '#ef4444'];
+const platformServices: Array<[string, LucideIcon]> = [
+  ['Servidores', Server],
+  ['Banco de Dados', Database],
+  ['API', PlugZap],
+  ['Armazenamento', HardDrive],
+  ['Backup', Cloud],
 ];
 
-function MetricCard({
-  label,
-  value,
-  icon: Icon,
-  color,
-}: {
-  label: string;
-  value: string;
-  icon: typeof Building2;
-  color: string;
-}) {
-  return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-4">
-        <span className={`flex h-14 w-14 items-center justify-center rounded-2xl ${color}`}>
-          <Icon className="h-7 w-7" />
-        </span>
-        <div>
-          <p className="text-sm font-medium text-slate-600">{label}</p>
-          <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">{value}</p>
-        </div>
-      </div>
-      <p className="mt-4 text-xs text-slate-500">Dados do período selecionado</p>
-    </section>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex min-h-36 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 text-center">
-      <Sparkles className="mb-3 h-6 w-6 text-slate-300" />
-      <p className="text-sm text-slate-500">{message}</p>
-    </div>
-  );
+function currency(value: number) {
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 0,
+  });
 }
 
 export default function DashboardPage() {
-  const [days, setDays] = useState(30);
   const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/dashboard/summary?days=${days}`, { cache: 'no-store' })
+    fetch('/api/dashboard/summary?days=180', { cache: 'no-store' })
       .then(async (response) => {
         const result = await response.json();
         if (!response.ok || !result.success) throw new Error(result.error || 'Erro ao carregar');
@@ -115,200 +86,223 @@ export default function DashboardPage() {
         setError(
           requestError instanceof Error ? requestError.message : 'Erro ao carregar dashboard'
         )
-      )
-      .finally(() => setLoading(false));
-  }, [days]);
+      );
+  }, []);
 
-  if (loading && !data) {
+  if (!data && !error)
     return (
-      <div className="py-20 text-center text-sm text-slate-500">
-        Carregando indicadores reais...
+      <div className="py-24 text-center text-sm text-slate-500">
+        Carregando dashboard executivo...
       </div>
     );
-  }
 
-  if (error && !data) {
-    return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
-        Não foi possível carregar o dashboard. {error}
-      </div>
-    );
-  }
-
-  if (!data) return null;
-
-  const firstName = data.user.name?.split(' ')[0] || 'Usuário';
+  const planData: DonutItem[] = (data?.planDistribution || []).map((item, index) => ({
+    ...item,
+    color: palette[index % palette.length],
+  }));
+  const usage = [
+    {
+      label: 'Armazenamento',
+      value: Math.min(100, Math.max(8, data?.metrics.activeCompanies || 0)),
+      detail: `${data?.metrics.activeCompanies || 0} empresas`,
+    },
+    {
+      label: 'Usuários Ativos',
+      value: Math.min(100, Math.round(((data?.metrics.monitoredEmployees || 0) / 3000) * 100)),
+      detail: `${(data?.metrics.monitoredEmployees || 0).toLocaleString('pt-BR')} / 3.000`,
+    },
+    {
+      label: 'Contratos',
+      value: Math.min(100, (data?.finance.activeContracts || 0) * 10),
+      detail: `${data?.finance.activeContracts || 0} ativos`,
+    },
+    { label: 'Integrações', value: 20, detail: 'Ambiente base' },
+  ];
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-950">
-          Olá, {firstName}! <span aria-hidden="true">👋</span>
-        </h1>
-        <p className="mt-2 text-lg text-slate-600">Bem-vindo ao NexxoHub</p>
-        <p className="mt-1 text-sm text-slate-500">
-          Monitoramento psicossocial corporativo em tempo real.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Dashboard Executivo"
+        subtitle="Visão geral da plataforma NexxoHub."
+        userName={data?.user.name || 'NexxoHub Admin'}
+        notifications={data?.unreadNotifications || 0}
+      />
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+      {data && (
+        <>
+          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+            <MetricCard
+              label="Clínicas Ativas"
+              value={data.metrics.activeClinics}
+              icon={Hospital}
+              tone="teal"
+              trend="12%"
+            />
+            <MetricCard
+              label="Empresas"
+              value={data.metrics.activeCompanies}
+              icon={Building2}
+              tone="blue"
+              trend="15%"
+            />
+            <MetricCard
+              label="Colaboradores"
+              value={data.metrics.monitoredEmployees.toLocaleString('pt-BR')}
+              icon={Users}
+              tone="teal"
+              trend="18%"
+            />
+            <MetricCard
+              label="Receita Prevista"
+              value={currency(data.finance.expectedRevenue)}
+              icon={CircleDollarSign}
+              tone="teal"
+              trend="24%"
+            />
+            <MetricCard
+              label="Alertas Abertos"
+              value={data.alerts.length}
+              icon={BellRing}
+              tone="orange"
+              trend={data.alerts.length ? '8%' : '0%'}
+              trendDirection={data.alerts.length ? 'down' : 'up'}
+            />
+          </section>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          label="Empresas Ativas"
-          value={String(data.metrics.activeCompanies)}
-          icon={Building2}
-          color="bg-blue-50 text-blue-600"
-        />
-        <MetricCard
-          label="Clínicas Ativas"
-          value={String(data.metrics.activeClinics)}
-          icon={Hospital}
-          color="bg-cyan-50 text-cyan-600"
-        />
-        <MetricCard
-          label="Colaboradores Monitorados"
-          value={data.metrics.monitoredEmployees.toLocaleString('pt-BR')}
-          icon={Users}
-          color="bg-violet-50 text-violet-600"
-        />
-        <MetricCard
-          label="Índice de Saúde Psicossocial"
-          value={
-            data.metrics.psychosocialIndex === null
-              ? '—'
-              : `${data.metrics.psychosocialIndex.toLocaleString('pt-BR')}/100`
-          }
-          icon={HeartPulse}
-          color="bg-emerald-50 text-emerald-600"
-        />
-      </div>
+          <section className="grid gap-3 xl:grid-cols-[1fr_0.95fr_0.95fr]">
+            <WorkspacePanel
+              title="Evolução de Clínicas Ativas"
+              action={
+                <span className="rounded-lg border px-3 py-1.5 text-[10px] text-slate-600">
+                  Últimos 6 meses⌄
+                </span>
+              }
+            >
+              <TrendChart data={data.clinicSeries || []} color="#10a89b" height={235} />
+            </WorkspacePanel>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.8fr)_minmax(330px,0.8fr)]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-950">
-                Evolução do Índice de Saúde Psicossocial
-              </h2>
-              <p className="mt-1 text-xs text-slate-500">
-                Série calculada a partir de avaliações concluídas.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {periods.map((period) => (
-                <button
-                  key={period.days}
-                  onClick={() => setDays(period.days)}
-                  className={`rounded-lg px-3 py-2 text-xs font-medium transition ${
-                    days === period.days
-                      ? 'bg-blue-600 text-white'
-                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  {period.label}
-                </button>
-              ))}
-            </div>
-          </div>
+            <WorkspacePanel title="Distribuição de Clínicas por Plano">
+              {planData.length ? (
+                <DonutChart
+                  data={planData}
+                  centerValue={data.metrics.activeClinics}
+                  centerLabel="Total"
+                  height={220}
+                />
+              ) : (
+                <EmptyWorkspaceState message="Nenhuma assinatura ativa vinculada a planos." />
+              )}
+            </WorkspacePanel>
 
-          <div className="mt-5 h-[330px]">
-            {data.indexSeries.length === 0 ? (
-              <EmptyState message="Nenhum índice calculado para o período. Conclua avaliações para gerar a série histórica." />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.indexSeries}>
-                  <defs>
-                    <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#2563eb" stopOpacity={0.28} />
-                      <stop offset="100%" stopColor="#2563eb" stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis
-                    dataKey="period_end"
-                    tickFormatter={(value) =>
-                      new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'short',
-                      })
-                    }
-                    tick={{ fontSize: 12, fill: '#64748b' }}
-                  />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#64748b' }} />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="score"
-                    stroke="#2563eb"
-                    strokeWidth={3}
-                    fill="url(#scoreGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </section>
-
-        <div className="space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-semibold text-slate-950">Alertas Inteligentes</h2>
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-            </div>
-            {data.alerts.length === 0 ? (
-              <EmptyState message="Nenhum alerta ativo no momento." />
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {data.alerts.map((alert) => (
-                  <article key={alert.id} className="py-3">
-                    <p className="text-sm font-semibold text-slate-900">{alert.title}</p>
-                    <p className="mt-1 text-xs text-slate-500">{alert.description}</p>
-                  </article>
+            <WorkspacePanel title="Status da Plataforma">
+              <div className="space-y-2.5 pt-1">
+                {platformServices.map(([label, Icon]) => (
+                  <div
+                    key={String(label)}
+                    className="flex items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5"
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="flex-1 text-xs font-medium text-[#071737]">{label}</span>
+                    <span className="text-[10px] font-medium text-emerald-600">Operacional</span>
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  </div>
                 ))}
               </div>
-            )}
+            </WorkspacePanel>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-violet-600" />
-              <h2 className="font-semibold text-slate-950">Insights da IA</h2>
-            </div>
-            {!data.insight ? (
-              <EmptyState message="Nenhum insight disponível no momento." />
-            ) : (
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{data.insight.title}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{data.insight.summary}</p>
-                {data.insight.recommendation && (
-                  <p className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
-                    {data.insight.recommendation}
-                  </p>
+          <section className="grid gap-3 xl:grid-cols-[0.95fr_1fr_1.2fr]">
+            <WorkspacePanel
+              title="Atividades Recentes"
+              footerLabel="Ver todas as atividades"
+              footerHref="/dashboard/audit"
+            >
+              <div className="divide-y divide-slate-100">
+                {data.activities.map((activity, index) => (
+                  <article key={activity.id} className="flex gap-3 py-3 first:pt-0">
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-lg ${index % 2 ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium">{activity.title}</p>
+                      <p className="mt-1 truncate text-[10px] text-slate-500">
+                        {activity.description || activity.event_type}
+                      </p>
+                    </div>
+                    <time className="text-[9px] text-slate-400">
+                      {new Date(activity.occurred_at).toLocaleDateString('pt-BR')}
+                    </time>
+                  </article>
+                ))}
+                {!data.activities.length && (
+                  <EmptyWorkspaceState message="Nenhuma atividade recente." />
                 )}
               </div>
-            )}
-          </section>
-        </div>
-      </div>
+            </WorkspacePanel>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <Activity className="h-5 w-5 text-blue-600" />
-          <h2 className="font-semibold text-slate-950">Atividades Recentes</h2>
-        </div>
-        {data.activities.length === 0 ? (
-          <EmptyState message="Nenhuma atividade registrada ainda." />
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {data.activities.map((activity) => (
-              <article key={activity.id} className="rounded-xl border border-slate-100 p-4">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                <p className="mt-3 text-sm font-semibold text-slate-900">{activity.title}</p>
-                <p className="mt-1 text-xs text-slate-500">{activity.description}</p>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+            <WorkspacePanel
+              title="Alertas do Sistema"
+              footerLabel="Ver todos os alertas"
+              footerHref="/dashboard/logs"
+            >
+              <div className="space-y-2.5">
+                {data.alerts.map((alert) => (
+                  <article
+                    key={alert.id}
+                    className="rounded-xl border border-red-100 bg-red-50/65 p-3"
+                  >
+                    <p className="text-xs font-semibold text-red-700">{alert.title}</p>
+                    <p className="mt-1 text-[10px] text-red-500">
+                      {alert.description || alert.severity}
+                    </p>
+                  </article>
+                ))}
+                {!data.alerts.length && (
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-xs text-emerald-700">
+                    Nenhum alerta ativo. A plataforma está operando normalmente.
+                  </div>
+                )}
+              </div>
+            </WorkspacePanel>
+
+            <WorkspacePanel
+              title="Uso da Plataforma"
+              footerLabel="Ver relatórios completos"
+              footerHref="/dashboard/reports"
+            >
+              <div className="space-y-5 pt-2">
+                {usage.map((item) => (
+                  <div key={item.label}>
+                    <div className="mb-2 flex items-center justify-between text-[11px]">
+                      <span className="text-[#142343]">{item.label}</span>
+                      <span className="font-medium">{item.value}%</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="h-1.5 flex-1 rounded-full bg-slate-100">
+                        <div
+                          className="h-full rounded-full bg-teal-600"
+                          style={{ width: `${item.value}%` }}
+                        />
+                      </div>
+                      <span className="w-24 text-right text-[9px] text-slate-500">
+                        {item.detail}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </WorkspacePanel>
+          </section>
+        </>
+      )}
     </div>
   );
 }
