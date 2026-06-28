@@ -1,41 +1,39 @@
-import { RecordsPage, StatusBadge, formatDate } from '../../../components/portal/records-page';
+import { ClinicCompaniesClient } from './clinic-companies-client';
+import { AuthorizationError } from '../../../lib/errors';
+import { mapCompany } from '../../../lib/domain-mappers';
 import { requirePortalContext } from '../../../lib/portal-context';
-
-type CompanyRow = {
-  name: string;
-  legal_name: string | null;
-  cnpj: string;
-  email: string | null;
-  employee_count: number;
-  status: string;
-  created_at: string;
-};
+import { normalizeRole } from '../../../lib/rbac';
+import type { Company } from '../../../types';
 
 export default async function ClinicCompaniesPage() {
   const { supabase, membership } = await requirePortalContext('clinic');
+
+  if (!membership.clinic_id) {
+    throw new AuthorizationError('A clínica não foi encontrada para este usuário.');
+  }
+
+  const { data: clinic, error: clinicError } = await supabase
+    .from('clinics')
+    .select('id, name')
+    .eq('id', membership.clinic_id)
+    .eq('organization_id', membership.organization_id)
+    .single();
+
+  if (clinicError || !clinic) throw new AuthorizationError('Clínica não autorizada.');
+
   const { data, error } = await supabase
     .from('companies')
-    .select('name, legal_name, cnpj, email, employee_count, status, created_at')
+    .select('*, clinics(name)')
     .eq('clinic_id', membership.clinic_id)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  const records = (data || []) as CompanyRow[];
+
+  const companies = (data || []).map((row) => mapCompany(row) as Company);
+  const canManage = normalizeRole(membership.role) === 'clinic_admin';
 
   return (
-    <RecordsPage
-      title="Empresas clientes"
-      subtitle="Empresas vinculadas à sua clínica, carregadas diretamente do Supabase."
-      records={records}
-      emptyMessage="Nenhuma empresa vinculada à clínica ainda."
-      columns={[
-        { header: 'Empresa', render: (row) => row.legal_name || row.name },
-        { header: 'CNPJ', render: (row) => row.cnpj },
-        { header: 'E-mail', render: (row) => row.email || '—' },
-        { header: 'Colaboradores', render: (row) => row.employee_count },
-        { header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-        { header: 'Criada em', render: (row) => formatDate(row.created_at) },
-      ]}
-    />
+    <ClinicCompaniesClient clinic={clinic} initialCompanies={companies} canManage={canManage} />
   );
 }

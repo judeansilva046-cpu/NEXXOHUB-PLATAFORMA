@@ -11,16 +11,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 export function CompanyForm({
   initialData,
   clinics,
+  defaultClinicId,
+  hideClinicSelect = false,
   onSubmit,
 }: {
   initialData?: Company | null;
-  clinics: Clinic[];
+  clinics: Array<Pick<Clinic, 'id' | 'name'>>;
+  defaultClinicId?: string;
+  hideClinicSelect?: boolean;
   onSubmit: (data: CompanyInput) => Promise<void>;
 }) {
   const form = useForm<CompanyInput>({
     resolver: zodResolver(companySchema),
     defaultValues: {
-      clinicId: initialData?.clinicId || '',
+      clinicId: initialData?.clinicId || defaultClinicId || '',
       legalName: initialData?.legalName || '',
       name: initialData?.name || '',
       cnpj: initialData?.cnpj || '',
@@ -44,21 +48,29 @@ export function CompanyForm({
           name="clinicId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Clínica responsável</FormLabel>
-              <FormControl>
-                <select
-                  className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
-                  {...field}
-                >
-                  <option value="">Selecione uma clínica</option>
-                  {clinics.map((clinic) => (
-                    <option key={clinic.id} value={clinic.id}>
-                      {clinic.name}
-                    </option>
-                  ))}
-                </select>
-              </FormControl>
-              <FormMessage />
+              {hideClinicSelect ? (
+                <FormControl>
+                  <input type="hidden" {...field} value={field.value || defaultClinicId || ''} />
+                </FormControl>
+              ) : (
+                <>
+                  <FormLabel>Clínica responsável</FormLabel>
+                  <FormControl>
+                    <select
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                      {...field}
+                    >
+                      <option value="">Selecione uma clínica</option>
+                      {clinics.map((clinic) => (
+                        <option key={clinic.id} value={clinic.id}>
+                          {clinic.name}
+                        </option>
+                      ))}
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </>
+              )}
             </FormItem>
           )}
         />

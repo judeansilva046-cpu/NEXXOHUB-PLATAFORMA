@@ -11,7 +11,6 @@ import {
   Home,
   Hospital,
   MessageCircleQuestion,
-  ShieldCheck,
   Users,
   X,
 } from 'lucide-react';
@@ -20,7 +19,6 @@ const navigation = [
   { label: 'Dashboard', href: '/nexxohub', icon: Home },
   { label: 'Organizações', href: '/dashboard/organizations', icon: Building2 },
   { label: 'Clínicas', href: '/dashboard/clinics', icon: Hospital },
-  { label: 'Empresas', href: '/dashboard/companies', icon: ShieldCheck },
   { label: 'Colaboradores', href: '/dashboard/employees', icon: Users },
   { label: 'Avaliações', href: '/dashboard/assessments', icon: ClipboardCheck },
   { label: 'Relatórios', href: '/dashboard/reports', icon: FileText },
