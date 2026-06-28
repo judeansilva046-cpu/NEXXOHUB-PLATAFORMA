@@ -46,13 +46,14 @@ supabase/seed.sql
 Senha única:
 
 ```text
-NexxoHub@Teste2026!
+NexxoHub@Teste2026!Seguro
 ```
 
 Usuários:
 
 ```text
 nexxohub.admin@nexxohub.test
+financeiro@nexxohub.com.br
 clinica.admin@nexxohub.test
 empresa.admin@nexxohub.test
 colaborador@nexxohub.test

@@ -63,7 +63,7 @@ values
     'authenticated',
     'authenticated',
     'nexxohub.admin@nexxohub.test',
-    crypt('NexxoHub@Teste2026!', gen_salt('bf')),
+    crypt('NexxoHub@Teste2026!Seguro', gen_salt('bf')),
     now(),
     '',
     '',
@@ -85,7 +85,7 @@ values
     'authenticated',
     'authenticated',
     'clinica.admin@nexxohub.test',
-    crypt('NexxoHub@Teste2026!', gen_salt('bf')),
+    crypt('NexxoHub@Teste2026!Seguro', gen_salt('bf')),
     now(),
     '',
     '',
@@ -107,7 +107,7 @@ values
     'authenticated',
     'authenticated',
     'empresa.admin@nexxohub.test',
-    crypt('NexxoHub@Teste2026!', gen_salt('bf')),
+    crypt('NexxoHub@Teste2026!Seguro', gen_salt('bf')),
     now(),
     '',
     '',
@@ -129,7 +129,7 @@ values
     'authenticated',
     'authenticated',
     'colaborador@nexxohub.test',
-    crypt('NexxoHub@Teste2026!', gen_salt('bf')),
+    crypt('NexxoHub@Teste2026!Seguro', gen_salt('bf')),
     now(),
     '',
     '',
@@ -591,10 +591,7 @@ commit;
 
 -- Enterprise homologation seed requested by the master prompt.
 -- Temporary passwords requested for homologation:
--- NexxoHub: Admin@123 / Financeiro@123
--- Clinics: Clinica@123
--- Companies: Empresa@123
--- Employees: Colaborador@123
+-- Senha única de teste: NexxoHub@Teste2026!Seguro
 
 do $enterprise_seed$
 begin
@@ -830,12 +827,8 @@ select
   email,
   crypt(
     case
-      when portal = 'nexxohub' and portal_role = 'nexxohub_admin' then 'Admin@123'
-      when portal = 'nexxohub' and portal_role = 'nexxohub_finance' then 'Financeiro@123'
-      when portal = 'clinic' then 'Clinica@123'
-      when portal = 'company' then 'Empresa@123'
-      when portal = 'employee' then 'Colaborador@123'
-      else 'NexxoHub@2026!'
+      when portal in ('nexxohub', 'clinic', 'company', 'employee') then 'NexxoHub@Teste2026!Seguro'
+      else 'NexxoHub@Teste2026!Seguro'
     end,
     gen_salt('bf')
   ),
