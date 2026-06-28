@@ -1,33 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '../../../../lib/supabase/server';
 import { updateClinicSchema } from '../../../../lib/validations/clinic';
 import { mapClinic } from '../../../../lib/domain-mappers';
-import {
-  AuthenticationError,
-  AuthorizationError,
-  NotFoundError,
-  getErrorResponse,
-} from '../../../../lib/errors';
+import { NotFoundError, getErrorResponse } from '../../../../lib/errors';
+import { requireNexxoHubRole } from '../../../../lib/nexxohub-context';
 
-type Profile = { organization_id: string; role: string };
 type Context = { params: { id: string } };
-
-async function context() {
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) throw new AuthenticationError();
-  const { data } = await supabase
-    .from('users')
-    .select('organization_id, role')
-    .eq('id', auth.user.id)
-    .single();
-  if (!data) throw new AuthenticationError();
-  return { supabase, user: auth.user, profile: data as Profile };
-}
 
 export async function GET(_request: NextRequest, { params }: Context) {
   try {
-    const { supabase } = await context();
+    const { supabase } = await requireNexxoHubRole([
+      'nexxohub_admin',
+      'nexxohub_finance',
+      'nexxohub_operator',
+    ]);
     const { data, error } = await supabase.from('clinics').select('*').eq('id', params.id).single();
     if (error || !data) throw new NotFoundError('Clínica');
     return NextResponse.json({ success: true, data: mapClinic(data) });
@@ -39,8 +24,7 @@ export async function GET(_request: NextRequest, { params }: Context) {
 
 export async function PUT(request: NextRequest, { params }: Context) {
   try {
-    const { supabase, user, profile } = await context();
-    if (!['admin', 'manager'].includes(profile.role)) throw new AuthorizationError();
+    const { supabase, user, membership } = await requireNexxoHubRole(['nexxohub_admin']);
     const input = updateClinicSchema.parse(await request.json());
     const update = {
       ...(input.name !== undefined && { name: input.name }),
@@ -55,18 +39,22 @@ export async function PUT(request: NextRequest, { params }: Context) {
           .map((item) => item.trim())
           .filter(Boolean),
       }),
-      ...(input.status !== undefined && { status: input.status }),
+      ...(input.status !== undefined && {
+        status: input.status,
+        deleted_at: input.status === 'archived' ? new Date().toISOString() : null,
+      }),
+      updated_by: user.id,
     };
     const { data, error } = await supabase
       .from('clinics')
       .update(update)
       .eq('id', params.id)
-      .eq('organization_id', profile.organization_id)
+      .eq('organization_id', membership.organization_id)
       .select()
       .single();
     if (error || !data) throw new NotFoundError('Clínica');
     await supabase.from('activity_events').insert({
-      organization_id: profile.organization_id,
+      organization_id: membership.organization_id,
       actor_id: user.id,
       event_type: 'clinic.updated',
       entity_type: 'clinic',
@@ -83,23 +71,26 @@ export async function PUT(request: NextRequest, { params }: Context) {
 
 export async function DELETE(_request: NextRequest, { params }: Context) {
   try {
-    const { supabase, user, profile } = await context();
-    if (profile.role !== 'admin') throw new AuthorizationError();
+    const { supabase, user, membership } = await requireNexxoHubRole(['nexxohub_admin']);
     const { data, error } = await supabase
       .from('clinics')
-      .delete()
+      .update({
+        status: 'archived',
+        deleted_at: new Date().toISOString(),
+        updated_by: user.id,
+      })
       .eq('id', params.id)
-      .eq('organization_id', profile.organization_id)
+      .eq('organization_id', membership.organization_id)
       .select('id, name')
       .single();
     if (error || !data) throw new NotFoundError('Clínica');
     await supabase.from('activity_events').insert({
-      organization_id: profile.organization_id,
+      organization_id: membership.organization_id,
       actor_id: user.id,
-      event_type: 'clinic.deleted',
+      event_type: 'clinic.archived',
       entity_type: 'clinic',
       entity_id: data.id,
-      title: 'Clínica excluída',
+      title: 'Clínica arquivada',
       description: data.name,
     });
     return NextResponse.json({ success: true });

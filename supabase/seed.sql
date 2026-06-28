@@ -963,6 +963,8 @@ insert into public.clinics (
   address,
   specialties,
   status,
+  created_by,
+  updated_by,
   created_at,
   updated_at
 )
@@ -979,6 +981,8 @@ values
     'Av. Paulista, 1000 - São Paulo/SP',
     array['Psicologia Organizacional', 'NR-1', 'Saúde Ocupacional'],
     'active',
+    '00000000-0000-4000-8000-000000001001',
+    '00000000-0000-4000-8000-000000001001',
     now(),
     now()
   ),
@@ -994,6 +998,8 @@ values
     'Rua da Saúde, 200 - Rio de Janeiro/RJ',
     array['Psicossocial', 'Treinamentos', 'Relatórios'],
     'active',
+    '00000000-0000-4000-8000-000000001001',
+    '00000000-0000-4000-8000-000000001001',
     now(),
     now()
   )
@@ -1008,6 +1014,7 @@ set
   address = excluded.address,
   specialties = excluded.specialties,
   status = excluded.status,
+  updated_by = excluded.updated_by,
   updated_at = now();
 
 drop table if exists public._seed_enterprise_companies;
@@ -1054,6 +1061,8 @@ insert into public.companies (
   address,
   employee_count,
   status,
+  created_by,
+  updated_by,
   created_at,
   updated_at
 )
@@ -1071,6 +1080,8 @@ select
   city || '/' || state,
   20,
   'active',
+  '00000000-0000-4000-8000-000000001101',
+  '00000000-0000-4000-8000-000000001101',
   now(),
   now()
 from public._seed_enterprise_companies
@@ -1087,6 +1098,7 @@ set
   address = excluded.address,
   employee_count = excluded.employee_count,
   status = excluded.status,
+  updated_by = excluded.updated_by,
   updated_at = now();
 
 insert into public.billing_plans (
@@ -1214,6 +1226,7 @@ insert into public.contracts (
   status,
   notes,
   created_by,
+  updated_by,
   created_at,
   updated_at
 )
@@ -1232,6 +1245,7 @@ select
   case when company_index = 5 then 'suspended' else 'active' end,
   'Contrato financeiro gerado pelo seed enterprise.',
   '00000000-0000-4000-8000-000000001002',
+  '00000000-0000-4000-8000-000000001002',
   now(),
   now()
 from public._seed_enterprise_companies
@@ -1241,6 +1255,7 @@ set
   covered_employees = excluded.covered_employees,
   status = excluded.status,
   notes = excluded.notes,
+  updated_by = excluded.updated_by,
   updated_at = now();
 
 insert into public.invoices (

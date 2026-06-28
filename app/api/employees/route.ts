@@ -3,8 +3,8 @@ import { createClient } from '../../../lib/supabase/server';
 import { createEmployeeSchema } from '../../../lib/validations/employee';
 import { mapEmployee } from '../../../lib/domain-mappers';
 import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
-
-type Profile = { organization_id: string; role: string };
+import { requirePortalContext } from '../../../lib/portal-context';
+import { normalizeRole } from '../../../lib/rbac';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,33 +30,33 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) throw new AuthenticationError();
-    const { data: profileData } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', auth.user.id)
-      .single();
-    const profile = profileData as Profile | null;
-    if (!profile) throw new AuthenticationError();
-    if (!['admin', 'manager'].includes(profile.role)) throw new AuthorizationError();
+    const { supabase, user, membership } = await requirePortalContext('company');
+    const role = normalizeRole(membership.role);
+    if (!['company_admin', 'company_hr'].includes(String(role)) || !membership.company_id) {
+      throw new AuthorizationError();
+    }
 
     const input = createEmployeeSchema.parse(await request.json());
+    if (input.companyId !== membership.company_id) {
+      throw new AuthorizationError('Empresa não encontrada');
+    }
+
     const { data: company } = await supabase
       .from('companies')
       .select('id, organization_id, name')
-      .eq('id', input.companyId)
+      .eq('id', membership.company_id)
       .single();
-    if (!company || company.organization_id !== profile.organization_id) {
+    if (!company || company.organization_id !== membership.organization_id) {
       throw new AuthorizationError('Empresa não encontrada');
     }
 
     const { data, error } = await supabase
       .from('employees')
       .insert({
-        organization_id: profile.organization_id,
-        company_id: input.companyId,
+        organization_id: membership.organization_id,
+        company_id: membership.company_id,
+        created_by: user.id,
+        updated_by: user.id,
         full_name: input.fullName,
         cpf: input.cpf,
         registration: input.registration,
@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     await supabase.from('activity_events').insert({
-      organization_id: profile.organization_id,
-      actor_id: auth.user.id,
+      organization_id: membership.organization_id,
+      actor_id: user.id,
       event_type: 'employee.created',
       entity_type: 'employee',
       entity_id: data.id,

@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireApiContext } from '../../../lib/api-context';
+import { requireNexxoHubRole } from '../../../lib/nexxohub-context';
 import { AuthorizationError, getErrorResponse } from '../../../lib/errors';
 import { contractSchema } from '../../../lib/validations/contract';
 
-const MANAGER_ROLES = ['admin', 'manager'] as const;
-
 async function validateContractScope(
-  supabase: Awaited<ReturnType<typeof requireApiContext>>['supabase'],
+  supabase: Awaited<ReturnType<typeof requireNexxoHubRole>>['supabase'],
   organizationId: string,
   clinicId: string,
   companyId: string
@@ -26,7 +24,7 @@ async function validateContractScope(
 
 export async function GET() {
   try {
-    const { supabase } = await requireApiContext();
+    const { supabase } = await requireNexxoHubRole(['nexxohub_admin', 'nexxohub_finance']);
     const { data, error } = await supabase
       .from('contracts')
       .select('*, clinics(name), companies(name)')
@@ -42,14 +40,22 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { supabase, user, profile } = await requireApiContext(MANAGER_ROLES);
+    const { supabase, user, membership } = await requireNexxoHubRole([
+      'nexxohub_admin',
+      'nexxohub_finance',
+    ]);
     const input = contractSchema.parse(await request.json());
-    await validateContractScope(supabase, profile.organization_id, input.clinicId, input.companyId);
+    await validateContractScope(
+      supabase,
+      membership.organization_id,
+      input.clinicId,
+      input.companyId
+    );
 
     const { data, error } = await supabase
       .from('contracts')
       .insert({
-        tenant_id: profile.organization_id,
+        tenant_id: membership.organization_id,
         clinic_id: input.clinicId,
         company_id: input.companyId,
         contract_number: input.contractNumber,

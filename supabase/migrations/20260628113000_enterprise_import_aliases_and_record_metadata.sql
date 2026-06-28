@@ -6,6 +6,20 @@ alter table public.branches
   add column if not exists updated_by uuid references public.users(id) on delete set null,
   add column if not exists deleted_at timestamptz;
 
+alter table public.clinics
+  add column if not exists created_by uuid references public.users(id) on delete set null,
+  add column if not exists updated_by uuid references public.users(id) on delete set null,
+  add column if not exists deleted_at timestamptz;
+
+alter table public.companies
+  add column if not exists created_by uuid references public.users(id) on delete set null,
+  add column if not exists updated_by uuid references public.users(id) on delete set null,
+  add column if not exists deleted_at timestamptz;
+
+alter table public.contracts
+  add column if not exists updated_by uuid references public.users(id) on delete set null,
+  add column if not exists deleted_at timestamptz;
+
 alter table public.departments
   add column if not exists updated_by uuid references public.users(id) on delete set null,
   add column if not exists deleted_at timestamptz;
@@ -21,6 +35,12 @@ alter table public.employees
 
 create index if not exists branches_deleted_at_idx
   on public.branches(deleted_at);
+create index if not exists clinics_deleted_at_idx
+  on public.clinics(deleted_at);
+create index if not exists companies_deleted_at_idx
+  on public.companies(deleted_at);
+create index if not exists contracts_deleted_at_idx
+  on public.contracts(deleted_at);
 create index if not exists departments_deleted_at_idx
   on public.departments(deleted_at);
 create index if not exists positions_deleted_at_idx

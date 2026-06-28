@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireApiContext } from '../../../../lib/api-context';
+import { requireNexxoHubRole } from '../../../../lib/nexxohub-context';
 import { AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
 import { contractSchema } from '../../../../lib/validations/contract';
 
 type Context = { params: Promise<{ id: string }> };
-const MANAGER_ROLES = ['admin', 'manager'] as const;
 
 async function validateScope(
-  supabase: Awaited<ReturnType<typeof requireApiContext>>['supabase'],
+  supabase: Awaited<ReturnType<typeof requireNexxoHubRole>>['supabase'],
   organizationId: string,
   clinicId: string,
   companyId: string
@@ -25,9 +24,12 @@ async function validateScope(
 export async function PUT(request: NextRequest, { params }: Context) {
   try {
     const { id } = await params;
-    const { supabase, profile } = await requireApiContext(MANAGER_ROLES);
+    const { supabase, user, membership } = await requireNexxoHubRole([
+      'nexxohub_admin',
+      'nexxohub_finance',
+    ]);
     const input = contractSchema.parse(await request.json());
-    await validateScope(supabase, profile.organization_id, input.clinicId, input.companyId);
+    await validateScope(supabase, membership.organization_id, input.clinicId, input.companyId);
 
     const { data, error } = await supabase
       .from('contracts')
@@ -40,9 +42,11 @@ export async function PUT(request: NextRequest, { params }: Context) {
         monthly_value: input.monthlyValue,
         covered_employees: input.coveredEmployees,
         status: input.status,
+        updated_by: user.id,
+        deleted_at: input.status === 'cancelled' ? new Date().toISOString() : null,
       })
       .eq('id', id)
-      .eq('tenant_id', profile.organization_id)
+      .eq('tenant_id', membership.organization_id)
       .select('*, clinics(name), companies(name)')
       .single();
 
@@ -57,12 +61,16 @@ export async function PUT(request: NextRequest, { params }: Context) {
 export async function DELETE(_request: NextRequest, { params }: Context) {
   try {
     const { id } = await params;
-    const { supabase, profile } = await requireApiContext(['admin']);
+    const { supabase, user, membership } = await requireNexxoHubRole(['nexxohub_admin']);
     const { data, error } = await supabase
       .from('contracts')
-      .delete()
+      .update({
+        status: 'cancelled',
+        deleted_at: new Date().toISOString(),
+        updated_by: user.id,
+      })
       .eq('id', id)
-      .eq('tenant_id', profile.organization_id)
+      .eq('tenant_id', membership.organization_id)
       .select('id')
       .single();
 
