@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
       complaintsResult,
       pgrProgramsResult,
       technicalCasesResult,
+      evidencesResult,
       dossiersResult,
       alertsResult,
       snapshotsResult,
@@ -100,6 +101,13 @@ export async function GET(request: NextRequest) {
         .from('technical_cases')
         .select('id, status, risk_level')
         .eq('clinic_id', membership.clinic_id),
+      companyIds.length
+        ? supabase
+            .from('evidences')
+            .select('id, metadata')
+            .eq('tenant_id', membership.organization_id)
+            .in('company_id', companyIds)
+        : Promise.resolve({ data: [] }),
       supabase.from('nr1_dossiers').select('id, status').eq('clinic_id', membership.clinic_id),
       companyIds.length
         ? supabase.from('smart_alerts').select('id, status, severity').in('company_id', companyIds)
@@ -130,6 +138,7 @@ export async function GET(request: NextRequest) {
     const complaints = complaintsResult.data || [];
     const pgrPrograms = pgrProgramsResult.data || [];
     const technicalCases = technicalCasesResult.data || [];
+    const evidences = evidencesResult.data || [];
     const dossiers = dossiersResult.data || [];
     const alerts = alertsResult.data || [];
     const snapshots = snapshotsResult.data || [];
@@ -193,6 +202,12 @@ export async function GET(request: NextRequest) {
             ).length,
           },
           {
+            label: 'Evidências Ativas',
+            value: evidences.filter(
+              (item) => (item.metadata as { archived?: boolean } | null)?.archived !== true
+            ).length,
+          },
+          {
             label: 'Dossiês NR-1 Publicados',
             value: dossiers.filter((item) => item.status === 'generated').length,
           },
@@ -235,6 +250,9 @@ export async function GET(request: NextRequest) {
             pgrPrograms: pgrPrograms.filter((item) => item.status === 'published').length,
             technicalCases: technicalCases.filter((item) =>
               ['open', 'in_progress', 'referred'].includes(item.status)
+            ).length,
+            evidences: evidences.filter(
+              (item) => (item.metadata as { archived?: boolean } | null)?.archived !== true
             ).length,
             dossiers: dossiers.filter((item) => item.status === 'generated').length,
             alerts: alerts.filter((item) => item.status !== 'resolved').length,
