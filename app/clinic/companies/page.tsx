@@ -1,6 +1,7 @@
 import { ClinicCompaniesClient } from './clinic-companies-client';
 import { AuthorizationError } from '../../../lib/errors';
 import { mapCompany } from '../../../lib/domain-mappers';
+import { loadClinicWorkspaceSnapshot } from '../../../lib/clinic-guidance';
 import { requirePortalContext } from '../../../lib/portal-context';
 import { normalizeRole } from '../../../lib/rbac';
 import type { Company } from '../../../types';
@@ -32,8 +33,17 @@ export default async function ClinicCompaniesPage() {
 
   const companies = (data || []).map((row) => mapCompany(row) as Company);
   const canManage = normalizeRole(membership.role) === 'clinic_admin';
+  const snapshot = await loadClinicWorkspaceSnapshot(supabase, {
+    clinicId: membership.clinic_id,
+    organizationId: membership.organization_id,
+  });
 
   return (
-    <ClinicCompaniesClient clinic={clinic} initialCompanies={companies} canManage={canManage} />
+    <ClinicCompaniesClient
+      clinic={clinic}
+      initialCompanies={companies}
+      canManage={canManage}
+      implementations={snapshot.implementations}
+    />
   );
 }
