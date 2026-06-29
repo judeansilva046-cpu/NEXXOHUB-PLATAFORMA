@@ -49,6 +49,7 @@ const portalMenus: Record<Exclude<PortalType, 'nexxohub'>, MenuItem[]> = {
     { label: 'Recursos', href: '/clinic/resources', icon: Library },
     { label: 'Relatórios', href: '/clinic/reports', icon: FileChartColumn },
     { label: 'Evidências', href: '/clinic/evidences', icon: ClipboardCheck },
+    { label: 'PGR', href: '/clinic/pgr', icon: ShieldCheck },
     { label: 'Dossiê NR-1', href: '/clinic/nr1-dossiers', icon: FileCheck2 },
     { label: 'Indicadores', href: '/clinic/indicators', icon: ChartNoAxesCombined },
     { label: 'Planos de Ação', href: '/clinic/action-plans', icon: ListChecks },

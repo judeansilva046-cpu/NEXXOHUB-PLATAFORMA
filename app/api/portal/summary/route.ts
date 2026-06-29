@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
       certificatesResult,
       helpRequestsResult,
       complaintsResult,
+      pgrProgramsResult,
       dossiersResult,
       alertsResult,
       snapshotsResult,
@@ -93,6 +94,7 @@ export async function GET(request: NextRequest) {
         .eq('clinic_id', membership.clinic_id),
       supabase.from('help_requests').select('id, status').eq('clinic_id', membership.clinic_id),
       supabase.from('complaints').select('id, status').eq('clinic_id', membership.clinic_id),
+      supabase.from('pgr_programs').select('id, status').eq('clinic_id', membership.clinic_id),
       supabase.from('nr1_dossiers').select('id, status').eq('clinic_id', membership.clinic_id),
       companyIds.length
         ? supabase.from('smart_alerts').select('id, status, severity').in('company_id', companyIds)
@@ -121,6 +123,7 @@ export async function GET(request: NextRequest) {
     const plans = plansResult.data || [];
     const helpRequests = helpRequestsResult.data || [];
     const complaints = complaintsResult.data || [];
+    const pgrPrograms = pgrProgramsResult.data || [];
     const dossiers = dossiersResult.data || [];
     const alerts = alertsResult.data || [];
     const snapshots = snapshotsResult.data || [];
@@ -174,6 +177,10 @@ export async function GET(request: NextRequest) {
             value: complaints.filter((item) => item.status !== 'closed').length,
           },
           {
+            label: 'PGRs Publicados',
+            value: pgrPrograms.filter((item) => item.status === 'published').length,
+          },
+          {
             label: 'Dossiês NR-1 Publicados',
             value: dossiers.filter((item) => item.status === 'generated').length,
           },
@@ -213,6 +220,7 @@ export async function GET(request: NextRequest) {
           technicalStatus: {
             helpRequests: helpRequests.filter((item) => item.status !== 'closed').length,
             complaints: complaints.filter((item) => item.status !== 'closed').length,
+            pgrPrograms: pgrPrograms.filter((item) => item.status === 'published').length,
             dossiers: dossiers.filter((item) => item.status === 'generated').length,
             alerts: alerts.filter((item) => item.status !== 'resolved').length,
           },
