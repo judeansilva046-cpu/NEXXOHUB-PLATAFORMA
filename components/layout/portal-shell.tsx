@@ -55,6 +55,7 @@ const portalMenus: Record<Exclude<PortalType, 'nexxohub'>, MenuItem[]> = {
     { label: 'Planos de Ação', href: '/clinic/action-plans', icon: ListChecks },
     { label: 'Certificados', href: '/clinic/certificates', icon: Award },
     { label: 'Colaboradores', href: '/clinic/employees', icon: Users },
+    { label: 'Casos Técnicos', href: '/clinic/cases', icon: BriefcaseBusiness },
     { label: 'Implantação Rápida', href: '/clinic/quick-onboarding', icon: UploadCloud },
     { label: 'Configurações', href: '/clinic/settings', icon: Settings },
   ],
