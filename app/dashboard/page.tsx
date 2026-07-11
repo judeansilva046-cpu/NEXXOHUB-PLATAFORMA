@@ -5,14 +5,9 @@ import {
   Building2,
   CheckCircle2,
   CircleDollarSign,
-  Cloud,
   Database,
-  HardDrive,
   Hospital,
-  PlugZap,
-  Server,
   Users,
-  type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -54,14 +49,6 @@ type DashboardData = {
 };
 
 const palette = ['#20ad9a', '#2f76d2', '#f59e0b', '#8b5ccf', '#ef4444'];
-const platformServices: Array<[string, LucideIcon]> = [
-  ['Servidores', Server],
-  ['Banco de Dados', Database],
-  ['API', PlugZap],
-  ['Armazenamento', HardDrive],
-  ['Backup', Cloud],
-];
-
 function currency(value: number) {
   return value.toLocaleString('pt-BR', {
     style: 'currency',
@@ -116,7 +103,6 @@ export default function DashboardPage() {
       value: Math.min(100, (data?.finance.activeContracts || 0) * 10),
       detail: `${data?.finance.activeContracts || 0} ativos`,
     },
-    { label: 'Integrações', value: 20, detail: 'Ambiente base' },
   ];
 
   return (
@@ -140,36 +126,30 @@ export default function DashboardPage() {
               value={data.metrics.activeClinics}
               icon={Hospital}
               tone="teal"
-              trend="12%"
             />
             <MetricCard
               label="Empresas"
               value={data.metrics.activeCompanies}
               icon={Building2}
               tone="blue"
-              trend="15%"
             />
             <MetricCard
               label="Colaboradores"
               value={data.metrics.monitoredEmployees.toLocaleString('pt-BR')}
               icon={Users}
               tone="teal"
-              trend="18%"
             />
             <MetricCard
               label="Receita Prevista"
               value={currency(data.finance.expectedRevenue)}
               icon={CircleDollarSign}
               tone="teal"
-              trend="24%"
             />
             <MetricCard
               label="Alertas Abertos"
               value={data.alerts.length}
               icon={BellRing}
               tone="orange"
-              trend={data.alerts.length ? '8%' : '0%'}
-              trendDirection={data.alerts.length ? 'down' : 'up'}
             />
           </section>
 
@@ -198,21 +178,14 @@ export default function DashboardPage() {
               )}
             </WorkspacePanel>
 
-            <WorkspacePanel title="Status da Plataforma">
-              <div className="space-y-2.5 pt-1">
-                {platformServices.map(([label, Icon]) => (
-                  <div
-                    key={String(label)}
-                    className="flex items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5"
-                  >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="flex-1 text-xs font-medium text-[#071737]">{label}</span>
-                    <span className="text-[10px] font-medium text-emerald-600">Operacional</span>
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  </div>
-                ))}
+            <WorkspacePanel title="Origem dos indicadores">
+              <div className="rounded-xl border border-cyan-100 bg-cyan-50 p-5 text-sm text-cyan-900">
+                <Database className="mb-3 h-6 w-6" />
+                <p className="font-semibold">Dados consultados em tempo real</p>
+                <p className="mt-2 text-xs leading-5 text-cyan-800">
+                  Clínicas, empresas, contratos, alertas e assinaturas são lidos do banco. A
+                  ausência de registros é exibida como zero.
+                </p>
               </div>
             </WorkspacePanel>
           </section>

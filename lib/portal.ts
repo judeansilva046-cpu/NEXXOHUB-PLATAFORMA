@@ -2,7 +2,7 @@ export type PortalType = 'nexxohub' | 'clinic' | 'company' | 'employee';
 
 export const portalConfig: Record<PortalType, { label: string; home: string; subdomain: string }> =
   {
-    nexxohub: { label: 'Portal NexxoHub', home: '/nexxohub', subdomain: 'admin' },
+    nexxohub: { label: 'NexxoHub Admin Central', home: '/admin', subdomain: 'admin' },
     clinic: { label: 'Portal Clínica', home: '/clinic', subdomain: 'clinica' },
     company: { label: 'Portal Empresa', home: '/company', subdomain: 'empresa' },
     employee: { label: 'Portal Colaborador', home: '/employee', subdomain: 'funcionario' },
@@ -29,6 +29,8 @@ export function isProtectedPortalPath(pathname: string) {
   return (
     pathname === '/dashboard' ||
     pathname.startsWith('/dashboard/') ||
+    pathname === '/admin' ||
+    pathname.startsWith('/admin/') ||
     pathname === '/nexxohub' ||
     pathname.startsWith('/nexxohub/') ||
     pathname === '/finance' ||

@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   BadgeDollarSign,
+  Blocks,
   ClipboardCheck,
-  CloudUpload,
+  CreditCard,
   FileClock,
-  Flag,
+  Gauge,
   Headphones,
   Home,
   Hospital,
@@ -16,8 +17,7 @@ import {
   LogOut,
   Menu,
   Network,
-  Palette,
-  Settings,
+  PlayCircle,
   ShieldCheck,
   Users,
   X,
@@ -30,21 +30,23 @@ import { BrandMark } from '../workspace/brand-mark';
 type NavigationItem = { label: string; href: string; icon: LucideIcon };
 
 const navigation: NavigationItem[] = [
-  { label: 'Dashboard', href: '/nexxohub', icon: Home },
-  { label: 'Clínicas', href: '/dashboard/clinics', icon: Hospital },
-  { label: 'Usuários', href: '/dashboard/users', icon: Users },
-  { label: 'Planos', href: '/dashboard/plans', icon: KeyRound },
-  { label: 'Financeiro', href: '/finance', icon: BadgeDollarSign },
-  { label: 'Integrações', href: '/dashboard/integrations', icon: Network },
-  { label: 'Configurações', href: '/dashboard/settings', icon: Settings },
-  { label: 'Logs', href: '/dashboard/logs', icon: FileClock },
-  { label: 'Auditoria', href: '/dashboard/audit', icon: ClipboardCheck },
-  { label: 'Segurança', href: '/dashboard/security', icon: LockKeyhole },
-  { label: 'White Label', href: '/dashboard/white-label', icon: Palette },
-  { label: 'Licenciamento', href: '/dashboard/licensing', icon: ShieldCheck },
-  { label: 'Backups', href: '/dashboard/backups', icon: CloudUpload },
-  { label: 'Feature Flags', href: '/dashboard/feature-flags', icon: Flag },
-  { label: 'Suporte', href: '/dashboard/support', icon: Headphones },
+  { label: 'Visão geral', href: '/admin', icon: Home },
+  { label: 'Acessos administrativos', href: '/admin/access/users', icon: Users },
+  { label: 'Perfis e permissões', href: '/admin/access/roles', icon: KeyRound },
+  { label: 'Sessões e dispositivos', href: '/admin/access/sessions', icon: ShieldCheck },
+  { label: 'Clínicas', href: '/admin/clinics', icon: Hospital },
+  { label: 'Usuários internos', href: '/admin/internal-users', icon: Headphones },
+  { label: 'Planos', href: '/admin/plans', icon: BadgeDollarSign },
+  { label: 'Contratos', href: '/admin/contracts', icon: FileClock },
+  { label: 'Assinaturas', href: '/admin/subscriptions', icon: CreditCard },
+  { label: 'Cobranças e pagamentos', href: '/admin/billing', icon: BadgeDollarSign },
+  { label: 'Bloqueios e suspensões', href: '/admin/blocks', icon: LockKeyhole },
+  { label: 'Módulos e permissões', href: '/admin/modules', icon: Blocks },
+  { label: 'Integrações', href: '/admin/integrations', icon: Network },
+  { label: 'Automações', href: '/admin/automations', icon: PlayCircle },
+  { label: 'Monitoramento', href: '/admin/monitoring', icon: Gauge },
+  { label: 'Auditoria', href: '/admin/audit', icon: ClipboardCheck },
+  { label: 'Segurança', href: '/admin/security', icon: LockKeyhole },
 ];
 
 function initials(name?: string) {
@@ -92,7 +94,7 @@ export function Sidebar({
         className={`fixed inset-y-0 left-0 z-40 flex w-[282px] flex-col border-r border-cyan-900/30 bg-[radial-gradient(circle_at_30%_20%,rgba(5,79,121,0.24),transparent_32%),linear-gradient(180deg,#02162f_0%,#011126_100%)] text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="flex h-[100px] shrink-0 items-center justify-between px-5">
-          <BrandMark href="/nexxohub" subtitle="Conectando dados, pessoas e resultados." />
+          <BrandMark href="/admin" subtitle="Admin Central" />
           <button
             type="button"
             className="rounded-lg p-2 text-slate-300 lg:hidden"
@@ -105,7 +107,7 @@ export function Sidebar({
         <nav className="workspace-scrollbar flex-1 space-y-0.5 overflow-y-auto px-4 pb-4">
           {navigation.map(({ label, href, icon: Icon }) => {
             const active =
-              pathname === href || (href !== '/nexxohub' && pathname.startsWith(`${href}/`));
+              pathname === href || (href !== '/admin' && pathname.startsWith(`${href}/`));
             return (
               <Link
                 key={href}
