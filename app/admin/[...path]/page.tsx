@@ -249,6 +249,7 @@ async function findOrCreateTargetUser({
   supabase,
   email,
   fullName,
+  temporaryPassword,
   organizationId,
   role,
   createIfMissing,
@@ -256,6 +257,7 @@ async function findOrCreateTargetUser({
   supabase: Awaited<ReturnType<typeof requireNexxoHubRole>>['supabase'];
   email: string;
   fullName: string;
+  temporaryPassword: string;
   organizationId: string;
   role: 'admin' | 'manager' | 'user';
   createIfMissing: boolean;
@@ -270,7 +272,24 @@ async function findOrCreateTargetUser({
     adminAccessRedirect('error', `Nao foi possivel localizar o usuario: ${userError.message}`);
   }
 
-  if (existingUser?.id) return existingUser as TargetUser;
+  if (existingUser?.id) {
+    if (createIfMissing && temporaryPassword) {
+      if (temporaryPassword.length < 12) {
+        adminAccessRedirect('error', 'A senha temporaria deve ter pelo menos 12 caracteres.');
+      }
+      const admin = createAdminClient();
+      const { error: passwordError } = await admin.auth.admin.updateUserById(existingUser.id, {
+        password: temporaryPassword,
+        email_confirm: true,
+      });
+
+      if (passwordError) {
+        adminAccessRedirect('error', `Nao foi possivel atualizar a senha: ${passwordError.message}`);
+      }
+    }
+
+    return existingUser as TargetUser;
+  }
 
   if (!createIfMissing) {
     adminAccessRedirect(
@@ -281,11 +300,14 @@ async function findOrCreateTargetUser({
 
   const displayName = fullName || defaultNameFromEmail(email) || email;
   const admin = createAdminClient();
-  const temporaryPassword = crypto.randomUUID() + crypto.randomUUID();
+  const password = temporaryPassword || crypto.randomUUID() + crypto.randomUUID();
+  if (password.length < 12) {
+    adminAccessRedirect('error', 'A senha temporaria deve ter pelo menos 12 caracteres.');
+  }
   const temporaryCnpj = `${Date.now()}${Math.floor(Math.random() * 10)}`.slice(-14);
   const { data: authUser, error: authError } = await admin.auth.admin.createUser({
     email,
-    password: temporaryPassword,
+    password,
     email_confirm: true,
     user_metadata: {
       full_name: displayName,
@@ -350,6 +372,7 @@ async function grantAdministrativeAccess(formData: FormData) {
 
   const email = String(formData.get('email') || '').trim().toLowerCase();
   const fullName = String(formData.get('fullName') || '').trim();
+  const temporaryPassword = String(formData.get('temporaryPassword') || '').trim();
   const role = String(formData.get('role') || '');
   const createIfMissing = formData.get('createIfMissing') === 'on';
 
@@ -366,6 +389,7 @@ async function grantAdministrativeAccess(formData: FormData) {
     supabase,
     email,
     fullName,
+    temporaryPassword,
     organizationId: membership.organization_id,
     role: 'admin',
     createIfMissing,
@@ -414,7 +438,7 @@ async function grantAdministrativeAccess(formData: FormData) {
   adminAccessRedirect(
     'created',
     createIfMissing
-      ? 'Conta criada e acesso administrativo registrado. Use redefinicao de senha no primeiro acesso.'
+      ? 'Conta criada/atualizada e acesso administrativo registrado.'
       : 'Acesso administrativo registrado.'
   );
 }
@@ -424,6 +448,7 @@ async function grantPortalAccess(formData: FormData) {
 
   const email = String(formData.get('email') || '').trim().toLowerCase();
   const fullName = String(formData.get('fullName') || '').trim();
+  const temporaryPassword = String(formData.get('temporaryPassword') || '').trim();
   const portal = String(formData.get('portal') || '') as PortalAccessType;
   const role = String(formData.get('role') || '');
   const clinicId = String(formData.get('clinicId') || '').trim() || null;
@@ -461,6 +486,7 @@ async function grantPortalAccess(formData: FormData) {
     supabase,
     email,
     fullName,
+    temporaryPassword,
     organizationId: membership.organization_id,
     role: portal === 'employee' ? 'user' : 'manager',
     createIfMissing,
@@ -548,7 +574,7 @@ async function grantPortalAccess(formData: FormData) {
   adminAccessRedirect(
     'created',
     createIfMissing
-      ? 'Conta criada e acesso do portal registrado. Use redefinicao de senha no primeiro acesso.'
+      ? 'Conta criada/atualizada e acesso do portal registrado.'
       : 'Acesso do portal registrado.'
   );
 }
@@ -792,11 +818,28 @@ export default async function AdminSection({
               />
               Criar conta automaticamente se o e-mail ainda nao existir
             </label>
+
+            <div className="lg:col-span-4">
+              <label
+                htmlFor="temporaryPassword"
+                className="mb-2 block text-xs font-semibold text-slate-600"
+              >
+                Senha temporaria
+              </label>
+              <input
+                id="temporaryPassword"
+                name="temporaryPassword"
+                type="text"
+                minLength={12}
+                placeholder="Opcional ao criar/atualizar conta"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              />
+            </div>
           </form>
 
           <p className="mt-3 text-xs text-slate-500">
-            Se a conta for criada automaticamente, o primeiro acesso deve ser feito pela
-            redefinicao de senha.
+            Ao marcar a criacao automatica, informe uma senha temporaria com pelo menos 12
+            caracteres ou deixe em branco para exigir redefinicao posterior.
           </p>
 
           {resolvedSearchParams.created && (
@@ -963,6 +1006,23 @@ export default async function AdminSection({
                 Criar conta automaticamente se o e-mail ainda nao existir
               </label>
 
+              <div className="mb-4">
+                <label
+                  htmlFor="portal-temporaryPassword"
+                  className="mb-2 block text-xs font-semibold text-slate-600"
+                >
+                  Senha temporaria
+                </label>
+                <input
+                  id="portal-temporaryPassword"
+                  name="temporaryPassword"
+                  type="text"
+                  minLength={12}
+                  placeholder="Opcional ao criar/atualizar conta"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+                />
+              </div>
+
               <button
                 type="submit"
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
@@ -972,8 +1032,8 @@ export default async function AdminSection({
               </button>
               <p className="mt-3 text-xs text-slate-500">
                 Para homologacao completa, conceda ao usuario pelo menos acesso de Clinica. Empresa
-                e Colaborador exigem tambem os respectivos escopos. Conta nova entra por
-                redefinicao de senha no primeiro acesso.
+                e Colaborador exigem tambem os respectivos escopos. Senha temporaria permite login
+                imediato.
               </p>
             </div>
           </form>
