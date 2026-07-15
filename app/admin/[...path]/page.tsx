@@ -5,6 +5,7 @@ import { Database, ExternalLink, Plus } from 'lucide-react';
 import { PageHeader } from '../../../components/workspace/page-header';
 import { WorkspacePanel } from '../../../components/workspace/panel';
 import { requireNexxoHubRole } from '../../../lib/nexxohub-context';
+import { createAdminClient } from '../../../lib/supabase/admin';
 
 const adminAccessRoles = [
   { value: 'nexxohub_admin', label: 'Super administrador' },
@@ -29,6 +30,7 @@ const portalAccessRoles = {
 
 type PortalAccessType = keyof typeof portalAccessRoles;
 type ReferenceRow = { id: string; name: string };
+type TargetUser = { id: string; email: string; full_name?: string | null };
 
 type Section = {
   title: string;
@@ -233,11 +235,123 @@ function adminAccessRedirect(messageKey: 'created' | 'error', message: string): 
   redirect(`/admin/access/users?${messageKey}=${encodeURIComponent(message)}`);
 }
 
+function defaultNameFromEmail(email: string) {
+  const [prefix] = email.split('@');
+  return prefix
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(' ')
+    .trim();
+}
+
+async function findOrCreateTargetUser({
+  supabase,
+  email,
+  fullName,
+  organizationId,
+  role,
+  createIfMissing,
+}: {
+  supabase: Awaited<ReturnType<typeof requireNexxoHubRole>>['supabase'];
+  email: string;
+  fullName: string;
+  organizationId: string;
+  role: 'admin' | 'manager' | 'user';
+  createIfMissing: boolean;
+}) {
+  const { data: existingUser, error: userError } = await supabase
+    .from('users')
+    .select('id,email,full_name')
+    .ilike('email', email)
+    .maybeSingle();
+
+  if (userError) {
+    adminAccessRedirect('error', `Nao foi possivel localizar o usuario: ${userError.message}`);
+  }
+
+  if (existingUser?.id) return existingUser as TargetUser;
+
+  if (!createIfMissing) {
+    adminAccessRedirect(
+      'error',
+      'Usuario nao encontrado. Marque a opcao de criar conta ou peca para a pessoa se cadastrar.'
+    );
+  }
+
+  const displayName = fullName || defaultNameFromEmail(email) || email;
+  const admin = createAdminClient();
+  const temporaryPassword = crypto.randomUUID() + crypto.randomUUID();
+  const temporaryCnpj = `${Date.now()}${Math.floor(Math.random() * 10)}`.slice(-14);
+  const { data: authUser, error: authError } = await admin.auth.admin.createUser({
+    email,
+    password: temporaryPassword,
+    email_confirm: true,
+    user_metadata: {
+      full_name: displayName,
+      organization_name: 'Convite NexxoHub',
+      organization_cnpj: temporaryCnpj,
+    },
+  });
+
+  if (authError || !authUser.user?.id) {
+    adminAccessRedirect(
+      'error',
+      `Nao foi possivel criar a conta no Auth: ${authError?.message || 'usuario sem id'}`
+    );
+  }
+
+  const userId = authUser.user.id;
+  const [{ data: generatedProfile }, profileMutation, userMutation] = await Promise.all([
+    admin.from('users').select('organization_id').eq('id', userId).maybeSingle(),
+    admin.from('profiles').upsert({
+      id: userId,
+      email,
+      full_name: displayName,
+      organization_id: organizationId,
+    }),
+    admin.from('users').upsert({
+      id: userId,
+      email,
+      full_name: displayName,
+      role,
+      organization_id: organizationId,
+    }),
+  ]);
+
+  if (profileMutation.error || userMutation.error) {
+    adminAccessRedirect(
+      'error',
+      `Conta criada no Auth, mas o perfil nao foi concluido: ${
+        profileMutation.error?.message || userMutation.error?.message
+      }`
+    );
+  }
+
+  const generatedOrganizationId =
+    generatedProfile && 'organization_id' in generatedProfile
+      ? String(generatedProfile.organization_id || '')
+      : '';
+
+  if (generatedOrganizationId && generatedOrganizationId !== organizationId) {
+    await admin
+      .from('portal_memberships')
+      .update({ organization_id: organizationId, is_active: false })
+      .eq('user_id', userId)
+      .eq('organization_id', generatedOrganizationId);
+    await admin.from('organizations').delete().eq('id', generatedOrganizationId);
+  }
+
+  return { id: userId, email, full_name: displayName } satisfies TargetUser;
+}
+
 async function grantAdministrativeAccess(formData: FormData) {
   'use server';
 
   const email = String(formData.get('email') || '').trim().toLowerCase();
+  const fullName = String(formData.get('fullName') || '').trim();
   const role = String(formData.get('role') || '');
+  const createIfMissing = formData.get('createIfMissing') === 'on';
 
   if (!email || !email.includes('@')) {
     adminAccessRedirect('error', 'Informe um e-mail valido.');
@@ -248,22 +362,14 @@ async function grantAdministrativeAccess(formData: FormData) {
   }
 
   const { supabase, user, membership } = await requireNexxoHubRole(['nexxohub_admin']);
-  const { data: targetUser, error: userError } = await supabase
-    .from('users')
-    .select('id,email,full_name')
-    .ilike('email', email)
-    .maybeSingle();
-
-  if (userError) {
-    adminAccessRedirect('error', `Nao foi possivel localizar o usuario: ${userError.message}`);
-  }
-
-  if (!targetUser?.id) {
-    adminAccessRedirect(
-      'error',
-      'Usuario nao encontrado. Primeiro crie a conta pelo cadastro/login e depois conceda o acesso.'
-    );
-  }
+  const targetUser = await findOrCreateTargetUser({
+    supabase,
+    email,
+    fullName,
+    organizationId: membership.organization_id,
+    role: 'admin',
+    createIfMissing,
+  });
 
   const { data: existingAccess, error: existingError } = await supabase
     .from('portal_memberships')
@@ -305,18 +411,25 @@ async function grantAdministrativeAccess(formData: FormData) {
   }
 
   revalidatePath('/admin/access/users');
-  adminAccessRedirect('created', 'Acesso administrativo registrado.');
+  adminAccessRedirect(
+    'created',
+    createIfMissing
+      ? 'Conta criada e acesso administrativo registrado. Use redefinicao de senha no primeiro acesso.'
+      : 'Acesso administrativo registrado.'
+  );
 }
 
 async function grantPortalAccess(formData: FormData) {
   'use server';
 
   const email = String(formData.get('email') || '').trim().toLowerCase();
+  const fullName = String(formData.get('fullName') || '').trim();
   const portal = String(formData.get('portal') || '') as PortalAccessType;
   const role = String(formData.get('role') || '');
   const clinicId = String(formData.get('clinicId') || '').trim() || null;
   const companyId = String(formData.get('companyId') || '').trim() || null;
   const employeeId = String(formData.get('employeeId') || '').trim() || null;
+  const createIfMissing = formData.get('createIfMissing') === 'on';
 
   if (!email || !email.includes('@')) {
     adminAccessRedirect('error', 'Informe um e-mail valido.');
@@ -344,22 +457,14 @@ async function grantPortalAccess(formData: FormData) {
   }
 
   const { supabase, user, membership } = await requireNexxoHubRole(['nexxohub_admin']);
-  const { data: targetUser, error: userError } = await supabase
-    .from('users')
-    .select('id,email,full_name')
-    .ilike('email', email)
-    .maybeSingle();
-
-  if (userError) {
-    adminAccessRedirect('error', `Nao foi possivel localizar o usuario: ${userError.message}`);
-  }
-
-  if (!targetUser?.id) {
-    adminAccessRedirect(
-      'error',
-      'Usuario nao encontrado. Primeiro crie a conta pelo cadastro/login e depois conceda o acesso.'
-    );
-  }
+  const targetUser = await findOrCreateTargetUser({
+    supabase,
+    email,
+    fullName,
+    organizationId: membership.organization_id,
+    role: portal === 'employee' ? 'user' : 'manager',
+    createIfMissing,
+  });
 
   if (portal === 'company' || portal === 'employee') {
     const { data: company, error: companyError } = await supabase
@@ -440,7 +545,12 @@ async function grantPortalAccess(formData: FormData) {
   }
 
   revalidatePath('/admin/access/users');
-  adminAccessRedirect('created', 'Acesso do portal registrado.');
+  adminAccessRedirect(
+    'created',
+    createIfMissing
+      ? 'Conta criada e acesso do portal registrado. Use redefinicao de senha no primeiro acesso.'
+      : 'Acesso do portal registrado.'
+  );
 }
 
 function display(value: unknown): string {
@@ -616,7 +726,7 @@ export default async function AdminSection({
         <WorkspacePanel title="Registrar acesso administrativo">
           <form
             action={grantAdministrativeAccess}
-            className="grid gap-4 lg:grid-cols-[1fr_240px_auto] lg:items-end"
+            className="grid gap-4 lg:grid-cols-[1fr_1fr_240px_auto] lg:items-end"
           >
             <div>
               <label htmlFor="email" className="mb-2 block text-xs font-semibold text-slate-600">
@@ -628,6 +738,22 @@ export default async function AdminSection({
                 type="email"
                 required
                 placeholder="nome@empresa.com"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="fullName"
+                className="mb-2 block text-xs font-semibold text-slate-600"
+              >
+                Nome do usuario
+              </label>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                placeholder="Nome completo"
                 className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
               />
             </div>
@@ -657,11 +783,20 @@ export default async function AdminSection({
               <Plus className="h-4 w-4" />
               Registrar acesso
             </button>
+
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-600 lg:col-span-4">
+              <input
+                name="createIfMissing"
+                type="checkbox"
+                className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+              />
+              Criar conta automaticamente se o e-mail ainda nao existir
+            </label>
           </form>
 
           <p className="mt-3 text-xs text-slate-500">
-            O usuario precisa existir no cadastro da plataforma. Este formulario concede ou reativa
-            o acesso ao Admin Central.
+            Se a conta for criada automaticamente, o primeiro acesso deve ser feito pela
+            redefinicao de senha.
           </p>
 
           {resolvedSearchParams.created && (
@@ -693,6 +828,22 @@ export default async function AdminSection({
                 type="email"
                 required
                 placeholder="nome@empresa.com"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="portal-fullName"
+                className="mb-2 block text-xs font-semibold text-slate-600"
+              >
+                Nome do usuario
+              </label>
+              <input
+                id="portal-fullName"
+                name="fullName"
+                type="text"
+                placeholder="Nome completo"
                 className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
               />
             </div>
@@ -803,6 +954,15 @@ export default async function AdminSection({
             </div>
 
             <div className="lg:col-span-3">
+              <label className="mb-4 flex items-center gap-2 text-xs font-medium text-slate-600">
+                <input
+                  name="createIfMissing"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                />
+                Criar conta automaticamente se o e-mail ainda nao existir
+              </label>
+
               <button
                 type="submit"
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
@@ -812,7 +972,8 @@ export default async function AdminSection({
               </button>
               <p className="mt-3 text-xs text-slate-500">
                 Para homologacao completa, conceda ao usuario pelo menos acesso de Clinica. Empresa
-                e Colaborador exigem tambem os respectivos escopos.
+                e Colaborador exigem tambem os respectivos escopos. Conta nova entra por
+                redefinicao de senha no primeiro acesso.
               </p>
             </div>
           </form>
