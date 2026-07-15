@@ -38,7 +38,6 @@ export default function RegisterPage() {
           errors[path] = error.message;
         });
         setFieldErrors(errors);
-        console.error('Validation errors:', errors);
         return false;
       }
       return true;
@@ -50,14 +49,12 @@ export default function RegisterPage() {
     setError(null);
 
     if (!validateFormData()) {
-      console.warn('Form validation failed');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      console.log('Attempting registration with email:', formData.email);
       const validation = registerSchema.parse(formData);
 
       const { error: authError } = await authClient.signUp({
@@ -70,24 +67,13 @@ export default function RegisterPage() {
 
       if (authError) {
         const errorMessage = authError.message || 'Erro desconhecido ao registrar';
-        console.error('Auth error:', {
-          message: errorMessage,
-          status: authError.status,
-          details: authError,
-        });
         setError(errorMessage);
         return;
       }
 
-      console.log('Registration successful, redirecting to email verification');
       router.push('/auth/verify-email');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao registrar';
-      console.error('Unexpected error during registration:', {
-        message: errorMessage,
-        error: err,
-        stack: err instanceof Error ? err.stack : undefined,
-      });
       setError(errorMessage);
     } finally {
       setIsLoading(false);

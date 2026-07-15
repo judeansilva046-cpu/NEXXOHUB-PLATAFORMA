@@ -24,9 +24,7 @@ export default function ForgotPasswordPage() {
       return true;
     } catch (err) {
       if (err instanceof ZodError) {
-        const message = err.errors[0]?.message || 'Email inválido';
-        setFieldError(message);
-        console.error('Validation error:', message);
+        setFieldError(err.errors[0]?.message || 'Email inválido');
         return false;
       }
       return true;
@@ -38,39 +36,23 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     if (!validateFormData()) {
-      console.warn('Form validation failed');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      console.log('Attempting password reset for email:', email);
       const validation = resetPasswordSchema.parse({ email });
       const { error: resetError } = await authClient.resetPassword(validation.email);
 
       if (resetError) {
-        const errorMessage = resetError.message || 'Erro desconhecido ao enviar email';
-        console.error('Reset password error:', {
-          message: errorMessage,
-          status: resetError.status,
-          details: resetError,
-        });
-        setError(errorMessage);
+        setError(resetError.message || 'Erro desconhecido ao enviar email');
         return;
       }
 
-      console.log('Password reset email sent successfully');
       setSuccess(true);
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Erro ao enviar email de recuperação';
-      console.error('Unexpected error during password reset:', {
-        message: errorMessage,
-        error: err,
-        stack: err instanceof Error ? err.stack : undefined,
-      });
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Erro ao enviar email de recuperação');
     } finally {
       setIsLoading(false);
     }

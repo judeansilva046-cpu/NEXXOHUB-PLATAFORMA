@@ -24,23 +24,19 @@ export default function OrganizationsPage() {
   useEffect(() => {
     const fetchOrganization = async () => {
       try {
-        console.log('[ORGANIZATIONS] Fetching organization...');
         const res = await fetch('/api/organizations');
 
         if (!res.ok) {
-          console.warn('[ORGANIZATIONS] Failed to fetch:', res.status);
           setOrganization(null);
           return;
         }
 
         const data = await res.json();
-        console.log('[ORGANIZATIONS] Data:', data);
 
         if (data.success && data.data) {
           setOrganization(data.data);
         }
       } catch (err) {
-        console.error('[ORGANIZATIONS] Error:', err);
         setError(err instanceof Error ? err.message : 'Erro ao carregar organização');
       } finally {
         setLoading(false);

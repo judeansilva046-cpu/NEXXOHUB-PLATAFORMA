@@ -27,17 +27,14 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        console.log('[PROFILE] Fetching user profile...');
         const res = await fetch('/api/auth/me');
 
         if (!res.ok) {
-          console.error('[PROFILE] Failed to fetch:', res.status);
           setError('Falha ao carregar perfil');
           return;
         }
 
         const data = await res.json();
-        console.log('[PROFILE] User data:', data);
 
         if (data.success && data.data) {
           setUser(data.data);
@@ -45,7 +42,6 @@ export default function ProfilePage() {
           setError('Dados do perfil inválidos');
         }
       } catch (err) {
-        console.error('[PROFILE] Error:', err);
         setError(err instanceof Error ? err.message : 'Erro ao carregar perfil');
       } finally {
         setLoading(false);

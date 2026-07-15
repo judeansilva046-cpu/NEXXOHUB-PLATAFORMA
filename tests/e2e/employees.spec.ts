@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { loginForE2E } from './helpers/auth';
+import { hasE2ECredentials, loginForE2E } from './helpers/auth';
 
 test.describe('Employees CRUD Flow', () => {
+  test.skip(
+    !hasE2ECredentials(),
+    'Defina PLAYWRIGHT_TEST_EMAIL e PLAYWRIGHT_TEST_PASSWORD com credenciais exclusivas de staging.'
+  );
+
   test.beforeEach(async ({ page }) => {
     await loginForE2E(page);
     await page.goto('/dashboard/employees');

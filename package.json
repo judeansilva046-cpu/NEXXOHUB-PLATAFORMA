@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:3001": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "eslint app components lib tests --ext .ts,.tsx",
@@ -12,10 +13,13 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
     "seed": "supabase db reset",
-    "test": "vitest",
+    "test": "vitest --run --config ./vitest.config.mjs",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:set-credentials": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/set-e2e-credentials.ps1",
+    "test:e2e:smoke": "playwright test --project=chromium tests/e2e/smoke.spec.ts",
+    "test:e2e:auth": "playwright test --project=chromium tests/e2e/auth.spec.ts",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {

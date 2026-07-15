@@ -10,6 +10,31 @@ import {
 import { getPublicEnvironment } from './lib/env';
 import { normalizeRole, roleBelongsToPortal } from './lib/rbac';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+function contentSecurityPolicy(frameAncestors: "'self'" | "'none'" = "'self'") {
+  const scriptSrc = isProduction
+    ? "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com"
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com";
+  const connectSrc = isProduction
+    ? "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.ingest.sentry.io"
+    : "connect-src 'self' http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:* https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.ingest.sentry.io";
+
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    `frame-ancestors ${frameAncestors}`,
+    "object-src 'none'",
+    scriptSrc,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://*.supabase.co https://www.google-analytics.com",
+    "font-src 'self' data:",
+    connectSrc,
+    ...(isProduction ? ['upgrade-insecure-requests'] : []),
+  ].join('; ');
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const hostname = request.headers.get('host') || request.nextUrl.hostname;
@@ -98,6 +123,10 @@ export async function middleware(request: NextRequest) {
     response.headers.set('X-Frame-Options', 'SAMEORIGIN');
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    if (isProduction) {
+      response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    response.headers.set('Content-Security-Policy', contentSecurityPolicy());
     return response;
   } catch (error) {
     console.error('[MIDDLEWARE_ERROR]', error);
@@ -113,6 +142,7 @@ export async function middleware(request: NextRequest) {
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('X-Frame-Options', 'DENY');
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('Content-Security-Policy', contentSecurityPolicy("'none'"));
     return response;
   }
 }

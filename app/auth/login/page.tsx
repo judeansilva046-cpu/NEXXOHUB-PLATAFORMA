@@ -231,26 +231,21 @@ export default function LoginPage() {
 
     try {
       const validation = loginSchema.parse(formData);
-      const { data, error: authError } = await authClient.signIn(
-        validation.email,
-        validation.password
-      );
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: validation.email,
+          password: validation.password,
+        }),
+      });
 
-      if (authError) {
-        setError(getAuthErrorMessage(authError));
-        return;
-      }
+      const result = await response.json();
 
-      if (!data?.session) {
-        setError('Login realizado, mas nenhuma sessão foi criada.');
-        return;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const { data: sessionData } = await authClient.getSession();
-
-      if (!sessionData?.session) {
-        setError('A sessão não foi persistida. Tente novamente.');
+      if (!response.ok || !result.success) {
+        setError(result.error || 'Erro ao fazer login.');
         return;
       }
 

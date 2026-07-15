@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import { loadEnvConfig } from '@next/env';
+
+loadEnvConfig(process.cwd());
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -11,7 +14,7 @@ export default defineConfig({
   },
   reporter: [['html'], ['list']],
   use: {
-    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3001',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -27,8 +30,8 @@ export default defineConfig({
   webServer: process.env.SKIP_WEB_SERVER
     ? undefined
     : {
-        command: 'npm run dev',
-        url: 'http://localhost:3000',
+        command: 'npm run dev:3001',
+        url: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3001',
         reuseExistingServer: !process.env.CI,
         timeout: 120 * 1000,
       },

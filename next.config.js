@@ -7,6 +7,7 @@ const connectPolicy =
   process.env.NODE_ENV === 'development'
     ? "connect-src 'self' http://127.0.0.1:54321 ws://127.0.0.1:54321 https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.ingest.sentry.io"
     : "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.ingest.sentry.io";
+const upgradePolicy = process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : [];
 
 const nextConfig = {
   reactStrictMode: true,
@@ -54,7 +55,7 @@ const nextConfig = {
               "img-src 'self' data: blob: https://*.supabase.co https://www.google-analytics.com",
               "font-src 'self' data:",
               connectPolicy,
-              'upgrade-insecure-requests',
+              ...upgradePolicy,
             ].join('; '),
           },
           {
