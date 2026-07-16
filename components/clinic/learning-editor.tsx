@@ -196,6 +196,7 @@ export function LearningEditor({
             </label>
             <input
               id={`${resource}-title`}
+              name="title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               required
@@ -212,6 +213,7 @@ export function LearningEditor({
               </label>
               <select
                 id={`${resource}-company`}
+                name="companyId"
                 value={companyId}
                 onChange={(event) => setCompanyId(event.target.value)}
                 className={inputClass}
@@ -233,6 +235,7 @@ export function LearningEditor({
               </label>
               <select
                 id={`${resource}-parent`}
+                name={meta.parentField}
                 value={parentId}
                 onChange={(event) => setParentId(event.target.value)}
                 required
@@ -254,6 +257,7 @@ export function LearningEditor({
             </label>
             <textarea
               id={`${resource}-description`}
+              name="description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               rows={4}
@@ -269,6 +273,7 @@ export function LearningEditor({
               </label>
               <select
                 id={`${resource}-status`}
+                name="status"
                 value={status}
                 onChange={(event) =>
                   setStatus(event.target.value as 'draft' | 'active' | 'archived')
@@ -287,6 +292,7 @@ export function LearningEditor({
                 </label>
                 <input
                   id={`${resource}-position`}
+                  name="position"
                   type="number"
                   min={0}
                   max={10000}
@@ -306,6 +312,7 @@ export function LearningEditor({
                 </label>
                 <input
                   id="lesson-duration"
+                  name="durationMinutes"
                   type="number"
                   min={0}
                   max={1440}
@@ -315,9 +322,10 @@ export function LearningEditor({
                 />
               </div>
               <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={hasVimeoVideo}
+                  <input
+                    type="checkbox"
+                    name="hasVimeoVideo"
+                    checked={hasVimeoVideo}
                   onChange={(event) => setHasVimeoVideo(event.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-blue-600"
                 />
@@ -330,6 +338,7 @@ export function LearningEditor({
                   </label>
                   <input
                     id="lesson-vimeo"
+                    name="videoExternalId"
                     value={videoExternalId}
                     onChange={(event) => setVideoExternalId(event.target.value)}
                     placeholder="Ex.: 123456789"

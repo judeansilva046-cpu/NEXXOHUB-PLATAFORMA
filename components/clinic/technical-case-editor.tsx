@@ -140,6 +140,8 @@ export function TechnicalCaseEditor({
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-slate-700">Empresa</label>
                 <select
+                  id="technical-case-company"
+                  name="companyId"
                   value={companyId}
                   onChange={(event) => {
                     setCompanyId(event.target.value);
@@ -161,6 +163,8 @@ export function TechnicalCaseEditor({
                   Colaborador monitorado
                 </label>
                 <select
+                  id="technical-case-employee"
+                  name="employeeId"
                   value={employeeId}
                   onChange={(event) => setEmployeeId(event.target.value)}
                   className={inputClass}
@@ -178,6 +182,8 @@ export function TechnicalCaseEditor({
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-slate-700">Título</label>
             <input
+              id="technical-case-title"
+              name="title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               minLength={3}
@@ -188,6 +194,8 @@ export function TechnicalCaseEditor({
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-slate-700">Resumo</label>
             <textarea
+              id="technical-case-summary"
+              name="summary"
               value={summary}
               onChange={(event) => setSummary(event.target.value)}
               rows={4}
@@ -198,6 +206,8 @@ export function TechnicalCaseEditor({
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-700">Tipo</label>
               <select
+                id="technical-case-type"
+                name="caseType"
                 value={caseType}
                 onChange={(event) => setCaseType(event.target.value as typeof caseType)}
                 className={inputClass}
@@ -212,6 +222,8 @@ export function TechnicalCaseEditor({
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-700">Risco</label>
               <select
+                id="technical-case-risk"
+                name="riskLevel"
                 value={riskLevel}
                 onChange={(event) => setRiskLevel(event.target.value as typeof riskLevel)}
                 className={inputClass}
@@ -225,6 +237,8 @@ export function TechnicalCaseEditor({
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-700">Status</label>
               <select
+                id="technical-case-status"
+                name="status"
                 value={status}
                 onChange={(event) => setStatus(event.target.value as typeof status)}
                 className={inputClass}
@@ -317,6 +331,8 @@ export function TechnicalCaseEventEditor({ caseId }: { caseId: string }) {
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <select
+            id="technical-event-type"
+            name="eventType"
             value={eventType}
             onChange={(event) => setEventType(event.target.value)}
             className={inputClass}
@@ -329,6 +345,8 @@ export function TechnicalCaseEventEditor({ caseId }: { caseId: string }) {
             <option value="status_change">Mudança de status</option>
           </select>
           <input
+            id="technical-event-title"
+            name="title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             required
@@ -337,6 +355,8 @@ export function TechnicalCaseEventEditor({ caseId }: { caseId: string }) {
             className={inputClass}
           />
           <textarea
+            id="technical-event-description"
+            name="description"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             rows={4}

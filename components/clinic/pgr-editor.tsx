@@ -131,6 +131,8 @@ export function PgrEditor({
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-700">Empresa</label>
               <select
+                id="pgr-company"
+                name="companyId"
                 value={companyId}
                 onChange={(e) => setCompanyId(e.target.value)}
                 required
@@ -148,6 +150,8 @@ export function PgrEditor({
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-slate-700">Título</label>
             <input
+              id="pgr-title"
+              name="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               minLength={3}
@@ -158,6 +162,8 @@ export function PgrEditor({
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-slate-700">Descrição</label>
             <textarea
+              id="pgr-description"
+              name="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
@@ -170,6 +176,8 @@ export function PgrEditor({
                 Início do período
               </label>
               <input
+                id="pgr-period-start"
+                name="periodStart"
                 type="date"
                 value={periodStart}
                 onChange={(e) => setPeriodStart(e.target.value)}
@@ -181,6 +189,8 @@ export function PgrEditor({
                 Fim do período
               </label>
               <input
+                id="pgr-period-end"
+                name="periodEnd"
                 type="date"
                 value={periodEnd}
                 onChange={(e) => setPeriodEnd(e.target.value)}
@@ -191,6 +201,8 @@ export function PgrEditor({
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-slate-700">Status</label>
             <select
+              id="pgr-status"
+              name="status"
               value={status}
               onChange={(e) => setStatus(e.target.value as typeof status)}
               className={inputClass}
@@ -205,6 +217,8 @@ export function PgrEditor({
               Resumo das alterações
             </label>
             <input
+              id="pgr-change-summary"
+              name="changeSummary"
               value={changeSummary}
               onChange={(e) => setChangeSummary(e.target.value)}
               placeholder="O que mudou nesta versão?"

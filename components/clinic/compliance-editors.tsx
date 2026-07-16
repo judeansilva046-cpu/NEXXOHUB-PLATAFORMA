@@ -147,6 +147,8 @@ export function EvidenceEditor({
         <form onSubmit={submit} className="space-y-4">
           <Field label="Empresa">
             <select
+              id="evidence-company"
+              name="companyId"
               value={companyId}
               onChange={(event) => setCompanyId(event.target.value)}
               required
@@ -162,6 +164,8 @@ export function EvidenceEditor({
           </Field>
           <Field label="Título">
             <input
+              id="evidence-title"
+              name="title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               required
@@ -172,6 +176,8 @@ export function EvidenceEditor({
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Data">
               <input
+                id="evidence-date"
+                name="evidenceDate"
                 type="date"
                 value={evidenceDate}
                 onChange={(event) => setEvidenceDate(event.target.value)}
@@ -180,6 +186,8 @@ export function EvidenceEditor({
             </Field>
             <Field label="Tipo">
               <select
+                id="evidence-type"
+                name="evidenceType"
                 value={evidenceType}
                 onChange={(event) => setEvidenceType(event.target.value as typeof evidenceType)}
                 className={inputClass}
@@ -195,6 +203,8 @@ export function EvidenceEditor({
             </Field>
             <Field label="Vinculado a">
               <select
+                id="evidence-related-to"
+                name="relatedTo"
                 value={relatedTo}
                 onChange={(event) => setRelatedTo(event.target.value as typeof relatedTo)}
                 className={inputClass}
@@ -210,6 +220,8 @@ export function EvidenceEditor({
           </div>
           <Field label="Link ou caminho do arquivo">
             <input
+              id="evidence-storage-path"
+              name="storagePath"
               value={storagePath}
               onChange={(event) => setStoragePath(event.target.value)}
               placeholder="Ex.: evidencias/empresa/arquivo.pdf"
@@ -218,6 +230,8 @@ export function EvidenceEditor({
           </Field>
           <Field label="Descrição">
             <textarea
+              id="evidence-description"
+              name="description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               rows={4}
@@ -340,6 +354,8 @@ export function DossierEditor({
           {!editing && (
             <Field label="Empresa">
               <select
+                id="dossier-company"
+                name="companyId"
                 value={companyId}
                 onChange={(event) => setCompanyId(event.target.value)}
                 required
@@ -356,6 +372,8 @@ export function DossierEditor({
           )}
           <Field label="Título">
             <input
+              id="dossier-title"
+              name="title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               required
@@ -366,6 +384,8 @@ export function DossierEditor({
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Início do período">
               <input
+                id="dossier-period-start"
+                name="periodStart"
                 type="date"
                 value={periodStart}
                 onChange={(event) => setPeriodStart(event.target.value)}
@@ -375,6 +395,8 @@ export function DossierEditor({
             </Field>
             <Field label="Fim do período">
               <input
+                id="dossier-period-end"
+                name="periodEnd"
                 type="date"
                 value={periodEnd}
                 onChange={(event) => setPeriodEnd(event.target.value)}
@@ -386,6 +408,8 @@ export function DossierEditor({
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Status">
               <select
+                id="dossier-status"
+                name="status"
                 value={status}
                 onChange={(event) => setStatus(event.target.value as typeof status)}
                 className={inputClass}
@@ -397,6 +421,8 @@ export function DossierEditor({
             </Field>
             <Field label="Arquivo gerado">
               <input
+                id="dossier-storage-path"
+                name="storagePath"
                 value={storagePath}
                 onChange={(event) => setStoragePath(event.target.value)}
                 placeholder="Ex.: dossies/empresa/maio-2026.pdf"
