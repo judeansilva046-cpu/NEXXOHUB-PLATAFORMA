@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
 type SubmitState = {
   loading: boolean;
@@ -55,6 +56,7 @@ function Feedback({ state }: { state: SubmitState }) {
 }
 
 export function WeeklyCheckinForm() {
+  const router = useRouter();
   const [state, setState] = useState(initialState);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -72,6 +74,7 @@ export function WeeklyCheckinForm() {
       });
       form.reset();
       setState({ loading: false, message: 'Check-in semanal salvo com sucesso.', error: null });
+      router.refresh();
     } catch (error) {
       setState({
         loading: false,
@@ -130,6 +133,7 @@ export function WeeklyCheckinForm() {
 }
 
 export function HelpRequestForm() {
+  const router = useRouter();
   const [state, setState] = useState(initialState);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -145,6 +149,7 @@ export function HelpRequestForm() {
       });
       form.reset();
       setState({ loading: false, message: 'Pedido de ajuda enviado ao RH.', error: null });
+      router.refresh();
     } catch (error) {
       setState({
         loading: false,
@@ -182,6 +187,7 @@ export function HelpRequestForm() {
 }
 
 export function ComplaintForm() {
+  const router = useRouter();
   const [state, setState] = useState(initialState);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -198,6 +204,7 @@ export function ComplaintForm() {
       });
       form.reset();
       setState({ loading: false, message: 'Denúncia registrada com segurança.', error: null });
+      router.refresh();
     } catch (error) {
       setState({
         loading: false,
