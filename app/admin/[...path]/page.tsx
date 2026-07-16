@@ -31,6 +31,7 @@ const portalAccessRoles = {
 type PortalAccessType = keyof typeof portalAccessRoles;
 type ReferenceRow = { id: string; name: string };
 type TargetUser = { id: string; email: string; full_name?: string | null };
+type AdminRedirectKey = 'access/users' | 'access/roles' | 'modules' | 'integrations';
 
 type Section = {
   title: string;
@@ -153,7 +154,7 @@ const sections: Record<string, Section> = {
   },
   modules: {
     title: 'Modulos e permissoes',
-    subtitle: 'Configuracoes funcionais persistidas.',
+    subtitle: 'Chaves funcionais que liberam ou restringem recursos da plataforma.',
     table: 'settings',
     select: 'id,key,value,is_sensitive,updated_at',
     order: 'updated_at',
@@ -235,6 +236,14 @@ function adminAccessRedirect(messageKey: 'created' | 'error', message: string): 
   redirect(`/admin/access/users?${messageKey}=${encodeURIComponent(message)}`);
 }
 
+function adminSectionRedirect(
+  sectionKey: AdminRedirectKey,
+  messageKey: 'created' | 'error',
+  message: string
+): never {
+  redirect(`/admin/${sectionKey}?${messageKey}=${encodeURIComponent(message)}`);
+}
+
 function defaultNameFromEmail(email: string) {
   const [prefix] = email.split('@');
   return prefix
@@ -243,6 +252,33 @@ function defaultNameFromEmail(email: string) {
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join(' ')
     .trim();
+}
+
+async function recordAdminAudit({
+  supabase,
+  organizationId,
+  userId,
+  action,
+  resourceType,
+  resourceId,
+  changes,
+}: {
+  supabase: Awaited<ReturnType<typeof requireNexxoHubRole>>['supabase'];
+  organizationId: string;
+  userId: string;
+  action: string;
+  resourceType: string;
+  resourceId?: string | null;
+  changes?: Record<string, unknown>;
+}) {
+  await supabase.from('audit_logs').insert({
+    organization_id: organizationId,
+    user_id: userId,
+    action,
+    resource_type: resourceType,
+    resource_id: resourceId || null,
+    changes: changes || {},
+  });
 }
 
 async function findOrCreateTargetUser({
@@ -434,6 +470,16 @@ async function grantAdministrativeAccess(formData: FormData) {
     adminAccessRedirect('error', `Nao foi possivel registrar o acesso: ${mutation.error.message}`);
   }
 
+  await recordAdminAudit({
+    supabase,
+    organizationId: membership.organization_id,
+    userId: user.id,
+    action: existingAccess?.id ? 'admin_access.updated' : 'admin_access.created',
+    resourceType: 'portal_memberships',
+    resourceId: existingAccess?.id || targetUser.id,
+    changes: { email, role, portal: 'nexxohub' },
+  });
+
   revalidatePath('/admin/access/users');
   adminAccessRedirect(
     'created',
@@ -570,6 +616,16 @@ async function grantPortalAccess(formData: FormData) {
     adminAccessRedirect('error', `Nao foi possivel registrar o acesso: ${mutation.error.message}`);
   }
 
+  await recordAdminAudit({
+    supabase,
+    organizationId: membership.organization_id,
+    userId: user.id,
+    action: existingAccess?.id ? 'portal_access.updated' : 'portal_access.created',
+    resourceType: 'portal_memberships',
+    resourceId: existingAccess?.id || targetUser.id,
+    changes: { email, portal, role, clinicId, companyId: scopedCompanyId, employeeId: scopedEmployeeId },
+  });
+
   revalidatePath('/admin/access/users');
   adminAccessRedirect(
     'created',
@@ -577,6 +633,190 @@ async function grantPortalAccess(formData: FormData) {
       ? 'Conta criada/atualizada e acesso do portal registrado.'
       : 'Acesso do portal registrado.'
   );
+}
+
+async function createRole(formData: FormData) {
+  'use server';
+
+  const name = String(formData.get('name') || '').trim();
+  const roleKey = String(formData.get('roleKey') || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+  const portal = String(formData.get('portal') || '').trim();
+  const description = String(formData.get('description') || '').trim();
+
+  if (!name || !roleKey || !portal) {
+    adminSectionRedirect('access/roles', 'error', 'Informe nome, chave e portal do perfil.');
+  }
+
+  if (!['nexxohub', 'clinic', 'company', 'employee'].includes(portal)) {
+    adminSectionRedirect('access/roles', 'error', 'Portal invalido para o perfil.');
+  }
+
+  const { supabase, user, membership } = await requireNexxoHubRole(['nexxohub_admin']);
+  const mutation = await supabase.from('roles').upsert(
+    {
+      organization_id: membership.organization_id,
+      name,
+      role_key: roleKey,
+      portal,
+      description: description || null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'organization_id,role_key' }
+  );
+
+  if (mutation.error) {
+    adminSectionRedirect('access/roles', 'error', `Nao foi possivel salvar o perfil: ${mutation.error.message}`);
+  }
+
+  await recordAdminAudit({
+    supabase,
+    organizationId: membership.organization_id,
+    userId: user.id,
+    action: 'role.upserted',
+    resourceType: 'roles',
+    resourceId: roleKey,
+    changes: { name, roleKey, portal, description },
+  });
+
+  revalidatePath('/admin/access/roles');
+  adminSectionRedirect('access/roles', 'created', 'Perfil salvo e disponivel para governanca.');
+}
+
+async function upsertModuleSetting(formData: FormData) {
+  'use server';
+
+  const moduleKey = String(formData.get('moduleKey') || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  const label = String(formData.get('label') || '').trim();
+  const enabled = formData.get('enabled') === 'on';
+  const sensitive = formData.get('sensitive') === 'on';
+
+  if (!moduleKey || !label) {
+    adminSectionRedirect('modules', 'error', 'Informe a chave e o nome do modulo.');
+  }
+
+  const { supabase, user, membership } = await requireNexxoHubRole(['nexxohub_admin']);
+  const key = moduleKey.startsWith('module.') ? moduleKey : `module.${moduleKey}`;
+  const value = {
+    label,
+    enabled,
+    managedBy: 'admin-central',
+    updatedAt: new Date().toISOString(),
+  };
+  const mutation = await supabase.from('settings').upsert(
+    {
+      tenant_id: membership.organization_id,
+      key,
+      value,
+      is_sensitive: sensitive,
+      created_by: user.id,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'tenant_id,key' }
+  );
+
+  if (mutation.error) {
+    adminSectionRedirect('modules', 'error', `Nao foi possivel salvar o modulo: ${mutation.error.message}`);
+  }
+
+  await recordAdminAudit({
+    supabase,
+    organizationId: membership.organization_id,
+    userId: user.id,
+    action: 'module_setting.upserted',
+    resourceType: 'settings',
+    resourceId: key,
+    changes: value,
+  });
+
+  revalidatePath('/admin/modules');
+  adminSectionRedirect('modules', 'created', 'Modulo configurado com sucesso.');
+}
+
+async function upsertIntegrationSetting(formData: FormData) {
+  'use server';
+
+  const provider = String(formData.get('provider') || '').trim();
+  const scope = String(formData.get('scope') || '').trim();
+  const clinicId = String(formData.get('clinicId') || '').trim() || null;
+  const enabled = formData.get('enabled') === 'on';
+  const secretRef = String(formData.get('secretRef') || '').trim() || null;
+
+  if (!['asaas', 'vimeo', 'claude', 'email', 'webhook'].includes(provider)) {
+    adminSectionRedirect('integrations', 'error', 'Selecione um provedor valido.');
+  }
+
+  if (!['global', 'clinic'].includes(scope)) {
+    adminSectionRedirect('integrations', 'error', 'Selecione um escopo valido.');
+  }
+
+  if (scope === 'clinic' && !clinicId) {
+    adminSectionRedirect('integrations', 'error', 'Selecione uma clinica para integracao de escopo clinico.');
+  }
+
+  const { supabase, user, membership } = await requireNexxoHubRole(['nexxohub_admin']);
+  const payload = {
+    organization_id: membership.organization_id,
+    clinic_id: scope === 'clinic' ? clinicId : null,
+    provider,
+    scope,
+    is_enabled: enabled,
+    config: { managedBy: 'admin-central' },
+    secret_ref: secretRef,
+    created_by: user.id,
+    updated_at: new Date().toISOString(),
+  };
+  let existingQuery = supabase
+    .from('integration_settings')
+    .select('id')
+    .eq('provider', provider)
+    .eq('scope', scope)
+    .eq('organization_id', membership.organization_id);
+  existingQuery =
+    scope === 'clinic' && clinicId ? existingQuery.eq('clinic_id', clinicId) : existingQuery.is('clinic_id', null);
+  const existingResult = await existingQuery.maybeSingle();
+
+  if (existingResult.error) {
+    adminSectionRedirect(
+      'integrations',
+      'error',
+      `Nao foi possivel verificar a integracao atual: ${existingResult.error.message}`
+    );
+  }
+
+  const mutation = existingResult.data?.id
+    ? await supabase.from('integration_settings').update(payload).eq('id', existingResult.data.id)
+    : await supabase.from('integration_settings').insert(payload);
+
+  if (mutation.error) {
+    adminSectionRedirect(
+      'integrations',
+      'error',
+      `Nao foi possivel salvar a integracao: ${mutation.error.message}`
+    );
+  }
+
+  await recordAdminAudit({
+    supabase,
+    organizationId: membership.organization_id,
+    userId: user.id,
+    action: 'integration_setting.upserted',
+    resourceType: 'integration_settings',
+    resourceId: `${provider}:${scope}`,
+    changes: { provider, scope, clinicId, enabled, hasSecretRef: Boolean(secretRef) },
+  });
+
+  revalidatePath('/admin/integrations');
+  adminSectionRedirect('integrations', 'created', 'Integracao configurada com sucesso.');
 }
 
 function display(value: unknown): string {
@@ -735,6 +975,16 @@ export default async function AdminSection({
     rows = result.rows;
     portalReferenceRows = references;
     errorMessage = result.errorMessage || references.errorMessage;
+  } else if (key === 'integrations') {
+    portalReferenceRows = await getPortalReferenceRows(supabase);
+    errorMessage = portalReferenceRows.errorMessage;
+    if (!errorMessage && section.table && section.select) {
+      let query = supabase.from(section.table).select(section.select).limit(100);
+      if (section.order) query = query.order(section.order, { ascending: false });
+      const result = await query;
+      rows = (result.data || []) as unknown as Record<string, unknown>[];
+      errorMessage = result.error?.message || '';
+    }
   } else if (section.table && section.select) {
     let query = supabase.from(section.table).select(section.select).limit(100);
     if (section.order) query = query.order(section.order, { ascending: false });
@@ -747,6 +997,17 @@ export default async function AdminSection({
   return (
     <div className="space-y-4">
       <PageHeader title={section.title} subtitle={section.subtitle} userName="NexxoHub Admin" />
+
+      {key !== 'access/users' && resolvedSearchParams.created && (
+        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {resolvedSearchParams.created}
+        </p>
+      )}
+      {key !== 'access/users' && resolvedSearchParams.error && (
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          {resolvedSearchParams.error}
+        </p>
+      )}
 
       {key === 'access/users' && (
         <WorkspacePanel title="Registrar acesso administrativo">
@@ -1036,6 +1297,220 @@ export default async function AdminSection({
                 imediato.
               </p>
             </div>
+          </form>
+        </WorkspacePanel>
+      )}
+
+      {key === 'access/roles' && (
+        <WorkspacePanel title="Criar ou atualizar perfil">
+          <form action={createRole} className="grid gap-4 lg:grid-cols-[1fr_220px_220px_auto] lg:items-end">
+            <div>
+              <label htmlFor="role-name" className="mb-2 block text-xs font-semibold text-slate-600">
+                Nome do perfil
+              </label>
+              <input
+                id="role-name"
+                name="name"
+                required
+                placeholder="Ex.: Auditor NR-1"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="role-key" className="mb-2 block text-xs font-semibold text-slate-600">
+                Chave
+              </label>
+              <input
+                id="role-key"
+                name="roleKey"
+                required
+                placeholder="auditor_nr1"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="role-portal" className="mb-2 block text-xs font-semibold text-slate-600">
+                Portal
+              </label>
+              <select
+                id="role-portal"
+                name="portal"
+                defaultValue="company"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              >
+                <option value="nexxohub">NexxoHub</option>
+                <option value="clinic">Clinica</option>
+                <option value="company">Empresa</option>
+                <option value="employee">Colaborador</option>
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-700"
+            >
+              <Plus className="h-4 w-4" />
+              Salvar perfil
+            </button>
+
+            <div className="lg:col-span-4">
+              <label htmlFor="role-description" className="mb-2 block text-xs font-semibold text-slate-600">
+                Descricao
+              </label>
+              <input
+                id="role-description"
+                name="description"
+                placeholder="Responsabilidades e limite de acesso deste perfil"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              />
+            </div>
+          </form>
+        </WorkspacePanel>
+      )}
+
+      {key === 'modules' && (
+        <WorkspacePanel title="Configurar modulo funcional">
+          <form action={upsertModuleSetting} className="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+            <div>
+              <label htmlFor="module-key" className="mb-2 block text-xs font-semibold text-slate-600">
+                Chave do modulo
+              </label>
+              <input
+                id="module-key"
+                name="moduleKey"
+                required
+                placeholder="nr1.dossie"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="module-label" className="mb-2 block text-xs font-semibold text-slate-600">
+                Nome exibido
+              </label>
+              <input
+                id="module-label"
+                name="label"
+                required
+                placeholder="Dossie NR-1"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-700"
+            >
+              <Plus className="h-4 w-4" />
+              Salvar modulo
+            </button>
+
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+              <input
+                name="enabled"
+                type="checkbox"
+                defaultChecked
+                className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+              />
+              Ativo
+            </label>
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+              <input
+                name="sensitive"
+                type="checkbox"
+                className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+              />
+              Configuracao sensivel
+            </label>
+          </form>
+        </WorkspacePanel>
+      )}
+
+      {key === 'integrations' && (
+        <WorkspacePanel title="Configurar integracao">
+          <form action={upsertIntegrationSetting} className="grid gap-4 lg:grid-cols-[180px_180px_1fr_1fr_auto] lg:items-end">
+            <div>
+              <label htmlFor="integration-provider" className="mb-2 block text-xs font-semibold text-slate-600">
+                Provedor
+              </label>
+              <select
+                id="integration-provider"
+                name="provider"
+                defaultValue="email"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              >
+                <option value="email">Email</option>
+                <option value="webhook">Webhook</option>
+                <option value="asaas">Asaas</option>
+                <option value="vimeo">Vimeo</option>
+                <option value="claude">Claude</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="integration-scope" className="mb-2 block text-xs font-semibold text-slate-600">
+                Escopo
+              </label>
+              <select
+                id="integration-scope"
+                name="scope"
+                defaultValue="global"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              >
+                <option value="global">Global</option>
+                <option value="clinic">Clinica</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="integration-clinic" className="mb-2 block text-xs font-semibold text-slate-600">
+                Clinica
+              </label>
+              <select
+                id="integration-clinic"
+                name="clinicId"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              >
+                <option value="">Somente para escopo clinico</option>
+                {portalReferenceRows.clinics.map((clinic) => (
+                  <option key={clinic.id} value={clinic.id}>
+                    {clinic.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="integration-secret" className="mb-2 block text-xs font-semibold text-slate-600">
+                Referencia secreta
+              </label>
+              <input
+                id="integration-secret"
+                name="secretRef"
+                placeholder="Ex.: netlify:ASAAS_API_KEY"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-700"
+            >
+              <Plus className="h-4 w-4" />
+              Salvar
+            </button>
+
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-600 lg:col-span-5">
+              <input
+                name="enabled"
+                type="checkbox"
+                defaultChecked
+                className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+              />
+              Integracao ativa
+            </label>
           </form>
         </WorkspacePanel>
       )}
