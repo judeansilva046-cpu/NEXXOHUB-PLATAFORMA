@@ -761,28 +761,33 @@ export function OrganizationRecordsClient({
             {resource === 'branches' && (
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
+                  name="name"
                   label="Nome da filial"
                   value={form.name}
                   onChange={(value) => setField('name', value)}
                   required
                 />
                 <Field
+                  name="cnpj"
                   label="CNPJ"
                   value={form.cnpj}
                   onChange={(value) => setField('cnpj', value)}
                 />
                 <Field
+                  name="city"
                   label="Cidade"
                   value={form.city}
                   onChange={(value) => setField('city', value)}
                 />
                 <Field
+                  name="state"
                   label="UF"
                   value={form.state}
                   onChange={(value) => setField('state', value.toUpperCase().slice(0, 2))}
                 />
                 <div className="md:col-span-2">
                   <Field
+                    name="address"
                     label="Endereço"
                     value={form.address}
                     onChange={(value) => setField('address', value)}
@@ -794,12 +799,14 @@ export function OrganizationRecordsClient({
             {resource === 'departments' && (
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
+                  name="name"
                   label="Nome do departamento"
                   value={form.name}
                   onChange={(value) => setField('name', value)}
                   required
                 />
                 <SelectField
+                  name="branchId"
                   label="Filial"
                   value={form.branchId}
                   onChange={(value) => setField('branchId', value)}
@@ -817,17 +824,20 @@ export function OrganizationRecordsClient({
             {resource === 'positions' && (
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
+                  name="name"
                   label="Nome do cargo"
                   value={form.name}
                   onChange={(value) => setField('name', value)}
                   required
                 />
                 <Field
+                  name="cboCode"
                   label="Código CBO"
                   value={form.cboCode}
                   onChange={(value) => setField('cboCode', value)}
                 />
                 <SelectField
+                  name="departmentId"
                   label="Departamento vinculado"
                   value={form.departmentId}
                   onChange={(value) => setField('departmentId', value)}
@@ -845,12 +855,14 @@ export function OrganizationRecordsClient({
             {resource === 'employees' && (
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
+                  name="fullName"
                   label="Nome completo"
                   value={form.fullName}
                   onChange={(value) => setField('fullName', value)}
                   required
                 />
                 <Field
+                  name="email"
                   label="E-mail"
                   type="email"
                   value={form.email}
@@ -858,29 +870,34 @@ export function OrganizationRecordsClient({
                   required
                 />
                 <Field
+                  name="cpf"
                   label="CPF"
                   value={form.cpf}
                   onChange={(value) => setField('cpf', value)}
                   required
                 />
                 <Field
+                  name="registration"
                   label="Matrícula"
                   value={form.registration}
                   onChange={(value) => setField('registration', value)}
                   required
                 />
                 <Field
+                  name="phone"
                   label="Telefone"
                   value={form.phone}
                   onChange={(value) => setField('phone', value)}
                 />
                 <Field
+                  name="admissionDate"
                   label="Admissão"
                   type="date"
                   value={form.admissionDate}
                   onChange={(value) => setField('admissionDate', value)}
                 />
                 <SelectField
+                  name="branchId"
                   label="Filial"
                   value={form.branchId}
                   onChange={(value) => setField('branchId', value)}
@@ -893,6 +910,7 @@ export function OrganizationRecordsClient({
                   ))}
                 </SelectField>
                 <SelectField
+                  name="departmentId"
                   label="Departamento"
                   value={form.departmentId}
                   onChange={(value) => setField('departmentId', value)}
@@ -906,12 +924,14 @@ export function OrganizationRecordsClient({
                 </SelectField>
                 {!form.departmentId && (
                   <Field
+                    name="department"
                     label="Departamento manual"
                     value={form.department}
                     onChange={(value) => setField('department', value)}
                   />
                 )}
                 <SelectField
+                  name="positionId"
                   label="Cargo"
                   value={form.positionId}
                   onChange={(value) => setField('positionId', value)}
@@ -925,6 +945,7 @@ export function OrganizationRecordsClient({
                 </SelectField>
                 {!form.positionId && (
                   <Field
+                    name="position"
                     label="Cargo manual"
                     value={form.position}
                     onChange={(value) => setField('position', value)}
@@ -935,6 +956,7 @@ export function OrganizationRecordsClient({
             )}
 
             <SelectField
+              name="status"
               label="Status"
               value={form.status}
               onChange={(value) => setField('status', value as OrganizationRecordStatus)}
@@ -960,12 +982,14 @@ export function OrganizationRecordsClient({
 }
 
 function Field({
+  name,
   label,
   value,
   onChange,
   type = 'text',
   required = false,
 }: {
+  name: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -976,6 +1000,8 @@ function Field({
     <label className="space-y-1.5 text-sm font-medium text-slate-700">
       <span>{label}</span>
       <Input
+        id={name}
+        name={name}
         type={type}
         value={value}
         required={required}
@@ -986,11 +1012,13 @@ function Field({
 }
 
 function SelectField({
+  name,
   label,
   value,
   onChange,
   children,
 }: {
+  name: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -1000,6 +1028,8 @@ function SelectField({
     <label className="space-y-1.5 text-sm font-medium text-slate-700">
       <span>{label}</span>
       <select
+        id={name}
+        name={name}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
