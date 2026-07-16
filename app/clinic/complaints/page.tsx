@@ -122,6 +122,7 @@ export default async function ClinicComplaintsPage() {
                   <th className="px-3 py-3">Descricao</th>
                   <th className="px-3 py-3">Status</th>
                   <th className="px-3 py-3">Criada em</th>
+                  <th className="px-3 py-3">Detalhes</th>
                   <th className="px-3 py-3">Acoes</th>
                 </tr>
               </thead>
@@ -154,6 +155,14 @@ export default async function ClinicComplaintsPage() {
                       </td>
                       <td className="px-3 py-3">
                         {new Date(complaint.created_at).toLocaleString('pt-BR')}
+                      </td>
+                      <td className="px-3 py-3">
+                        <Link
+                          href={`/clinic/complaints/${complaint.id}`}
+                          className="font-semibold text-blue-700 hover:text-blue-900"
+                        >
+                          Abrir
+                        </Link>
                       </td>
                       <td className="px-3 py-3">
                         <StatusActionButtons

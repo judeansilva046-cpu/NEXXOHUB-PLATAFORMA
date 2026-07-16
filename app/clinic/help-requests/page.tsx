@@ -125,6 +125,7 @@ export default async function ClinicHelpRequestsPage() {
                   <th className="px-3 py-3">Descricao</th>
                   <th className="px-3 py-3">Status</th>
                   <th className="px-3 py-3">Criado em</th>
+                  <th className="px-3 py-3">Detalhes</th>
                   <th className="px-3 py-3">Acoes</th>
                 </tr>
               </thead>
@@ -153,6 +154,14 @@ export default async function ClinicHelpRequestsPage() {
                       </td>
                       <td className="px-3 py-3">
                         {new Date(request.created_at).toLocaleString('pt-BR')}
+                      </td>
+                      <td className="px-3 py-3">
+                        <Link
+                          href={`/clinic/help-requests/${request.id}`}
+                          className="font-semibold text-blue-700 hover:text-blue-900"
+                        >
+                          Abrir
+                        </Link>
                       </td>
                       <td className="px-3 py-3">
                         <StatusActionButtons
