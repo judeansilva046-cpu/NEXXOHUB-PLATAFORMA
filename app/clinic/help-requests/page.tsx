@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Building2, CheckCircle2, Clock3, HandHeart, Users } from 'lucide-react';
+import { StatusActionButtons } from '../../../components/portal/status-action-buttons';
 import { DonutChart, type DonutItem } from '../../../components/workspace/charts';
 import { MetricCard } from '../../../components/workspace/metric-card';
 import { PageHeader } from '../../../components/workspace/page-header';
@@ -104,6 +105,7 @@ export default async function ClinicHelpRequestsPage() {
                   <th className="px-3 py-3">Descricao</th>
                   <th className="px-3 py-3">Status</th>
                   <th className="px-3 py-3">Criado em</th>
+                  <th className="px-3 py-3">Acoes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -131,6 +133,16 @@ export default async function ClinicHelpRequestsPage() {
                       </td>
                       <td className="px-3 py-3">
                         {new Date(request.created_at).toLocaleString('pt-BR')}
+                      </td>
+                      <td className="px-3 py-3">
+                        <StatusActionButtons
+                          url={`/api/clinic/help-requests/${request.id}`}
+                          currentStatus={request.status}
+                          actions={[
+                            { label: 'Tratar', status: 'in_treatment', tone: 'blue' },
+                            { label: 'Encerrar', status: 'closed', tone: 'green' },
+                          ]}
+                        />
                       </td>
                     </tr>
                   );

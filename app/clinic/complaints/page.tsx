@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AlertTriangle, Building2, CheckCircle2, FileWarning, ShieldAlert } from 'lucide-react';
+import { StatusActionButtons } from '../../../components/portal/status-action-buttons';
 import { DonutChart, type DonutItem } from '../../../components/workspace/charts';
 import { MetricCard } from '../../../components/workspace/metric-card';
 import { PageHeader } from '../../../components/workspace/page-header';
@@ -101,6 +102,7 @@ export default async function ClinicComplaintsPage() {
                   <th className="px-3 py-3">Descricao</th>
                   <th className="px-3 py-3">Status</th>
                   <th className="px-3 py-3">Criada em</th>
+                  <th className="px-3 py-3">Acoes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -132,6 +134,16 @@ export default async function ClinicComplaintsPage() {
                       </td>
                       <td className="px-3 py-3">
                         {new Date(complaint.created_at).toLocaleString('pt-BR')}
+                      </td>
+                      <td className="px-3 py-3">
+                        <StatusActionButtons
+                          url={`/api/clinic/complaints/${complaint.id}`}
+                          currentStatus={complaint.status}
+                          actions={[
+                            { label: 'Analisar', status: 'reviewing', tone: 'blue' },
+                            { label: 'Encerrar', status: 'closed', tone: 'green' },
+                          ]}
+                        />
                       </td>
                     </tr>
                   );
