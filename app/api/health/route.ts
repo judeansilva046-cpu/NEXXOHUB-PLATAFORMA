@@ -3,6 +3,7 @@ import { getPublicEnvironment } from '../../../lib/env';
 
 export async function GET() {
   const startedAt = Date.now();
+  const appVersion = (process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0').replace(/-staging$/, '');
 
   try {
     const { supabaseUrl, supabaseAnonKey } = getPublicEnvironment();
@@ -21,7 +22,7 @@ export async function GET() {
       {
         status: 'ok',
         service: 'nexxohub-platform',
-        version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+        version: appVersion,
         database: 'reachable',
         latencyMs: Date.now() - startedAt,
         timestamp: new Date().toISOString(),
