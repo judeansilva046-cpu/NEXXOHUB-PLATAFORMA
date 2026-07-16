@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { AuthorizationError, getErrorResponse } from '../../../../../lib/errors';
+import { AuthorizationError, getErrorResponse, NotFoundError } from '../../../../../lib/errors';
 import { requirePortalContext } from '../../../../../lib/portal-context';
 
 const updateSchema = z.object({
@@ -16,7 +16,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       throw new AuthorizationError('Escopo de empresa incompleto');
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('complaints')
       .update({
         status: input.status,
@@ -24,9 +24,12 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       })
       .eq('id', params.id)
       .eq('clinic_id', membership.clinic_id)
-      .eq('company_id', membership.company_id);
+      .eq('company_id', membership.company_id)
+      .select('id')
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new NotFoundError('Denuncia');
 
     return NextResponse.json(
       { success: true, data: { saved: true } },

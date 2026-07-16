@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { AuthorizationError, getErrorResponse } from '../../../../../lib/errors';
+import { AuthorizationError, getErrorResponse, NotFoundError } from '../../../../../lib/errors';
 import { requirePortalContext } from '../../../../../lib/portal-context';
 import { createAdminClient } from '../../../../../lib/supabase/admin';
 
@@ -18,16 +18,19 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     }
 
     const admin = createAdminClient();
-    const { error } = await admin
+    const { data, error } = await admin
       .from('help_requests')
       .update({
         status: input.status,
         closed_at: input.status === 'closed' ? new Date().toISOString() : null,
       })
       .eq('id', params.id)
-      .eq('clinic_id', membership.clinic_id);
+      .eq('clinic_id', membership.clinic_id)
+      .select('id')
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new NotFoundError('Pedido de ajuda');
 
     return NextResponse.json(
       { success: true, data: { saved: true } },
