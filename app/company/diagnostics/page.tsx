@@ -3,7 +3,7 @@ import { requirePortalContext } from '../../../lib/portal-context';
 
 type CaseRow = {
   title: string;
-  severity: string | null;
+  risk_level: string | null;
   status: string;
   opened_at: string | null;
   created_at: string;
@@ -13,7 +13,7 @@ export default async function CompanyDiagnosticsPage() {
   const { supabase, membership } = await requirePortalContext('company');
   const { data, error } = await supabase
     .from('technical_cases')
-    .select('title, severity, status, opened_at, created_at')
+    .select('title, risk_level, status, opened_at, created_at')
     .eq('company_id', membership.company_id)
     .order('created_at', { ascending: false });
 
@@ -28,7 +28,7 @@ export default async function CompanyDiagnosticsPage() {
       emptyMessage="Nenhum diagnostico tecnico registrado para esta empresa."
       columns={[
         { header: 'Caso', render: (row) => row.title },
-        { header: 'Severidade', render: (row) => row.severity || '-' },
+        { header: 'Risco', render: (row) => row.risk_level || '-' },
         { header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
         { header: 'Aberto em', render: (row) => formatDate(row.opened_at || row.created_at) },
       ]}

@@ -3,16 +3,16 @@ import { requirePortalContext } from '../../../lib/portal-context';
 
 type CheckinRow = {
   mood_score: number | null;
-  stress_level: number | null;
-  status: string | null;
+  stress_score: number | null;
+  week_start: string;
   created_at: string;
 };
 
 export default async function EmployeeActivityPage() {
   const { supabase, membership } = await requirePortalContext('employee');
   const { data, error } = await supabase
-    .from('employee_checkins')
-    .select('mood_score, stress_level, status, created_at')
+    .from('weekly_checkins')
+    .select('mood_score, stress_score, week_start, created_at')
     .eq('employee_id', membership.employee_id)
     .order('created_at', { ascending: false });
 
@@ -27,9 +27,9 @@ export default async function EmployeeActivityPage() {
       emptyMessage="Nenhuma atividade registrada ainda."
       columns={[
         { header: 'Humor', render: (row) => row.mood_score ?? '-' },
-        { header: 'Estresse', render: (row) => row.stress_level ?? '-' },
-        { header: 'Status', render: (row) => <StatusBadge status={row.status || 'registered'} /> },
-        { header: 'Data', render: (row) => formatDate(row.created_at) },
+        { header: 'Estresse', render: (row) => row.stress_score ?? '-' },
+        { header: 'Status', render: () => <StatusBadge status="registered" /> },
+        { header: 'Semana', render: (row) => formatDate(row.week_start || row.created_at) },
       ]}
     />
   );
