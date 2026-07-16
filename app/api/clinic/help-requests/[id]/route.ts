@@ -11,7 +11,7 @@ const updateSchema = z.object({
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
     const input = updateSchema.parse(await request.json());
-    const { membership } = await requirePortalContext('clinic');
+    const { user, membership } = await requirePortalContext('clinic');
 
     if (!membership.clinic_id) {
       throw new AuthorizationError('Escopo de clinica incompleto');
@@ -31,6 +31,16 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
     if (error) throw error;
     if (!data) throw new NotFoundError('Pedido de ajuda');
+
+    await admin.from('activity_events').insert({
+      organization_id: membership.organization_id,
+      actor_id: user.id,
+      event_type: 'help_request.status_updated',
+      entity_type: 'help_request',
+      entity_id: params.id,
+      title: 'Pedido de ajuda atualizado',
+      description: `Status alterado para ${input.status}.`,
+    });
 
     return NextResponse.json(
       { success: true, data: { saved: true } },

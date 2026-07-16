@@ -22,6 +22,14 @@ type HelpRequestRow = {
   companies: SupabaseRelation<{ name: string }>;
   employees: SupabaseRelation<{ full_name: string; email: string | null }>;
 };
+type ActivityEventRow = {
+  id: string;
+  event_type: string;
+  entity_id: string | null;
+  title: string;
+  description: string | null;
+  occurred_at: string;
+};
 
 function statusLabel(status: string) {
   if (status === 'open') return 'Aberto';
@@ -50,6 +58,18 @@ export default async function ClinicHelpRequestsPage() {
 
   if (error) throw error;
   const requests = (data || []) as unknown as HelpRequestRow[];
+  const requestIds = requests.map((request) => request.id);
+  const { data: activityEvents } = requestIds.length
+    ? await admin
+        .from('activity_events')
+        .select('id, event_type, entity_id, title, description, occurred_at')
+        .eq('organization_id', membership.organization_id)
+        .eq('entity_type', 'help_request')
+        .in('entity_id', requestIds)
+        .order('occurred_at', { ascending: false })
+        .limit(8)
+    : { data: [] };
+  const events = (activityEvents || []) as ActivityEventRow[];
   const open = requests.filter((request) => request.status === 'open').length;
   const inTreatment = requests.filter((request) => request.status === 'in_treatment').length;
   const closed = requests.filter((request) => request.status === 'closed').length;
@@ -160,6 +180,24 @@ export default async function ClinicHelpRequestsPage() {
             ) : (
               <EmptyWorkspaceState message="Sem pedidos para analisar." />
             )}
+          </WorkspacePanel>
+          <WorkspacePanel title="Historico Recente">
+            <div className="space-y-3">
+              {events.map((event) => (
+                <div key={event.id} className="rounded-lg border border-slate-100 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-slate-800">{event.title}</p>
+                    <span className="text-[10px] text-slate-500">
+                      {new Date(event.occurred_at).toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    {event.description || event.event_type}
+                  </p>
+                </div>
+              ))}
+              {!events.length && <EmptyWorkspaceState message="Nenhum evento registrado." />}
+            </div>
           </WorkspacePanel>
           <WorkspacePanel title="Acoes Relacionadas">
             <div className="space-y-2">
