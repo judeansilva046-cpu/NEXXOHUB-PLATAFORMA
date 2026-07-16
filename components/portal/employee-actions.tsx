@@ -55,6 +55,55 @@ function Feedback({ state }: { state: SubmitState }) {
   return null;
 }
 
+export function IssueCertificateButton({
+  programId,
+  alreadyIssued,
+}: {
+  programId: string;
+  alreadyIssued: boolean;
+}) {
+  const router = useRouter();
+  const [state, setState] = useState(initialState);
+
+  const onClick = async () => {
+    setState({ loading: true, message: null, error: null });
+
+    try {
+      await submitJson('/api/portal/employee/certificates', { programId });
+      setState({ loading: false, message: 'Certificado emitido.', error: null });
+      router.refresh();
+    } catch (error) {
+      setState({
+        loading: false,
+        message: null,
+        error: error instanceof Error ? error.message : 'Erro ao emitir certificado.',
+      });
+    }
+  };
+
+  if (alreadyIssued) {
+    return (
+      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+        Emitido
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={state.loading}
+        className="w-fit rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {state.loading ? 'Emitindo...' : 'Emitir certificado'}
+      </button>
+      <Feedback state={state} />
+    </div>
+  );
+}
+
 export function WeeklyCheckinForm() {
   const router = useRouter();
   const [state, setState] = useState(initialState);
