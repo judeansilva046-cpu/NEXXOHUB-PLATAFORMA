@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, Building2, Clock3, HandHeart, UserRound } from 'lucide-react';
+import { CreateTechnicalCaseButton } from '../../../../components/portal/create-case-button';
 import { StatusActionButtons } from '../../../../components/portal/status-action-buttons';
 import { TreatmentNoteForm } from '../../../../components/portal/treatment-note-form';
 import { MetricCard } from '../../../../components/workspace/metric-card';
@@ -138,6 +139,12 @@ export default async function ClinicHelpRequestDetailPage({
                 { label: 'Encerrar', status: 'closed', tone: 'green' },
               ]}
             />
+          </WorkspacePanel>
+          <WorkspacePanel title="Caso Tecnico">
+            <CreateTechnicalCaseButton url={`/api/clinic/help-requests/${row.id}/technical-case`} />
+            <p className="mt-2 text-xs text-slate-500">
+              Cria um caso tecnico vinculado a este pedido e move a tratativa para em tratamento.
+            </p>
           </WorkspacePanel>
           <WorkspacePanel title="Adicionar Nota Tecnica">
             <TreatmentNoteForm url={`/api/clinic/help-requests/${row.id}/events`} />
