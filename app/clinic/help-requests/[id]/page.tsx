@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft, Building2, Clock3, HandHeart, UserRound } from 'lucide-react';
 import { StatusActionButtons } from '../../../../components/portal/status-action-buttons';
+import { TreatmentNoteForm } from '../../../../components/portal/treatment-note-form';
 import { MetricCard } from '../../../../components/workspace/metric-card';
 import { PageHeader } from '../../../../components/workspace/page-header';
 import { StatusPill, WorkspacePanel } from '../../../../components/workspace/panel';
@@ -137,6 +138,9 @@ export default async function ClinicHelpRequestDetailPage({
                 { label: 'Encerrar', status: 'closed', tone: 'green' },
               ]}
             />
+          </WorkspacePanel>
+          <WorkspacePanel title="Adicionar Nota Tecnica">
+            <TreatmentNoteForm url={`/api/clinic/help-requests/${row.id}/events`} />
           </WorkspacePanel>
           <WorkspacePanel title="Linha do Tempo">
             <div className="space-y-3">
