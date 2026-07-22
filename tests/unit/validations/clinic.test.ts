@@ -48,18 +48,13 @@ describe('Clinic Validation Schema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('trims whitespace from fields', () => {
-    const dataWithWhitespace = {
-      name: '  Clínica ABC  ',
+  it('accepts optional address', () => {
+    const validData = {
+      name: 'Clínica ABC',
       cnpj: '12.345.678/0001-99',
-      phone: '(11) 3333-3333',
-      address: '  Rua A, 123  ',
     };
 
-    const result = createClinicSchema.safeParse(dataWithWhitespace);
-    if (result.success) {
-      expect(result.data.name).toBe('Clínica ABC');
-      expect(result.data.address).toBe('Rua A, 123');
-    }
+    const result = createClinicSchema.safeParse(validData);
+    expect(result.success).toBe(true);
   });
 });

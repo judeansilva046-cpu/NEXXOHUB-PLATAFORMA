@@ -2,42 +2,40 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createCompanySchema, type CreateCompanyInput } from '../../lib/validations/company';
+import { createAssessmentSchema, type CreateAssessmentInput } from '../../lib/validations/assessment';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '../ui/form';
 import { useState } from 'react';
-import { Company } from '../../types';
+import { Assessment } from '../../types';
 
-interface CompanyFormProps {
-  initialData?: Company | null;
-  onSubmit: (data: CreateCompanyInput) => Promise<void>;
+interface AssessmentFormProps {
+  initialData?: Assessment | null;
+  onSubmit: (data: CreateAssessmentInput) => Promise<void>;
   isLoading?: boolean;
 }
 
-export function CompanyForm({ initialData, onSubmit, isLoading }: CompanyFormProps) {
+export function AssessmentForm({ initialData, onSubmit, isLoading }: AssessmentFormProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<CreateCompanyInput>({
-    resolver: zodResolver(createCompanySchema),
+  const form = useForm<CreateAssessmentInput>({
+    resolver: zodResolver(createAssessmentSchema),
     defaultValues: initialData || {
-      name: '',
-      cnpj: '',
-      phone: '',
-      address: '',
+      title: '',
       description: '',
+      status: 'draft',
+      questions: [],
     },
   });
 
-  const handleSubmit = async (data: CreateCompanyInput) => {
+  const handleSubmit = async (data: CreateAssessmentInput) => {
     try {
       setError(null);
       await onSubmit(data);
@@ -57,55 +55,12 @@ export function CompanyForm({ initialData, onSubmit, isLoading }: CompanyFormPro
 
         <FormField
           control={form.control}
-          name="name"
+          name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nome da Empresa</FormLabel>
+              <FormLabel>Título</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Empresa XYZ" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="cnpj"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CNPJ</FormLabel>
-              <FormControl>
-                <Input placeholder="12.345.678/0001-90" {...field} />
-              </FormControl>
-              <FormDescription>Formato: XX.XXX.XXX/XXXX-XX</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Telefone</FormLabel>
-              <FormControl>
-                <Input placeholder="(11) 99999-9999" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Endereço</FormLabel>
-              <FormControl>
-                <Input placeholder="Rua Exemplo, 123" {...field} />
+                <Input placeholder="Ex: Avaliação Psicossocial Q1" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -120,10 +75,31 @@ export function CompanyForm({ initialData, onSubmit, isLoading }: CompanyFormPro
               <FormLabel>Descrição</FormLabel>
               <FormControl>
                 <textarea
-                  placeholder="Descrição da empresa"
+                  placeholder="Descrição da avaliação"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                   {...field}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <FormControl>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  {...field}
+                >
+                  <option value="draft">Rascunho</option>
+                  <option value="active">Ativa</option>
+                  <option value="closed">Encerrada</option>
+                </select>
               </FormControl>
               <FormMessage />
             </FormItem>

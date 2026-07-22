@@ -1,64 +1,65 @@
 import { createClient } from '../../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
+import { AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
+import { requireAuth, requireAdmin, requireAdminOrManager } from '../../../../lib/api/auth-helpers';
 import { updateEmployeeSchema } from '../../../../lib/validations/employee';
+import { serialize, toSnakeCase } from '../../../../lib/serialize';
 
-type UserProfile = {
-  organization_id?: string;
-  role?: string;
-};
+type EmployeeRow = { company_id?: string };
+type CompanyOrgRow = { organization_id?: string };
 
-type EmployeeData = {
-  companies?: {
-    organization_id?: string;
-  };
-};
+async function verifyEmployeeAccess(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  employeeId: string,
+  organizationId: string
+) {
+  const { data: employee } = await supabase
+    .from('employees')
+    .select('company_id')
+    .eq('id', employeeId)
+    .single();
+
+  const employeeData = employee as unknown as EmployeeRow;
+  if (!employeeData?.company_id) {
+    throw new NotFoundError('Colaborador');
+  }
+
+  const { data: company } = await supabase
+    .from('companies')
+    .select('organization_id')
+    .eq('id', employeeData.company_id)
+    .single();
+
+  const companyData = company as unknown as CompanyOrgRow;
+  if (!companyData || companyData.organization_id !== organizationId) {
+    throw new AuthorizationError();
+  }
+}
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
+    const { profile } = await requireAuth(supabase);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
+    await verifyEmployeeAccess(supabase, id, profile.organization_id);
 
     const { data: employee, error: employeeError } = await supabase
       .from('employees')
-      .select(`
-        *,
-        companies(organization_id)
-      `)
-      .eq('id', params.id)
+      .select('*')
+      .eq('id', id)
       .single();
 
     if (employeeError || !employee) {
       throw new NotFoundError('Colaborador');
     }
 
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-    const employeeData = employee as unknown as EmployeeData;
-
-    if (!profile || profile.organization_id !== employeeData.companies?.organization_id) {
-      throw new AuthorizationError();
-    }
-
     return NextResponse.json({
       success: true,
-      data: employee,
+      data: serialize(employee),
     });
   } catch (error) {
     const errorResponse = getErrorResponse(error);
@@ -68,54 +69,24 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
+    const { profile } = await requireAuth(supabase);
+    requireAdminOrManager(profile);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile || !profile.role || !['admin', 'manager'].includes(profile.role)) {
-      throw new AuthorizationError();
-    }
-
-    const { data: employee } = await supabase
-      .from('employees')
-      .select(`
-        company_id,
-        companies(organization_id)
-      `)
-      .eq('id', params.id)
-      .single();
-
-    const employeeData = employee as unknown as EmployeeData;
-
-    if (!employeeData || employeeData.companies?.organization_id !== profile.organization_id) {
-      throw new NotFoundError('Colaborador');
-    }
+    await verifyEmployeeAccess(supabase, id, profile.organization_id);
 
     const body = await req.json();
     const validatedData = updateEmployeeSchema.parse(body);
+    const dbData = toSnakeCase(validatedData as Record<string, unknown>);
 
     const { data: updatedEmployee, error: updateError } = await supabase
       .from('employees')
-      .update(validatedData)
-      .eq('id', params.id)
+      .update(dbData)
+      .eq('id', id)
       .select()
       .single();
 
@@ -125,7 +96,7 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      data: updatedEmployee,
+      data: serialize(updatedEmployee),
     });
   } catch (error) {
     const errorResponse = getErrorResponse(error);
@@ -135,51 +106,17 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
+    const { profile } = await requireAuth(supabase);
+    requireAdmin(profile);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    await verifyEmployeeAccess(supabase, id, profile.organization_id);
 
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile || profile.role !== 'admin') {
-      throw new AuthorizationError();
-    }
-
-    const { data: employee } = await supabase
-      .from('employees')
-      .select(`
-        company_id,
-        companies(organization_id)
-      `)
-      .eq('id', params.id)
-      .single();
-
-    const employeeData = employee as unknown as EmployeeData;
-
-    if (!employeeData || employeeData.companies?.organization_id !== profile.organization_id) {
-      throw new NotFoundError('Colaborador');
-    }
-
-    const { error: deleteError } = await supabase
-      .from('employees')
-      .delete()
-      .eq('id', params.id);
+    const { error: deleteError } = await supabase.from('employees').delete().eq('id', id);
 
     if (deleteError) {
       throw new Error('Failed to delete employee');

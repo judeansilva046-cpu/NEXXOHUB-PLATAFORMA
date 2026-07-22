@@ -52,6 +52,44 @@ export interface Employee {
   fullName: string;
   position: string;
   department?: string;
+  birthDate?: string;
+  gender?: 'M' | 'F' | 'O' | 'N';
+  phone?: string;
+  address?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AssessmentStatus = 'draft' | 'active' | 'closed';
+
+export interface AssessmentQuestion {
+  id: string;
+  text: string;
+  type: 'text' | 'scale' | 'multiple_choice';
+  options?: string[];
+}
+
+export interface Assessment {
+  id: string;
+  organizationId: string;
+  employeeId?: string;
+  title: string;
+  description?: string;
+  questions: AssessmentQuestion[];
+  status: AssessmentStatus;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Report {
+  id: string;
+  organizationId: string;
+  assessmentId?: string;
+  title: string;
+  description?: string;
+  reportData?: Record<string, unknown>;
+  generatedBy?: string;
   createdAt: string;
   updatedAt: string;
 }

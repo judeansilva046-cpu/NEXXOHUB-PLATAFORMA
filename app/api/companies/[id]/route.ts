@@ -1,12 +1,9 @@
 import { createClient } from '../../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
-import { createOrganizationSchema } from '../../../../lib/validations/organization';
-
-type UserProfile = {
-  organization_id?: string;
-  role?: string;
-};
+import { AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
+import { requireAuth, requireAdmin } from '../../../../lib/api/auth-helpers';
+import { updateCompanySchema } from '../../../../lib/validations/company';
+import { serialize } from '../../../../lib/serialize';
 
 type CompanyData = {
   organization_id?: string;
@@ -14,46 +11,31 @@ type CompanyData = {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
+    const { profile } = await requireAuth(supabase);
 
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (companyError || !company) {
       throw new NotFoundError('Empresa');
     }
 
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-    const companyData = company as unknown as CompanyData;
-
-    if (!profile || profile.organization_id !== companyData.organization_id) {
+    const companyData = company as CompanyData;
+    if (profile.organization_id !== companyData.organization_id) {
       throw new AuthorizationError();
     }
 
     return NextResponse.json({
       success: true,
-      data: company,
+      data: serialize(company),
     });
   } catch (error) {
     const errorResponse = getErrorResponse(error);
@@ -63,51 +45,32 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile || profile.role !== 'admin') {
-      throw new AuthorizationError();
-    }
+    const { profile } = await requireAuth(supabase);
+    requireAdmin(profile);
 
     const { data: company } = await supabase
       .from('companies')
       .select('organization_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
-    const companyData = company as unknown as CompanyData;
-
+    const companyData = company as CompanyData;
     if (!companyData || companyData.organization_id !== profile.organization_id) {
       throw new NotFoundError('Empresa');
     }
 
     const body = await req.json();
-    const validatedData = createOrganizationSchema.partial().parse(body);
+    const validatedData = updateCompanySchema.parse(body);
 
     const { data: updatedCompany, error: updateError } = await supabase
       .from('companies')
       .update(validatedData)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -117,7 +80,7 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      data: updatedCompany,
+      data: serialize(updatedCompany),
     });
   } catch (error) {
     const errorResponse = getErrorResponse(error);
@@ -127,48 +90,26 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile || profile.role !== 'admin') {
-      throw new AuthorizationError();
-    }
+    const { profile } = await requireAuth(supabase);
+    requireAdmin(profile);
 
     const { data: company } = await supabase
       .from('companies')
       .select('organization_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
-    const companyData = company as unknown as CompanyData;
-
+    const companyData = company as CompanyData;
     if (!companyData || companyData.organization_id !== profile.organization_id) {
       throw new NotFoundError('Empresa');
     }
 
-    const { error: deleteError } = await supabase
-      .from('companies')
-      .delete()
-      .eq('id', params.id);
+    const { error: deleteError } = await supabase.from('companies').delete().eq('id', id);
 
     if (deleteError) {
       throw new Error('Failed to delete company');
