@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Verifica se a sessão foi criada com sucesso
  * Use após login para garantir que os cookies foram setados
  */
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const supabase = await createClient();
 

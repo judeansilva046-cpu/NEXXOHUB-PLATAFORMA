@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
     try {
       console.log('Attempting password reset for email:', email);
       const validation = resetPasswordSchema.parse({ email });
-      const { data, error: resetError } = await authClient.resetPassword(validation.email);
+      const { error: resetError } = await authClient.resetPassword(validation.email);
 
       if (resetError) {
         const errorMessage = resetError.message || 'Erro desconhecido ao enviar email';
