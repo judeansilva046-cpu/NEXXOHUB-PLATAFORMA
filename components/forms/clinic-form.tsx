@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createOrganizationSchema, type CreateOrganizationInput } from '../../lib/validations/organization';
+import { createClinicSchema, type CreateClinicInput } from '../../lib/validations/clinic';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import {
@@ -15,28 +15,29 @@ import {
   FormMessage,
 } from '../ui/form';
 import { useState } from 'react';
+import { Clinic } from '../../types';
 
 interface ClinicFormProps {
-  initialData?: any;
-  onSubmit: (data: CreateOrganizationInput) => Promise<void>;
+  initialData?: Clinic | null;
+  onSubmit: (data: CreateClinicInput) => Promise<void>;
   isLoading?: boolean;
 }
 
 export function ClinicForm({ initialData, onSubmit, isLoading }: ClinicFormProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<CreateOrganizationInput>({
-    resolver: zodResolver(createOrganizationSchema),
+  const form = useForm<CreateClinicInput>({
+    resolver: zodResolver(createClinicSchema),
     defaultValues: initialData || {
       name: '',
       cnpj: '',
       phone: '',
-      website: '',
+      address: '',
       description: '',
     },
   });
 
-  const handleSubmit = async (data: CreateOrganizationInput) => {
+  const handleSubmit = async (data: CreateClinicInput) => {
     try {
       setError(null);
       await onSubmit(data);
@@ -77,9 +78,7 @@ export function ClinicForm({ initialData, onSubmit, isLoading }: ClinicFormProps
               <FormControl>
                 <Input placeholder="12.345.678/0001-90" {...field} />
               </FormControl>
-              <FormDescription>
-                Formato: XX.XXX.XXX/XXXX-XX
-              </FormDescription>
+              <FormDescription>Formato: XX.XXX.XXX/XXXX-XX</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -101,12 +100,12 @@ export function ClinicForm({ initialData, onSubmit, isLoading }: ClinicFormProps
 
         <FormField
           control={form.control}
-          name="website"
+          name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Website</FormLabel>
+              <FormLabel>Endereço</FormLabel>
               <FormControl>
-                <Input placeholder="https://exemplo.com.br" {...field} />
+                <Input placeholder="Rua Exemplo, 123" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

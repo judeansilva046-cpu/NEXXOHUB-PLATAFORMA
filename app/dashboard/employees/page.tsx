@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -15,68 +16,54 @@ import {
 } from '../../../components/ui/dialog';
 import { EmployeeForm } from '../../../components/forms/employee-form';
 import { Employee } from '../../../types';
-import { toast } from 'sonner';
+import { useEmployees, useCompanies } from '../../../lib/hooks/use-api';
+import { api } from '../../../lib/api/fetch';
+import { CreateEmployeeInput } from '../../../lib/validations/employee';
 
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: employees = [], isLoading, error, refetch } = useEmployees();
+  const { data: companies = [] } = useCompanies();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
-  const fetchEmployees = async () => {
-    try {
-      const res = await fetch('/api/employees');
-      if (!res.ok) throw new Error('Failed to fetch employees');
-      const data = await res.json();
-      setEmployees(data.data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar colaboradores');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
 
   const filteredEmployees = useMemo(() => {
-    return employees.filter((employee) =>
-      employee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(searchTerm.toLowerCase())
+    return employees.filter(
+      (employee) =>
+        employee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [employees, searchTerm]);
 
-  const handleCreateEmployee = async (data: any) => {
-    try {
-      // For now, we'll just show a message since we need companyId
-      // In the future, add company selector to the form
+  const handleCreateEmployee = async (data: CreateEmployeeInput) => {
+    if (!selectedCompanyId) {
       toast.error('Por favor, selecione uma empresa');
       throw new Error('Company ID required');
+    }
+
+    try {
+      await api.post('/api/employees', { companyId: selectedCompanyId, ...data });
+      toast.success('Colaborador criado com sucesso!');
+      setIsDialogOpen(false);
+      setSelectedCompanyId('');
+      refetch();
     } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao criar colaborador');
       throw err;
     }
   };
 
-  const handleUpdateEmployee = async (data: any) => {
+  const handleUpdateEmployee = async (data: CreateEmployeeInput) => {
     if (!editingEmployee) return;
 
     try {
-      const res = await fetch(`/api/employees/${editingEmployee.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!res.ok) throw new Error('Failed to update employee');
-
+      await api.put(`/api/employees/${editingEmployee.id}`, data);
       toast.success('Colaborador atualizado com sucesso!');
       setIsDialogOpen(false);
       setEditingEmployee(null);
-      fetchEmployees();
+      refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao atualizar colaborador');
       throw err;
@@ -85,21 +72,16 @@ export default function EmployeesPage() {
 
   const handleDeleteEmployee = async (employeeId: string) => {
     try {
-      const res = await fetch(`/api/employees/${employeeId}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) throw new Error('Failed to delete employee');
-
+      await api.delete(`/api/employees/${employeeId}`);
       toast.success('Colaborador deletado com sucesso!');
       setDeleteConfirmId(null);
-      fetchEmployees();
+      refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao deletar colaborador');
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-gray-600">Carregando...</div>
@@ -111,7 +93,7 @@ export default function EmployeesPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <p className="text-red-600 font-medium">{error}</p>
+          <p className="text-red-600 font-medium">{error.message}</p>
         </div>
       </div>
     );
@@ -128,7 +110,10 @@ export default function EmployeesPage() {
           <DialogTrigger asChild>
             <Button
               className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => setEditingEmployee(null)}
+              onClick={() => {
+                setEditingEmployee(null);
+                setSelectedCompanyId('');
+              }}
             >
               + Novo Colaborador
             </Button>
@@ -138,10 +123,25 @@ export default function EmployeesPage() {
               <DialogTitle>
                 {editingEmployee ? 'Editar Colaborador' : 'Novo Colaborador'}
               </DialogTitle>
-              <DialogDescription>
-                Preencha os dados do colaborador
-              </DialogDescription>
+              <DialogDescription>Preencha os dados do colaborador</DialogDescription>
             </DialogHeader>
+            {!editingEmployee && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Empresa</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  value={selectedCompanyId}
+                  onChange={(e) => setSelectedCompanyId(e.target.value)}
+                >
+                  <option value="">Selecione uma empresa</option>
+                  {companies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <EmployeeForm
               initialData={editingEmployee}
               onSubmit={editingEmployee ? handleUpdateEmployee : handleCreateEmployee}
@@ -153,7 +153,9 @@ export default function EmployeesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Lista de Colaboradores</CardTitle>
-          <CardDescription>Total: {filteredEmployees.length} de {employees.length} colaborador(es)</CardDescription>
+          <CardDescription>
+            Total: {filteredEmployees.length} de {employees.length} colaborador(es)
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -190,32 +192,18 @@ export default function EmployeesPage() {
                       {new Date(employee.createdAt).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Dialog open={isDialogOpen && editingEmployee?.id === employee.id} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingEmployee(employee)}
-                          >
-                            Editar
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Editar Colaborador</DialogTitle>
-                            <DialogDescription>
-                              Atualize os dados do colaborador
-                            </DialogDescription>
-                          </DialogHeader>
-                          <EmployeeForm
-                            initialData={employee}
-                            onSubmit={handleUpdateEmployee}
-                          />
-                        </DialogContent>
-                      </Dialog>
-
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingEmployee(employee);
+                          setIsDialogOpen(true);
+                        }}
+                      >
+                        Editar
+                      </Button>
                       {deleteConfirmId === employee.id ? (
-                        <div className="flex gap-2">
+                        <>
                           <Button
                             size="sm"
                             variant="destructive"
@@ -230,7 +218,7 @@ export default function EmployeesPage() {
                           >
                             Cancelar
                           </Button>
-                        </div>
+                        </>
                       ) : (
                         <Button
                           size="sm"

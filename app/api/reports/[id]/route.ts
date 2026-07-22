@@ -2,10 +2,10 @@ import { createClient } from '../../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthorizationError, NotFoundError, getErrorResponse } from '../../../../lib/errors';
 import { requireAuth, requireAdmin } from '../../../../lib/api/auth-helpers';
-import { updateClinicSchema } from '../../../../lib/validations/clinic';
+import { updateReportSchema } from '../../../../lib/validations/assessment';
 import { serialize } from '../../../../lib/serialize';
 
-type ClinicData = {
+type ReportData = {
   organization_id?: string;
 };
 
@@ -18,24 +18,24 @@ export async function GET(
     const supabase = await createClient();
     const { profile } = await requireAuth(supabase);
 
-    const { data: clinic, error: clinicError } = await supabase
-      .from('clinics')
+    const { data: report, error } = await supabase
+      .from('reports')
       .select('*')
       .eq('id', id)
       .single();
 
-    if (clinicError || !clinic) {
-      throw new NotFoundError('Clínica');
+    if (error || !report) {
+      throw new NotFoundError('Relatório');
     }
 
-    const clinicData = clinic as ClinicData;
-    if (profile.organization_id !== clinicData.organization_id) {
+    const reportData = report as ReportData;
+    if (profile.organization_id !== reportData.organization_id) {
       throw new AuthorizationError();
     }
 
     return NextResponse.json({
       success: true,
-      data: serialize(clinic),
+      data: serialize(report),
     });
   } catch (error) {
     const errorResponse = getErrorResponse(error);
@@ -53,34 +53,40 @@ export async function PUT(
     const { profile } = await requireAuth(supabase);
     requireAdmin(profile);
 
-    const { data: clinic } = await supabase
-      .from('clinics')
+    const { data: existing } = await supabase
+      .from('reports')
       .select('organization_id')
       .eq('id', id)
       .single();
 
-    const clinicData = clinic as ClinicData;
-    if (!clinicData || clinicData.organization_id !== profile.organization_id) {
-      throw new NotFoundError('Clínica');
+    const reportData = existing as ReportData;
+    if (!reportData || reportData.organization_id !== profile.organization_id) {
+      throw new NotFoundError('Relatório');
     }
 
     const body = await req.json();
-    const validatedData = updateClinicSchema.parse(body);
+    const validatedData = updateReportSchema.parse(body);
 
-    const { data: updatedClinic, error: updateError } = await supabase
-      .from('clinics')
-      .update(validatedData)
+    const updatePayload: Record<string, unknown> = {};
+    if (validatedData.title !== undefined) updatePayload.title = validatedData.title;
+    if (validatedData.description !== undefined) updatePayload.description = validatedData.description;
+    if (validatedData.reportData !== undefined) updatePayload.report_data = validatedData.reportData;
+    if (validatedData.assessmentId !== undefined) updatePayload.assessment_id = validatedData.assessmentId;
+
+    const { data: updated, error } = await supabase
+      .from('reports')
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();
 
-    if (updateError) {
-      throw new Error('Failed to update clinic');
+    if (error) {
+      throw new Error('Failed to update report');
     }
 
     return NextResponse.json({
       success: true,
-      data: serialize(updatedClinic),
+      data: serialize(updated),
     });
   } catch (error) {
     const errorResponse = getErrorResponse(error);
@@ -98,26 +104,26 @@ export async function DELETE(
     const { profile } = await requireAuth(supabase);
     requireAdmin(profile);
 
-    const { data: clinic } = await supabase
-      .from('clinics')
+    const { data: existing } = await supabase
+      .from('reports')
       .select('organization_id')
       .eq('id', id)
       .single();
 
-    const clinicData = clinic as ClinicData;
-    if (!clinicData || clinicData.organization_id !== profile.organization_id) {
-      throw new NotFoundError('Clínica');
+    const reportData = existing as ReportData;
+    if (!reportData || reportData.organization_id !== profile.organization_id) {
+      throw new NotFoundError('Relatório');
     }
 
-    const { error: deleteError } = await supabase.from('clinics').delete().eq('id', id);
+    const { error } = await supabase.from('reports').delete().eq('id', id);
 
-    if (deleteError) {
-      throw new Error('Failed to delete clinic');
+    if (error) {
+      throw new Error('Failed to delete report');
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Clínica deletada com sucesso',
+      message: 'Relatório deletado com sucesso',
     });
   } catch (error) {
     const errorResponse = getErrorResponse(error);

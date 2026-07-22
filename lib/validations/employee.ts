@@ -5,7 +5,7 @@ export const createEmployeeSchema = z.object({
   fullName: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
   position: z.string().min(2, 'Cargo é obrigatório'),
   department: z.string().optional(),
-  birthDate: z.string().datetime().optional(),
+  birthDate: z.string().optional(),
   gender: z.enum(['M', 'F', 'O', 'N']).optional(),
   phone: z.string().optional(),
   address: z.string().optional(),

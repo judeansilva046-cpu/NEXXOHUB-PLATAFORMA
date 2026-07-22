@@ -8,7 +8,6 @@ import { Input } from '../ui/input';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -16,8 +15,10 @@ import {
 } from '../ui/form';
 import { useState } from 'react';
 
+import { Employee } from '../../types';
+
 interface EmployeeFormProps {
-  initialData?: any;
+  initialData?: Employee | null;
   onSubmit: (data: CreateEmployeeInput) => Promise<void>;
   isLoading?: boolean;
 }

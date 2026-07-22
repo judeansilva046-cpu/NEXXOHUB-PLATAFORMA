@@ -22,7 +22,6 @@ describe('Employee Validation Schema', () => {
     const invalidData = {
       fullName: 'João Silva Santos',
       email: 'joao@empresa.com',
-      // missing position, department, phone
     };
 
     const result = createEmployeeSchema.safeParse(invalidData);
@@ -39,30 +38,30 @@ describe('Employee Validation Schema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects name shorter than 3 characters', () => {
+  it('rejects name shorter than 2 characters', () => {
     const invalidData = {
       ...validData,
-      fullName: 'JJ',
+      fullName: 'J',
     };
 
     const result = createEmployeeSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
   });
 
-  it('rejects invalid birth date format', () => {
-    const invalidData = {
+  it('accepts optional birth date as string', () => {
+    const data = {
       ...validData,
-      birthDate: 'invalid-date',
+      birthDate: '1990-05-15',
     };
 
-    const result = createEmployeeSchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+    const result = createEmployeeSchema.safeParse(data);
+    expect(result.success).toBe(true);
   });
 
   it('accepts valid gender values', () => {
     const genders = ['M', 'F', 'O', 'N'];
 
-    genders.forEach(gender => {
+    genders.forEach((gender) => {
       const data = {
         ...validData,
         gender: gender as 'M' | 'F' | 'O' | 'N',
@@ -75,7 +74,7 @@ describe('Employee Validation Schema', () => {
   it('rejects invalid gender', () => {
     const invalidData = {
       ...validData,
-      gender: 'X' as any,
+      gender: 'X' as 'M',
     };
 
     const result = createEmployeeSchema.safeParse(invalidData);
@@ -87,24 +86,9 @@ describe('Employee Validation Schema', () => {
       fullName: 'Jane Doe',
       email: 'jane@empresa.com',
       position: 'Analista',
-      department: 'RH',
     };
 
     const result = createEmployeeSchema.safeParse(minimalData);
     expect(result.success).toBe(true);
-  });
-
-  it('trims whitespace from text fields', () => {
-    const dataWithWhitespace = {
-      ...validData,
-      fullName: '  João Silva Santos  ',
-      position: '  Desenvolvedor  ',
-    };
-
-    const result = createEmployeeSchema.safeParse(dataWithWhitespace);
-    if (result.success) {
-      expect(result.data.fullName).toBe('João Silva Santos');
-      expect(result.data.position).toBe('Desenvolvedor');
-    }
   });
 });

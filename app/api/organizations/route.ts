@@ -1,40 +1,14 @@
 import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, getErrorResponse } from '../../../lib/errors';
-import { createOrganizationSchema } from '../../../lib/validations/organization';
-
-type UserOrg = {
-  organization_id?: string;
-};
-
-type OrganizationData = {
-  id?: string;
-};
+import { getErrorResponse } from '../../../lib/errors';
+import { requireAuth, requireAdmin } from '../../../lib/api/auth-helpers';
+import { createOrganizationSchema, updateOrganizationSchema } from '../../../lib/validations/organization';
+import { serialize } from '../../../lib/serialize';
 
 export async function GET(_req: NextRequest) {
   try {
     const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userOrg, error: userOrgError } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userOrg as unknown as UserOrg;
-
-    if (userOrgError || !profile?.organization_id) {
-      throw new Error('User organization not found');
-    }
+    const { profile } = await requireAuth(supabase);
 
     const { data: org, error: orgError } = await supabase
       .from('organizations')
@@ -48,7 +22,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: org,
+      data: serialize(org),
     });
   } catch (error) {
     const errorResponse = getErrorResponse(error);
@@ -59,15 +33,7 @@ export async function GET(_req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
+    const { user } = await requireAuth(supabase);
 
     const body = await req.json();
     const validatedData = createOrganizationSchema.parse(body);
@@ -78,15 +44,15 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    const organization = org as unknown as OrganizationData;
-
-    if (orgError || !organization?.id) {
+    if (orgError || !org) {
       throw new Error('Failed to create organization');
     }
 
+    const organization = org as unknown as { id: string };
+
     const { error: updateError } = await supabase
       .from('users')
-      .update({ organization_id: organization.id })
+      .update({ organization_id: organization.id, role: 'admin' })
       .eq('id', user.id);
 
     if (updateError) {
@@ -96,10 +62,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: org,
+        data: serialize(org),
       },
       { status: 201 }
     );
+  } catch (error) {
+    const errorResponse = getErrorResponse(error);
+    return NextResponse.json(errorResponse, { status: errorResponse.statusCode });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { profile } = await requireAuth(supabase);
+    requireAdmin(profile, 'Apenas administradores podem editar a organização');
+
+    const body = await req.json();
+    const validatedData = updateOrganizationSchema.parse(body);
+
+    const { data: org, error: orgError } = await supabase
+      .from('organizations')
+      .update(validatedData)
+      .eq('id', profile.organization_id)
+      .select()
+      .single();
+
+    if (orgError) {
+      throw new Error('Failed to update organization');
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: serialize(org),
+    });
   } catch (error) {
     const errorResponse = getErrorResponse(error);
     return NextResponse.json(errorResponse, { status: errorResponse.statusCode });

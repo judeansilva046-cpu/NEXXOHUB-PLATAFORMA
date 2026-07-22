@@ -1,37 +1,14 @@
 import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthenticationError, AuthorizationError, getErrorResponse } from '../../../lib/errors';
-import { createOrganizationSchema } from '../../../lib/validations/organization';
-
-type UserProfile = {
-  organization_id?: string;
-  role?: string;
-};
+import { getErrorResponse } from '../../../lib/errors';
+import { requireAuth, requireAdmin } from '../../../lib/api/auth-helpers';
+import { createCompanySchema } from '../../../lib/validations/company';
+import { serialize } from '../../../lib/serialize';
 
 export async function GET(_req: NextRequest) {
   try {
     const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile?.organization_id) {
-      throw new AuthenticationError();
-    }
+    const { profile } = await requireAuth(supabase);
 
     const { data: companies, error: companiesError } = await supabase
       .from('companies')
@@ -45,7 +22,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: companies,
+      data: serialize(companies),
     });
   } catch (error) {
     const errorResponse = getErrorResponse(error);
@@ -56,34 +33,11 @@ export async function GET(_req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new AuthenticationError();
-    }
-
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('organization_id, role')
-      .eq('id', user.id)
-      .single();
-
-    const profile = userProfile as unknown as UserProfile;
-
-    if (!profile?.organization_id) {
-      throw new AuthenticationError();
-    }
-
-    if (profile.role !== 'admin') {
-      throw new AuthorizationError('Apenas administradores podem criar empresas');
-    }
+    const { profile } = await requireAuth(supabase);
+    requireAdmin(profile, 'Apenas administradores podem criar empresas');
 
     const body = await req.json();
-    const validatedData = createOrganizationSchema.parse(body);
+    const validatedData = createCompanySchema.parse(body);
 
     const { data: company, error: companyError } = await supabase
       .from('companies')
@@ -103,7 +57,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: company,
+        data: serialize(company),
       },
       { status: 201 }
     );

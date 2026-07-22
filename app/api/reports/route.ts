@@ -1,8 +1,8 @@
 import { createClient } from '../../../lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getErrorResponse } from '../../../lib/errors';
-import { requireAuth, requireAdmin } from '../../../lib/api/auth-helpers';
-import { createClinicSchema } from '../../../lib/validations/clinic';
+import { requireAuth, requireAdminOrManager } from '../../../lib/api/auth-helpers';
+import { createReportSchema } from '../../../lib/validations/assessment';
 import { serialize } from '../../../lib/serialize';
 
 export async function GET(_req: NextRequest) {
@@ -10,19 +10,19 @@ export async function GET(_req: NextRequest) {
     const supabase = await createClient();
     const { profile } = await requireAuth(supabase);
 
-    const { data: clinics, error: clinicsError } = await supabase
-      .from('clinics')
+    const { data: reports, error } = await supabase
+      .from('reports')
       .select('*')
       .eq('organization_id', profile.organization_id)
       .order('created_at', { ascending: false });
 
-    if (clinicsError) {
-      throw new Error('Failed to fetch clinics');
+    if (error) {
+      throw new Error('Failed to fetch reports');
     }
 
     return NextResponse.json({
       success: true,
-      data: serialize(clinics),
+      data: serialize(reports),
     });
   } catch (error) {
     const errorResponse = getErrorResponse(error);
@@ -33,31 +33,35 @@ export async function GET(_req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const { profile } = await requireAuth(supabase);
-    requireAdmin(profile, 'Apenas administradores podem criar clínicas');
+    const { user, profile } = await requireAuth(supabase);
+    requireAdminOrManager(profile, 'Apenas administradores ou gerentes podem criar relatórios');
 
     const body = await req.json();
-    const validatedData = createClinicSchema.parse(body);
+    const validatedData = createReportSchema.parse(body);
 
-    const { data: clinic, error: clinicError } = await supabase
-      .from('clinics')
+    const { data: report, error } = await supabase
+      .from('reports')
       .insert([
         {
           organization_id: profile.organization_id,
-          ...validatedData,
+          assessment_id: validatedData.assessmentId || null,
+          title: validatedData.title,
+          description: validatedData.description,
+          report_data: validatedData.reportData || {},
+          generated_by: user.id,
         },
       ])
       .select()
       .single();
 
-    if (clinicError) {
-      throw new Error('Failed to create clinic');
+    if (error) {
+      throw new Error('Failed to create report');
     }
 
     return NextResponse.json(
       {
         success: true,
-        data: serialize(clinic),
+        data: serialize(report),
       },
       { status: 201 }
     );
