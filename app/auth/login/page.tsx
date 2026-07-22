@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ZodError } from 'zod';
-import { loginSchema, type LoginInput } from '../../../lib/validations/auth';
+import { loginSchema } from '../../../lib/validations/auth';
 import { authClient } from '../../../lib/supabase/auth';
 import { getAuthErrorMessage } from '../../../lib/auth-errors';
 import { Alert } from '../../../components/ui/alert';
@@ -154,7 +154,7 @@ export default function LoginPage() {
 
     try {
       console.log('Sending OTP to phone:', formData.phone);
-      const { data, error: authError } = await authClient.signInWithPhone(formData.phone);
+      const { error: authError } = await authClient.signInWithPhone(formData.phone);
 
       if (authError) {
         const errorMessage = authError.message || 'Erro ao enviar código';
@@ -233,7 +233,7 @@ export default function LoginPage() {
 
     try {
       console.log('Sending magic link to:', formData.email);
-      const { data, error: authError } = await authClient.signInWithMagicLink(formData.email);
+      const { error: authError } = await authClient.signInWithMagicLink(formData.email);
 
       if (authError) {
         const errorMessage = authError.message || 'Erro ao enviar link';
